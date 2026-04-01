@@ -1,0 +1,51 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+export interface Oil {
+  id: string;
+  title: string;
+  description: string | null;
+  focus: string | null;
+  is_active: boolean;
+}
+
+export function useOils() {
+  const { user } = useAuth();
+
+  const { data: allOils = [], isLoading: oilsLoading } = useQuery({
+    queryKey: ["oils"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oils")
+        .select("*")
+        .eq("is_active", true)
+        .order("title");
+      if (error) throw error;
+      return data as Oil[];
+    },
+    enabled: !!user,
+  });
+
+  const { data: accessList = [], isLoading: accessLoading } = useQuery({
+    queryKey: ["user_access", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_access")
+        .select("oil_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data.map((a) => a.oil_id);
+    },
+    enabled: !!user,
+  });
+
+  const myOils = allOils.filter((o) => accessList.includes(o.id));
+  const newOils = allOils.filter((o) => !accessList.includes(o.id));
+
+  return {
+    myOils,
+    newOils,
+    isLoading: oilsLoading || accessLoading,
+  };
+}
