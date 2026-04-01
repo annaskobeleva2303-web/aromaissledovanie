@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOils } from "@/hooks/useOils";
 import { OilCard } from "@/components/OilCard";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Leaf, LogOut, Loader2 } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { myOils, newOils, isLoading } = useOils();
 
@@ -55,7 +57,7 @@ const Index = () => {
               ) : (
                 <div className="grid gap-3">
                   {myOils.map((oil) => (
-                    <OilCard key={oil.id} oil={oil} />
+                    <OilCard key={oil.id} oil={oil} onClick={() => navigate(`/oils/${oil.id}`)} />
                   ))}
                 </div>
               )}
