@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Leaf, LogOut, Loader2 } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { myOils, newOils, isLoading } = useOils();
 
