@@ -57,7 +57,7 @@ const Index = () => {
               ) : (
                 <div className="grid gap-3">
                   {myOils.map((oil) => (
-                    <OilCard key={oil.id} oil={oil} />
+                    <OilCard key={oil.id} oil={oil} onClick={() => navigate(`/oils/${oil.id}`)} />
                   ))}
                 </div>
               )}
