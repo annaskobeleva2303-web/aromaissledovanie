@@ -38,7 +38,7 @@ const OilWorkspace = () => {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-muted-foreground">Масло не найдено</p>
-        <Button variant="outline" onClick={() => navigate("/")}>
+        <Button variant="outline" onClick={() => navigate("/")} className="rounded-full">
           На главную
         </Button>
       </div>
@@ -46,48 +46,54 @@ const OilWorkspace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+      <header className="sticky top-0 z-20 border-b border-white/30 bg-white/40 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="shrink-0 rounded-xl"
+            className="shrink-0 rounded-full text-muted-foreground hover:text-foreground transition-all duration-300"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold">{oil.title}</h1>
+            <h1 className="truncate font-serif text-xl font-medium tracking-wide">{oil.title}</h1>
             {oil.focus && (
-              <p className="truncate text-xs text-muted-foreground">{oil.focus}</p>
+              <p className="truncate text-xs tracking-wide text-muted-foreground">{oil.focus}</p>
             )}
           </div>
         </div>
       </header>
 
       {/* Tabs */}
-      <main className="mx-auto max-w-2xl px-4 py-5">
+      <main className="mx-auto max-w-2xl px-5 py-8">
         <Tabs defaultValue="diary">
-          <TabsList className="w-full rounded-xl bg-secondary">
-            <TabsTrigger value="diary" className="flex-1 gap-1.5 rounded-lg">
+          <TabsList className="w-full rounded-full bg-white/50 backdrop-blur-md border border-white/40 p-1">
+            <TabsTrigger
+              value="diary"
+              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
               <BookOpen className="h-3.5 w-3.5" />
               Мой Дневник
             </TabsTrigger>
-            <TabsTrigger value="group" className="flex-1 gap-1.5 rounded-lg">
+            <TabsTrigger
+              value="group"
+              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
               <Users className="h-3.5 w-3.5" />
               Групповое поле
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="diary" className="mt-5">
+          <TabsContent value="diary" className="mt-8">
             <DiaryForm oilId={oil.id} />
           </TabsContent>
 
-          <TabsContent value="group" className="mt-5">
-            <div className="rounded-2xl border border-dashed p-10 text-center">
-              <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" strokeWidth={1.5} />
+          <TabsContent value="group" className="mt-8">
+            <div className="glass-card p-12 text-center">
+              <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" strokeWidth={1.5} />
               <p className="text-sm text-muted-foreground">
                 Групповое поле будет доступно позже
               </p>

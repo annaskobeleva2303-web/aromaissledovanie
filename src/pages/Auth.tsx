@@ -34,7 +34,6 @@ export default function Auth() {
     e.preventDefault();
     setError(null);
 
-    // Validate
     const nickResult = nicknameSchema.safeParse(nickname);
     if (!nickResult.success) {
       setError(nickResult.error.errors[0].message);
@@ -57,29 +56,29 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
-      {/* Background */}
+      {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-nature-glow opacity-40 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-nature-glow opacity-30 blur-3xl" />
+        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-nature-glow opacity-50 blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-nature-glow opacity-35 blur-[100px]" />
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
+        <div className="mb-10 flex flex-col items-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-lg shadow-primary/20">
             <Leaf className="h-8 w-8 text-primary-foreground" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Essence Lab</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="font-serif text-3xl font-medium tracking-wide">Essence Lab</h1>
+          <p className="mt-2 text-sm tracking-wide text-muted-foreground">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nickname" className="text-sm font-medium">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="glass-card p-7 space-y-5">
+            <div className="space-y-2.5">
+              <Label htmlFor="nickname" className="text-sm font-medium tracking-wide">
                 Никнейм
               </Label>
               <Input
@@ -88,14 +87,14 @@ export default function Auth() {
                 placeholder="Ваш никнейм"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="rounded-xl"
+                className="rounded-full border-white/40 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30"
                 autoComplete="username"
                 maxLength={24}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
+            <div className="space-y-2.5">
+              <Label htmlFor="password" className="text-sm font-medium tracking-wide">
                 Пароль
               </Label>
               <div className="relative">
@@ -105,14 +104,14 @@ export default function Auth() {
                   placeholder="Минимум 6 символов"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-xl pr-10"
+                  className="rounded-full border-white/40 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                   maxLength={72}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -124,7 +123,12 @@ export default function Auth() {
               <p className="text-sm text-destructive animate-fade-in">{error}</p>
             )}
 
-            <Button type="submit" className="w-full rounded-xl" size="lg" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full rounded-full py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              size="lg"
+              disabled={loading}
+            >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : isRegister ? (
@@ -137,7 +141,7 @@ export default function Auth() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-8 text-center text-sm text-muted-foreground">
           {isRegister ? "Уже есть аккаунт?" : "Нет аккаунта?"}{" "}
           <button
             type="button"
@@ -145,14 +149,13 @@ export default function Auth() {
               setIsRegister(!isRegister);
               setError(null);
             }}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-primary hover:underline transition-colors"
           >
             {isRegister ? "Войти" : "Создать"}
           </button>
         </p>
 
-        {/* Anonymity note */}
-        <p className="mt-4 text-center text-xs text-muted-foreground/70">
+        <p className="mt-5 text-center text-xs tracking-wide text-muted-foreground/60">
           🔒 Мы не собираем email или личные данные
         </p>
       </div>
