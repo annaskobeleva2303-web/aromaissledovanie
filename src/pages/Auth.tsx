@@ -56,19 +56,19 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
-      {/* Background glow */}
+      {/* Background glow orbs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-nature-glow opacity-50 blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-nature-glow opacity-35 blur-[100px]" />
+        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-coral/30 blur-[120px]" />
+        <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-violet/20 blur-[120px]" />
       </div>
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
         <div className="mb-10 flex flex-col items-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-lg shadow-primary/20">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-lg shadow-primary/25">
             <Leaf className="h-8 w-8 text-primary-foreground" strokeWidth={1.5} />
           </div>
-          <h1 className="font-serif text-3xl font-medium tracking-wide">Essence Lab</h1>
+          <h1 className="font-serif text-3xl font-medium tracking-wide text-foreground">Essence Lab</h1>
           <p className="mt-2 text-sm tracking-wide text-muted-foreground">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
@@ -87,7 +87,7 @@ export default function Auth() {
                 placeholder="Ваш никнейм"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="rounded-full border-white/40 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30"
+                className="rounded-full border-white/30 bg-white/40 px-5 backdrop-blur-sm focus-visible:ring-primary/30"
                 autoComplete="username"
                 maxLength={24}
               />
@@ -104,7 +104,7 @@ export default function Auth() {
                   placeholder="Минимум 6 символов"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-full border-white/40 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30"
+                  className="rounded-full border-white/30 bg-white/40 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                   maxLength={72}
                 />
@@ -125,7 +125,7 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full rounded-full py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              className="w-full rounded-full py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
               size="lg"
               disabled={loading}
             >

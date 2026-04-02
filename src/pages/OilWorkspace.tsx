@@ -48,7 +48,7 @@ const OilWorkspace = () => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/30 bg-white/40 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-4">
           <Button
             variant="ghost"
@@ -70,17 +70,17 @@ const OilWorkspace = () => {
       {/* Tabs */}
       <main className="mx-auto max-w-2xl px-5 py-8">
         <Tabs defaultValue="diary">
-          <TabsList className="w-full rounded-full bg-white/50 backdrop-blur-md border border-white/40 p-1">
+          <TabsList className="w-full rounded-full bg-white/30 backdrop-blur-xl border border-white/20 p-1">
             <TabsTrigger
               value="diary"
-              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
             >
               <BookOpen className="h-3.5 w-3.5" />
               Мой Дневник
             </TabsTrigger>
             <TabsTrigger
               value="group"
-              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
             >
               <Users className="h-3.5 w-3.5" />
               Групповое поле
