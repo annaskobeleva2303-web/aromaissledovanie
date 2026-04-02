@@ -6,54 +6,53 @@
 
 @layer base {
   :root {
-    /* Creamy warm background */
-    --background: 30 33% 96%;
-    --foreground: 25 20% 20%;
+    /* Coral-to-Violet brand palette */
+    --background: 270 20% 96%;
+    --foreground: 270 30% 15%;
 
-    --card: 30 25% 98%;
-    --card-foreground: 25 20% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 270 30% 15%;
 
-    --popover: 30 25% 98%;
-    --popover-foreground: 25 20% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 30% 15%;
 
-    /* Nature green accent */
-    --primary: 152 55% 28%;
-    --primary-foreground: 40 33% 96%;
+    /* Violet primary */
+    --primary: 263 72% 52%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 20% 92%;
-    --secondary-foreground: 25 20% 25%;
+    --secondary: 20 90% 74%;
+    --secondary-foreground: 270 30% 15%;
 
-    --muted: 30 15% 93%;
-    --muted-foreground: 25 10% 50%;
+    --muted: 270 15% 92%;
+    --muted-foreground: 270 10% 46%;
 
-    --accent: 30 25% 90%;
-    --accent-foreground: 25 20% 20%;
+    --accent: 20 80% 90%;
+    --accent-foreground: 270 30% 15%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 88%;
-    --input: 30 15% 88%;
-    --ring: 152 55% 28%;
+    --border: 270 10% 88%;
+    --input: 270 10% 88%;
+    --ring: 263 72% 52%;
 
     --radius: 1rem;
 
-    /* Custom tokens */
-    --cream: 30 33% 96%;
-    --cream-dark: 30 20% 92%;
-    --nature: 152 55% 28%;
-    --nature-light: 152 40% 42%;
-    --nature-glow: 152 30% 90%;
-    --warm: 25 20% 20%;
+    /* Brand tokens */
+    --coral: 20 95% 73%;
+    --coral-light: 20 90% 88%;
+    --violet: 263 72% 52%;
+    --violet-deep: 263 80% 30%;
+    --violet-glow: 263 50% 92%;
 
-    --sidebar-background: 30 25% 97%;
-    --sidebar-foreground: 25 20% 25%;
-    --sidebar-primary: 152 55% 28%;
-    --sidebar-primary-foreground: 40 33% 96%;
-    --sidebar-accent: 30 20% 93%;
-    --sidebar-accent-foreground: 25 20% 20%;
-    --sidebar-border: 30 15% 88%;
-    --sidebar-ring: 152 55% 28%;
+    --sidebar-background: 270 20% 97%;
+    --sidebar-foreground: 270 30% 20%;
+    --sidebar-primary: 263 72% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 15% 93%;
+    --sidebar-accent-foreground: 270 30% 15%;
+    --sidebar-border: 270 10% 88%;
+    --sidebar-ring: 263 72% 52%;
   }
 }
 
@@ -64,7 +63,13 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background: radial-gradient(ellipse at 50% 0%, hsl(30 33% 98%) 0%, hsl(30 33% 96%) 50%, hsl(30 20% 94%) 100%);
+    background:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+      linear-gradient(135deg, hsla(20, 90%, 78%, 0.35) 0%, hsla(263, 60%, 65%, 0.25) 50%, hsla(263, 72%, 42%, 0.3) 100%),
+      radial-gradient(ellipse at 20% 0%, hsla(20, 95%, 73%, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, hsla(263, 72%, 52%, 0.25) 0%, transparent 60%),
+      hsl(270 20% 96%);
+    background-attachment: fixed;
     min-height: 100vh;
   }
 
@@ -75,6 +80,10 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/60 backdrop-blur-lg border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl;
+    @apply bg-white/50 backdrop-blur-2xl border border-white/25 rounded-3xl;
+    box-shadow:
+      0 8px 40px hsla(263, 72%, 52%, 0.06),
+      0 2px 12px hsla(263, 72%, 52%, 0.04),
+      inset 0 1px 0 hsla(0, 0%, 100%, 0.4);
   }
 }

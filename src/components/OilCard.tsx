@@ -14,14 +14,14 @@ export function OilCard({ oil, locked = false, onClick }: OilCardProps) {
       className={`glass-card cursor-pointer p-6 transition-all duration-300 ${
         locked
           ? "opacity-60 hover:opacity-75"
-          : "hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]"
+          : "hover:-translate-y-1 hover:shadow-[0_12px_40px_hsla(263,72%,52%,0.1)]"
       }`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3">
         <div
           className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-            locked ? "bg-muted" : "bg-nature-glow"
+            locked ? "bg-muted" : "bg-violet-glow"
           }`}
         >
           {locked ? (
@@ -33,7 +33,7 @@ export function OilCard({ oil, locked = false, onClick }: OilCardProps) {
         {oil.focus && (
           <Badge
             variant="secondary"
-            className="rounded-full bg-nature-glow/60 px-3 py-0.5 text-[10px] font-normal tracking-wide text-primary border-0"
+            className="rounded-full bg-coral-light/60 px-3 py-0.5 text-[10px] font-normal tracking-wide text-secondary-foreground border-0"
           >
             {oil.focus}
           </Badge>

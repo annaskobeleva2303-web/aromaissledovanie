@@ -13,10 +13,10 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/30 bg-white/40 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary shadow-md shadow-primary/20">
               <Leaf className="h-5 w-5 text-primary-foreground" strokeWidth={1.5} />
             </div>
             <span className="font-serif text-xl font-medium tracking-wide">Essence Lab</span>

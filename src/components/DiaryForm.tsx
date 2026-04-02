@@ -67,8 +67,8 @@ export function DiaryForm({ oilId }: DiaryFormProps) {
               onClick={() => setMood(mood === m.value ? null : m.value)}
               className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm transition-all duration-300 ${
                 mood === m.value
-                  ? "bg-primary text-primary-foreground shadow-md -translate-y-0.5"
-                  : "bg-white/60 text-foreground/70 hover:bg-white hover:-translate-y-0.5 hover:shadow-sm"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 -translate-y-0.5"
+                  : "bg-white/40 text-foreground/70 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-sm"
               }`}
             >
               <span>{m.emoji}</span>
@@ -78,7 +78,7 @@ export function DiaryForm({ oilId }: DiaryFormProps) {
         </div>
       </div>
 
-      {/* Content textarea — luxury notebook feel */}
+      {/* Content textarea */}
       <div className="glass-card p-6">
         <p className="mb-4 font-serif text-sm font-medium tracking-wide text-muted-foreground">
           Ваш инсайт или наблюдение
@@ -87,7 +87,7 @@ export function DiaryForm({ oilId }: DiaryFormProps) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Опишите ваш опыт, ощущения, мысли…"
-          className="min-h-[180px] resize-none rounded-2xl border-0 bg-white/40 px-5 py-4 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[180px] resize-none rounded-2xl border-0 bg-transparent px-5 py-4 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       </div>
 
@@ -95,7 +95,7 @@ export function DiaryForm({ oilId }: DiaryFormProps) {
       <Button
         onClick={() => saveEntry()}
         disabled={!canSave || isPending}
-        className="w-full rounded-full gap-2 py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+        className="w-full rounded-full gap-2 py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
       >
         {isPending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
