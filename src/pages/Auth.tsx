@@ -79,7 +79,7 @@ export default function Auth() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="glass-card p-8 space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="nickname" className="text-sm font-medium text-violet-deep/90">
+              <Label htmlFor="nickname" className="text-sm font-medium text-violet-deep">
                 Никнейм
               </Label>
               <Input
