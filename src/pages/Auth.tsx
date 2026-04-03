@@ -6,14 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import BrandIcon from "@/components/BrandIcon";
-import { z } from "zod";
-
-const nicknameSchema = z
-  .string()
-  .trim()
-  .min(3, "Минимум 3 символа")
-  .max(24, "Максимум 24 символа")
-  .regex(/^[a-zA-Zа-яА-ЯёЁ0-9_ ]+$/, "Только буквы, цифры, пробелы и _");
+import { nicknameSchema } from "@/lib/nickname";
 
 const passwordSchema = z
   .string()

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { createAuthEmailFromNickname, getSignInEmailsForNickname, normalizeNickname } from "@/lib/nickname";
 
 interface Profile {
   id: string;
@@ -35,6 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(data);
   };
 
+  const getSignUpErrorMessage = (message: string) => {
+    const normalizedMessage = message.toLowerCase();
+
+    if (normalizedMessage.includes("already registered") || normalizedMessage.includes("already exists")) {
+      return "Этот никнейм уже занят";
+    }
+
+    if (normalizedMessage.includes("email")) {
+      return "Не удалось создать аккаунт. Попробуйте ещё раз с этим никнеймом.";
+    }
+
+    return `Не удалось создать аккаунт: ${message}`;
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -64,30 +79,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (nickname: string, password: string) => {
-    const fakeEmail = `${nickname.toLowerCase().trim()}@anonymous.local`;
-    const { error } = await supabase.auth.signUp({
-      email: fakeEmail,
+    const normalizedNickname = normalizeNickname(nickname);
+    const authEmail = createAuthEmailFromNickname(normalizedNickname);
+    const { data, error } = await supabase.auth.signUp({
+      email: authEmail,
       password,
+      options: {
+        data: {
+          nickname: normalizedNickname,
+        },
+      },
     });
+
     if (error) {
-      if (error.message.includes("already registered")) {
-        return { error: "Этот никнейм уже занят" };
-      }
-      return { error: error.message };
+      return { error: getSignUpErrorMessage(error.message) };
     }
+
+    if (!data.user) {
+      return { error: "Не удалось завершить регистрацию. Попробуйте ещё раз." };
+    }
+
+    if (!data.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password,
+      });
+
+      if (signInError) {
+        return {
+          error: "Аккаунт создан, но вход не завершился автоматически. Попробуйте войти тем же никнеймом и паролем.",
+        };
+      }
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ nickname: normalizedNickname } as any)
+      .eq("id", data.user.id);
+
+    if (profileError) {
+      return {
+        error: `Аккаунт создан, но никнейм не сохранился: ${profileError.message}`,
+      };
+    }
+
+    await fetchProfile(data.user.id);
+
     return { error: null };
   };
 
   const signIn = async (nickname: string, password: string) => {
-    const fakeEmail = `${nickname.toLowerCase().trim()}@anonymous.local`;
-    const { error } = await supabase.auth.signInWithPassword({
-      email: fakeEmail,
-      password,
-    });
-    if (error) {
+    let lastError: string | null = null;
+
+    for (const authEmail of getSignInEmailsForNickname(nickname)) {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password,
+      });
+
+      if (!error) {
+        return { error: null };
+      }
+
+      lastError = error.message;
+    }
+
+    if (lastError?.toLowerCase().includes("invalid login credentials")) {
       return { error: "Неверный никнейм или пароль" };
     }
-    return { error: null };
+
+    return { error: `Не удалось войти: ${lastError ?? "неизвестная ошибка"}` };
   };
 
   const signOut = async () => {
