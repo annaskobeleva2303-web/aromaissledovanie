@@ -17,8 +17,8 @@ const Index = () => {
       <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <Droplet className="h-6 w-6 text-violet-deep" strokeWidth={1.2} />
-            <span className="font-serif text-xl font-light tracking-wide whitespace-nowrap">Живые Смыслы</span>
+            <BrandIcon className="h-7 w-7 text-violet-deep" strokeWidth={0.9} />
+            <span className="font-serif text-xl font-light tracking-[0.15em] whitespace-nowrap">Живые Смыслы</span>
           </div>
           <Button
             variant="ghost"
