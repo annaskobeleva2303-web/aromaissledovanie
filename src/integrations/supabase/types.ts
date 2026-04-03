@@ -100,6 +100,7 @@ export type Database = {
           content: string
           created_at: string
           date: string
+          energy_tags: Json | null
           id: string
           is_public: boolean
           mood: string | null
@@ -111,6 +112,7 @@ export type Database = {
           content: string
           created_at?: string
           date?: string
+          energy_tags?: Json | null
           id?: string
           is_public?: boolean
           mood?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           content?: string
           created_at?: string
           date?: string
+          energy_tags?: Json | null
           id?: string
           is_public?: boolean
           mood?: string | null
