@@ -21,7 +21,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { myOils, newOils, entryCounts, isLoading } = useOils();
+  const isAdmin = useIsAdmin();
   const [remindersEnabled, setRemindersEnabled] = useState(profile?.reminders_enabled ?? true);
+  const [activationOil, setActivationOil] = useState<Oil | null>(null);
 
   useEffect(() => {
     setRemindersEnabled(profile?.reminders_enabled ?? true);
