@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History } from "lucide-react";
+import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface AiInsightProps {
@@ -18,6 +18,7 @@ function InsightCard({
   total,
   onPrev,
   onNext,
+  onDelete,
 }: {
   content: string;
   createdAt: string;
@@ -25,6 +26,7 @@ function InsightCard({
   total: number;
   onPrev: () => void;
   onNext: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div
@@ -92,15 +94,25 @@ function InsightCard({
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground/60">
-        Сгенерировано:{" "}
-        {new Date(createdAt).toLocaleDateString("ru-RU", {
-          day: "numeric",
-          month: "long",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-      </p>
+      <div className="relative flex items-center justify-between">
+        <p className="text-xs text-muted-foreground/60">
+          Сгенерировано:{" "}
+          {new Date(createdAt).toLocaleDateString("ru-RU", {
+            day: "numeric",
+            month: "long",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          className="h-7 w-7 rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -143,6 +155,21 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
 
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
+
+  const handleDelete = async (insightId: string) => {
+    const { error } = await supabase
+      .from("ai_insights")
+      .delete()
+      .eq("id", insightId)
+      .eq("user_id", user!.id);
+    if (error) {
+      toast.error("Не удалось удалить инсайт");
+      return;
+    }
+    toast.success("Инсайт удалён");
+    setCurrentIndex((i) => Math.max(0, i - 1));
+    queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
+  };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -236,6 +263,7 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
             total={insights.length}
             onPrev={() => setCurrentIndex((i) => Math.max(0, i - 1))}
             onNext={() => setCurrentIndex((i) => Math.min(insights.length - 1, i + 1))}
+            onDelete={() => handleDelete(currentInsight.id)}
           />
 
           <div className="flex items-center justify-between">

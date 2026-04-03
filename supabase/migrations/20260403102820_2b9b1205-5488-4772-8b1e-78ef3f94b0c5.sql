@@ -1,0 +1,1 @@
+CREATE POLICY "Users can delete own insights" ON public.ai_insights FOR DELETE TO public USING (auth.uid() = user_id);
