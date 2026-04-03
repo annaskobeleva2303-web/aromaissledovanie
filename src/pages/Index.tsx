@@ -16,6 +16,25 @@ const Index = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { myOils, newOils, isLoading } = useOils();
+  const [remindersEnabled, setRemindersEnabled] = useState(profile?.reminders_enabled ?? true);
+
+  useEffect(() => {
+    setRemindersEnabled(profile?.reminders_enabled ?? true);
+  }, [profile?.reminders_enabled]);
+
+  const toggleReminders = async (checked: boolean) => {
+    setRemindersEnabled(checked);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ reminders_enabled: checked } as any)
+      .eq("id", profile!.id);
+    if (error) {
+      setRemindersEnabled(!checked);
+      toast.error("Не удалось сохранить настройку");
+    } else {
+      toast.success(checked ? "Напоминания включены" : "Напоминания отключены");
+    }
+  };
 
   return (
     <div className="min-h-screen">
