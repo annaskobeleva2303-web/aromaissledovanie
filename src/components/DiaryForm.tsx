@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Save, Loader2, Users, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,12 +33,14 @@ const STEP_TITLES = [
   "Что ты чувствуешь сейчас?",
   "Как сегодня звучит Давана?",
   "Твои смыслы и наблюдения...",
+  "Твой инсайт от Даваны ✨",
 ];
 
 const STEP_SUBTITLES = [
   "Вход в состояние",
   "Энергия Масла",
   "Свободный полёт",
+  "Послание Даваны",
 ];
 
 interface DiaryFormProps {
@@ -71,7 +73,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [selectedEnergy, setSelectedEnergy] = useState<string[]>([]);
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [showAlchemy, setShowAlchemy] = useState(false);
+  const [insightText, setInsightText] = useState<string | null>(null);
 
   const toggleMood = (value: string) => {
     setSelectedMoods((prev) =>
@@ -101,10 +103,23 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setStep((s) => Math.max(s - 1, 0));
   };
 
+  const finishSession = () => {
+    setSelectedMoods([]);
+    setSelectedEnergy([]);
+    setContent("");
+    setIsPublic(false);
+    setInsightText(null);
+    setStep(0);
+    queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["entries-count", oilId] });
+    onSaved?.();
+  };
+
   const { mutate: saveEntry, isPending } = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
-      setShowAlchemy(true);
 
       // Save entry
       const { error } = await supabase.from("entries").insert({
@@ -118,42 +133,40 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       });
       if (error) throw error;
 
-      // Try generating AI insight (non-blocking — don't fail the save if AI fails)
+      // Generate AI insight
+      let insight: string | null = null;
       try {
         const { data, error: fnError } = await supabase.functions.invoke("generate-insight", {
           body: { oilId },
         });
         if (!fnError && data?.insight) {
-          toast.success("Инсайт готов! ✨", { duration: 4000 });
+          insight = data.insight;
         }
       } catch {
-        // AI generation is optional — silently skip
+        // AI is optional
+      }
+      return insight;
+    },
+    onSuccess: (insight) => {
+      toast.success("Запись сохранена ✨");
+      if (insight) {
+        setInsightText(insight);
+        setDirection(1);
+        setStep(3);
+      } else {
+        finishSession();
       }
     },
-    onSuccess: () => {
-      toast.success("Запись сохранена ✨");
-      setSelectedMoods([]);
-      setSelectedEnergy([]);
-      setContent("");
-      setIsPublic(false);
-      setStep(0);
-      setShowAlchemy(false);
-      queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
-      queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
-      queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
-      queryClient.invalidateQueries({ queryKey: ["entries-count", oilId] });
-      onSaved?.();
-    },
     onError: () => {
-      setShowAlchemy(false);
       toast.error("Не удалось сохранить запись");
     },
   });
 
   const canSave = content.trim().length > 0;
+  const totalSteps = insightText !== null ? 4 : 3;
 
-  // Alchemy loading overlay
-  if (showAlchemy) {
+  // Alchemy loading overlay (shown during save + AI generation)
+  if (isPending) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -180,15 +193,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     <div className="space-y-6">
       {/* Progress indicator */}
       <div className="flex items-center justify-center gap-2">
-        {[0, 1, 2].map((i) => (
-          <button
-            key={i}
-            onClick={() => {
-              setDirection(i > step ? 1 : -1);
-              setStep(i);
-            }}
-            className="flex items-center gap-2"
-          >
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2">
             <div
               className={`h-2 rounded-full transition-all duration-500 ${
                 i === step
@@ -198,7 +204,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
                     : "w-2 bg-foreground/10"
               }`}
             />
-          </button>
+          </div>
         ))}
       </div>
 
@@ -306,13 +312,43 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
                 </div>
               </div>
             )}
+
+            {/* Step 4: Insight reveal */}
+            {step === 3 && insightText && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="space-y-5"
+              >
+                <div className="relative overflow-hidden rounded-3xl border border-white/30 bg-white/50 p-6 shadow-xl shadow-primary/5 backdrop-blur-2xl">
+                  {/* Decorative glow */}
+                  <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.8 }}
+                    className="relative"
+                  >
+                    <Sparkles className="mx-auto mb-4 h-6 w-6 text-primary/60" />
+                    <div className="max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/85 font-light">
+                        {insightText}
+                      </p>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Navigation */}
       <div className="flex gap-3">
-        {step > 0 && (
+        {step > 0 && step < 3 && (
           <Button
             variant="ghost"
             onClick={goBack}
@@ -331,18 +367,22 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             Далее
             <ArrowRight className="h-4 w-4" />
           </Button>
-        ) : (
+        ) : step === 2 ? (
           <Button
             onClick={() => saveEntry()}
             disabled={!canSave || isPending}
             className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
           >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Сохранить запись
+            <Sparkles className="h-4 w-4" />
+            Алхимия инсайта
+          </Button>
+        ) : (
+          <Button
+            onClick={finishSession}
+            className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+          >
+            <Heart className="h-4 w-4" />
+            Благодарю
           </Button>
         )}
       </div>
