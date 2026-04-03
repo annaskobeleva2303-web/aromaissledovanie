@@ -1,9 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History, Trash2, CalendarDays } from "lucide-react";
+import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History, Trash2, CalendarDays, BarChart3 } from "lucide-react";
+
+const MOOD_LABELS: Record<string, { label: string; emoji: string }> = {
+  calm: { label: "Спокойствие", emoji: "😌" },
+  anxious: { label: "Тревога", emoji: "😟" },
+  joyful: { label: "Радость", emoji: "😊" },
+  sad: { label: "Грусть", emoji: "😢" },
+  energetic: { label: "Энергия", emoji: "⚡" },
+  irritated: { label: "Раздражение", emoji: "😤" },
+  reflective: { label: "Задумчивость", emoji: "🤔" },
+  grateful: { label: "Благодарность", emoji: "🙏" },
+};
+
+const ENERGY_LABELS: Record<string, { label: string; emoji: string }> = {
+  support: { label: "Опора", emoji: "🏔️" },
+  transformation: { label: "Трансформация", emoji: "🦋" },
+  release: { label: "Отпускание", emoji: "🍃" },
+  expansion: { label: "Расширение", emoji: "✨" },
+  silence: { label: "Тишина", emoji: "🌙" },
+};
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -200,6 +219,62 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     enabled: !!user,
   });
 
+  // Load all entries for stats
+  const { data: allEntries = [] } = useQuery({
+    queryKey: ["entries-stats", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("mood, energy_tags")
+        .eq("oil_id", oilId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  // Compute top moods and energy tags
+  const stats = useMemo(() => {
+    const moodCounts: Record<string, number> = {};
+    const energyCounts: Record<string, number> = {};
+    let totalMoods = 0;
+    let totalEnergy = 0;
+
+    for (const e of allEntries) {
+      if (e.mood) {
+        moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+        totalMoods++;
+      }
+      if (Array.isArray(e.energy_tags)) {
+        for (const tag of e.energy_tags as string[]) {
+          energyCounts[tag] = (energyCounts[tag] || 0) + 1;
+          totalEnergy++;
+        }
+      }
+    }
+
+    const topMoods = Object.entries(moodCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, count]) => ({
+        key,
+        ...(MOOD_LABELS[key] || { label: key, emoji: "•" }),
+        percent: totalMoods > 0 ? Math.round((count / totalMoods) * 100) : 0,
+      }));
+
+    const topEnergy = Object.entries(energyCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, count]) => ({
+        key,
+        ...(ENERGY_LABELS[key] || { label: key, emoji: "•" }),
+        percent: totalEnergy > 0 ? Math.round((count / totalEnergy) * 100) : 0,
+      }));
+
+    return { topMoods, topEnergy, totalEntries: allEntries.length };
+  }, [allEntries]);
+
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
 
@@ -374,6 +449,79 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
             <Sparkles className="h-4 w-4" />
             Сгенерировать глубокий инсайт
           </Button>
+        </div>
+      )}
+
+      {/* Stats Block */}
+      {stats.totalEntries >= 3 && (stats.topMoods.length > 0 || stats.topEnergy.length > 0) && (
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/25 p-6 space-y-4"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(263,50%,95%,0.5) 0%, hsla(0,0%,100%,0.4) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow: "inset 0 1px 0 hsla(0,0%,100%,0.5)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <BarChart3 className="h-4 w-4 text-primary" strokeWidth={1.5} />
+            </div>
+            <h3 className="font-serif text-base font-semibold tracking-wide text-foreground">
+              Ваш профиль исследования
+            </h3>
+          </div>
+
+          {stats.topMoods.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
+                Топ состояний
+              </p>
+              <div className="space-y-1.5">
+                {stats.topMoods.map((m) => (
+                  <div key={m.key} className="flex items-center gap-3">
+                    <span className="text-base w-6 text-center">{m.emoji}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-medium text-foreground/80">{m.label}</span>
+                        <span className="text-xs text-primary font-semibold">{m.percent}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-foreground/5 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary/40 transition-all duration-700"
+                          style={{ width: `${m.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {stats.topEnergy.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
+                Топ энергий масла
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {stats.topEnergy.map((e) => (
+                  <div
+                    key={e.key}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-white/30 px-3 py-1.5 text-xs"
+                  >
+                    <span>{e.emoji}</span>
+                    <span className="font-medium text-foreground/80">{e.label}</span>
+                    <span className="text-primary font-semibold">{e.percent}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className="text-[10px] text-muted-foreground/50">
+            На основе {stats.totalEntries} {stats.totalEntries >= 5 ? "записей" : "записей"}
+          </p>
         </div>
       )}
 
