@@ -29,6 +29,8 @@ interface GroupFieldProps {
 export function GroupField({ oilId }: GroupFieldProps) {
   const { user } = useAuth();
 
+  const [trendIndex, setTrendIndex] = useState(0);
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ["group-stats", oilId],
     queryFn: async () => {
@@ -40,6 +42,21 @@ export function GroupField({ oilId }: GroupFieldProps) {
     },
     enabled: !!user,
     refetchInterval: 30000,
+  });
+
+  const { data: trends = [], isLoading: trendsLoading } = useQuery({
+    queryKey: ["group-trends", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_trends")
+        .select("id, week_start, trend_text, created_at")
+        .eq("oil_id", oilId)
+        .order("week_start", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
   });
 
   if (isLoading) {
