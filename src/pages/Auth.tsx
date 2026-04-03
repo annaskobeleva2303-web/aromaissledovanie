@@ -105,7 +105,7 @@ export default function Auth() {
                   placeholder="Минимум 6 символов"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-full border-white/30 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/50"
+                  className="rounded-full border-white/30 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-violet-deep/40"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                   maxLength={72}
                 />
