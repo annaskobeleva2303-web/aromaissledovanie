@@ -76,7 +76,7 @@ serve(async (req) => {
       // Get users who have entries for this oil in the last 7 days
       let entriesQuery = supabaseAdmin
         .from("entries")
-        .select("user_id, date, mood, content")
+        .select("user_id, date, mood, content, energy_tags")
         .eq("oil_id", oil.id)
         .gte("date", sevenDaysAgoStr)
         .order("date", { ascending: true });
@@ -112,10 +112,15 @@ serve(async (req) => {
         }
 
         const diaryText = userEntries
-          .map((e) => `[${e.date}] Состояние: ${e.mood || "не указано"}\n${e.content}`)
+          .map((e) => {
+            const tags = Array.isArray(e.energy_tags) && (e.energy_tags as string[]).length > 0
+              ? `\nЭнергия масла: ${(e.energy_tags as string[]).join(", ")}`
+              : "";
+            return `[${e.date}] Состояние: ${e.mood || "не указано"}${tags}\n${e.content}`;
+          })
           .join("\n\n---\n\n");
 
-        const systemPrompt = `Ты — эмпатичный наставник и психолог. Проанализируй дневниковые записи участника за последнюю неделю по эфирному маслу «${oil.title}» (фокус: ${oil.focus || "общее исследование"}). Напиши тёплое, поддерживающее еженедельное саммари (2-3 абзаца): отметь прогресс, выдели ключевые паттерны и мягко подсвети направление для следующей недели. Обращайся на «Вы», используй бережный, премиальный стиль.`;
+        const systemPrompt = `Ты — эмпатичный наставник и психолог. Проанализируй дневниковые записи участника за последнюю неделю по эфирному маслу «${oil.title}» (фокус: ${oil.focus || "общее исследование"}). Обрати внимание на выбранные энергетические теги масла (Опора, Трансформация, Отпускание, Расширение, Тишина) — они показывают, как участник ощущал энергию масла каждый день. Напиши тёплое, поддерживающее еженедельное саммари (2-3 абзаца): отметь прогресс, проследи динамику энергий, выдели ключевые паттерны и мягко подсвети направление для следующей недели. Обращайся на «Вы», используй бережный, премиальный стиль.`;
 
         const aiResponse = await fetch(
           "https://ai.gateway.lovable.dev/v1/chat/completions",
