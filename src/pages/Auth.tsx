@@ -67,8 +67,8 @@ export default function Auth() {
         {/* Logo */}
         <div className="mb-14 flex flex-col items-center gap-5">
           <BrandIcon className="h-14 w-14 text-violet-deep" strokeWidth={0.8} />
-          <h1 className="font-serif text-3xl font-light tracking-[0.2em] text-foreground whitespace-nowrap">Живые Смыслы</h1>
-          <p className="mt-2 text-xs tracking-widest uppercase text-violet-deep/40 font-light">
+          <h1 className="font-serif text-3xl font-medium tracking-[0.2em] text-violet-deep text-glow-peach whitespace-nowrap">Живые Смыслы</h1>
+          <p className="mt-2 text-xs tracking-widest uppercase text-violet-deep/70 font-normal">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function Auth() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="glass-card p-9 space-y-6">
             <div className="space-y-2.5">
-              <Label htmlFor="nickname" className="text-xs font-light tracking-wide text-muted-foreground">
+              <Label htmlFor="nickname" className="text-xs font-normal tracking-wide text-violet-deep/80">
                 Никнейм
               </Label>
               <Input
@@ -93,7 +93,7 @@ export default function Auth() {
             </div>
 
             <div className="space-y-2.5">
-              <Label htmlFor="password" className="text-xs font-light tracking-wide text-muted-foreground">
+              <Label htmlFor="password" className="text-xs font-normal tracking-wide text-violet-deep/80">
                 Пароль
               </Label>
               <div className="relative">
@@ -140,7 +140,7 @@ export default function Auth() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-8 text-center text-sm text-muted-foreground">
+        <p className="mt-8 text-center text-sm text-violet-deep/70">
           {isRegister ? "Уже есть аккаунт?" : "Нет аккаунта?"}{" "}
           <button
             type="button"
@@ -148,13 +148,13 @@ export default function Auth() {
               setIsRegister(!isRegister);
               setError(null);
             }}
-            className="font-medium text-primary hover:underline transition-colors"
+            className="font-medium text-violet-deep hover:underline transition-colors"
           >
             {isRegister ? "Войти" : "Создать"}
           </button>
         </p>
 
-        <p className="mt-5 text-center text-xs tracking-wide text-muted-foreground/60">
+        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep/50">
           🔒 Мы не собираем email или личные данные
         </p>
       </div>
