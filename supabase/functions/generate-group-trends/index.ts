@@ -151,6 +151,19 @@ serve(async (req) => {
         results.push({ oil: oil.title, status: "insert_error" });
       } else {
         results.push({ oil: oil.title, status: "success" });
+        // Notify all users who have access to this oil
+        const { data: accessUsers } = await supabase
+          .from("user_access")
+          .select("user_id")
+          .eq("oil_id", oil.id);
+        if (accessUsers && accessUsers.length > 0) {
+          const notifs = accessUsers.map((u) => ({
+            user_id: u.user_id,
+            title: "🌿 Групповой обзор недели",
+            message: `Новый ИИ-обзор группы по маслу «${oil.title}» готов. Загляните в Групповое поле.`,
+          }));
+          await supabase.from("notifications").insert(notifs);
+        }
       }
     }
 
