@@ -20,9 +20,10 @@ const MOODS = [
 
 interface DiaryFormProps {
   oilId: string;
+  date?: string;
 }
 
-export function DiaryForm({ oilId }: DiaryFormProps) {
+export function DiaryForm({ oilId, date }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [mood, setMood] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export function DiaryForm({ oilId }: DiaryFormProps) {
         oil_id: oilId,
         mood,
         content: content.trim(),
+        ...(date ? { date } : {}),
       });
       if (error) throw error;
     },
