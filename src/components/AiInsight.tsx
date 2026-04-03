@@ -4,20 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Droplet, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface AiInsightProps {
   oilId: string;
   oilTitle: string;
 }
-
-const MOCK_INSIGHT = `В ваших записях прослеживается глубокая тема **внутренней честности**. Вы начинаете замечать, как тело реагирует на ситуации раньше, чем разум успевает их осмыслить.
-
-Ключевые паттерны:
-• Состояние тревоги чаще возникает в моменты, когда вы откладываете важный разговор
-• Спокойствие приходит после того, как вы позволяете себе «просто быть»
-• Энергия растёт, когда вы следуете за интересом, а не за «надо»
-
-💡 **Инсайт:** Ваше тело уже знает ответы. Попробуйте в следующий раз, когда почувствуете напряжение, задать себе вопрос: «Что я сейчас не говорю?»`;
 
 export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
   const { user } = useAuth();
@@ -43,10 +35,31 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    // Mock 3-second "thinking"
-    await new Promise((r) => setTimeout(r, 3000));
-    setInsight(MOCK_INSIGHT);
-    setIsGenerating(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-insight", {
+        body: { oilId },
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        toast.error("Не удалось сгенерировать инсайт. Попробуйте позже.");
+        setIsGenerating(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        setIsGenerating(false);
+        return;
+      }
+
+      setInsight(data.insight);
+    } catch (e) {
+      console.error("Insight generation failed:", e);
+      toast.error("Произошла ошибка при генерации инсайта.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Not enough entries
