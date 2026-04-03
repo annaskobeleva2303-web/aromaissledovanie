@@ -156,6 +156,21 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
 
+  const handleDelete = async (insightId: string) => {
+    const { error } = await supabase
+      .from("ai_insights")
+      .delete()
+      .eq("id", insightId)
+      .eq("user_id", user!.id);
+    if (error) {
+      toast.error("Не удалось удалить инсайт");
+      return;
+    }
+    toast.success("Инсайт удалён");
+    setCurrentIndex((i) => Math.max(0, i - 1));
+    queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
