@@ -31,9 +31,9 @@ export function SparkleBackground({ count = 18 }: { count?: number }) {
           key={s.id}
           className="absolute rounded-full bg-white"
           style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size }}
-          animate={{ opacity: [0, 0.7, 0], scale: [0.8, 1.2, 0.8] }}
+          animate={{ opacity: [0, 0.35, 0], scale: [0.95, 1.05, 0.95] }}
           transition={{
-            duration: s.duration,
+            duration: s.duration + 4,
             delay: s.delay,
             repeat: Infinity,
             ease: "easeInOut",
