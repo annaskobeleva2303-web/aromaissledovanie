@@ -7,6 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MOOD_RU: Record<string, string> = { calm: "Спокойствие", anxious: "Тревога", joyful: "Радость", sad: "Грусть", energetic: "Энергия", irritated: "Раздражение", reflective: "Задумчивость", grateful: "Благодарность" };
+const ENERGY_RU: Record<string, string> = { support: "Опора", transformation: "Трансформация", release: "Отпускание", expansion: "Расширение", silence: "Тишина" };
+
 function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) {
   const moodCounts: Record<string, number> = {};
   const energyCounts: Record<string, number> = {};
@@ -29,12 +32,12 @@ function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) 
   const topMoods = Object.entries(moodCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([mood, count]) => `${mood} (${Math.round((count / totalMoods) * 100)}%)`);
+    .map(([mood, count]) => `${MOOD_RU[mood] || mood} (${Math.round((count / totalMoods) * 100)}%)`);
 
   const topEnergy = Object.entries(energyCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([tag, count]) => `${tag} (${Math.round((count / totalEnergy) * 100)}%)`);
+    .map(([tag, count]) => `${ENERGY_RU[tag] || tag} (${Math.round((count / totalEnergy) * 100)}%)`);
 
   return { topMoods, topEnergy };
 }
@@ -152,14 +155,14 @@ serve(async (req) => {
           })
           .join("\n\n---\n\n");
 
-        const systemPrompt = `Ты — эмпатичный наставник и психолог. Проанализируй дневниковые записи участника за последнюю неделю по эфирному маслу «${oil.title}» (фокус: ${oil.focus || "общее исследование"}).
+        const systemPrompt = `Ты — эмпатичный, глубокий психолог и наставник. Это глубокий, развёрнутый терапевтический анализ за неделю по эфирному маслу «${oil.title}» (фокус: ${oil.focus || "общее исследование"}).
 
-Обрати внимание на выбранные энергетические теги масла (Опора, Трансформация, Отпускание, Расширение, Тишина) — они показывают, как участник ощущал энергию масла каждый день.
+Обрати особое внимание на энергетические теги (Опора, Трансформация, Отпускание, Расширение, Тишина) — они показывают, как участница ощущала энергию масла каждый день.
 
-Вот статистика за неделю:
+Статистика за неделю:
 ${statsBlock}
 
-Используй эту статистику как основу: упомяни доминирующее состояние и его процент, проследи динамику энергий. Напиши тёплое, поддерживающее еженедельное саммари (2-3 абзаца): отметь прогресс, выдели ключевые паттерны и мягко подсвети направление для следующей недели. Обращайся на «Вы», используй бережный, премиальный стиль.`;
+Напиши 3-4 подробных абзаца. Разбери статистику: укажи доминирующее состояние и его процент, проследи динамику энергий день за днём, найди скрытые паттерны и переломные моменты. Дай глубокую, поддерживающую обратную связь по всему периоду и мягко подсвети направление для следующей недели. Обращайся на «Вы», используй бережный, премиальный, метафоричный стиль. Без банальных советов — только глубина и смыслы.`;
 
         const aiResponse = await fetch(
           "https://ai.gateway.lovable.dev/v1/chat/completions",

@@ -7,6 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MOOD_RU: Record<string, string> = { calm: "Спокойствие", anxious: "Тревога", joyful: "Радость", sad: "Грусть", energetic: "Энергия", irritated: "Раздражение", reflective: "Задумчивость", grateful: "Благодарность" };
+const ENERGY_RU: Record<string, string> = { support: "Опора", transformation: "Трансформация", release: "Отпускание", expansion: "Расширение", silence: "Тишина" };
+
 function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) {
   const moodCounts: Record<string, number> = {};
   const energyCounts: Record<string, number> = {};
@@ -29,12 +32,12 @@ function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) 
   const topMoods = Object.entries(moodCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([mood, count]) => `${mood} (${Math.round((count / totalMoods) * 100)}%)`);
+    .map(([mood, count]) => `${MOOD_RU[mood] || mood} (${Math.round((count / totalMoods) * 100)}%)`);
 
   const topEnergy = Object.entries(energyCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([tag, count]) => `${tag} (${Math.round((count / totalEnergy) * 100)}%)`);
+    .map(([tag, count]) => `${ENERGY_RU[tag] || tag} (${Math.round((count / totalEnergy) * 100)}%)`);
 
   return { topMoods, topEnergy };
 }
@@ -132,14 +135,12 @@ serve(async (req) => {
       })
       .join("\n\n---\n\n");
 
-    const systemPrompt = `Ты — эмпатичный, глубокий психолог и наставник. Проанализируй эти дневниковые записи участницы, которая исследовала эфирное масло «${oil.title}» (его фокус: ${oil.focus || "общее исследование"}). 
+    const systemPrompt = `Ты — эмпатичный наставник. Дай моментальный отклик на ПОСЛЕДНЮЮ запись участницы, которая исследует эфирное масло «${oil.title}» (фокус: ${oil.focus || "общее исследование"}).
 
-Обрати особое внимание на выбранные энергетические теги масла (Опора, Трансформация, Отпускание, Расширение, Тишина) — они отражают, как участница воспринимает энергию масла в конкретный день. 
-
-Вот статистика по всем записям:
+Контекст (используй только как фон, НЕ пересказывай):
 ${statsBlock}
 
-Используй эту статистику как опору для анализа: укажи доминирующее состояние и его процент, проследи динамику энергий, найди скрытые паттерны, отметь изменения в состояниях и дай поддерживающий, глубокий инсайт (3-4 абзаца). Обращайся на Вы, используй бережный, премиальный, метафоричный стиль. Без банальных советов, только глубина и смыслы.`;
+Твой ответ — максимум 2-3 предложения. Это метафоричная мысль-поддержка «на сегодня». Бережный, премиальный стиль. Обращайся на «Вы». Никаких длинных эссе, только суть и глубина.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
