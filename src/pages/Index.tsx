@@ -3,7 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOils } from "@/hooks/useOils";
 import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, Settings } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import BrandIcon from "@/components/BrandIcon";
 import { NotificationCenter } from "@/components/NotificationCenter";
 

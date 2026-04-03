@@ -21,9 +21,11 @@ Deno.serve(async (req) => {
     );
 
     // Get all users who have at least one entry
+    // Only get users who have reminders enabled
     const { data: users, error: usersError } = await supabase
       .from("profiles")
-      .select("id");
+      .select("id, reminders_enabled")
+      .eq("reminders_enabled", true);
 
     if (usersError) throw usersError;
 

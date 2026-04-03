@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, nickname")
+      .select("id, nickname, reminders_enabled")
       .eq("id", userId)
       .single();
     setProfile(data);
