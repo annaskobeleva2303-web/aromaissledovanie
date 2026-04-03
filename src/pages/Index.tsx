@@ -18,7 +18,7 @@ const Index = () => {
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
             <BrandIcon className="h-8 w-8" withBackground strokeWidth={1.8} />
-            <span className="font-serif text-xl font-semibold tracking-wide text-violet-deep whitespace-nowrap">Живые Смыслы</span>
+            <span className="font-serif text-xl font-semibold tracking-normal text-violet-deep whitespace-nowrap">Живые Смыслы</span>
           </div>
           <Button
             variant="ghost"

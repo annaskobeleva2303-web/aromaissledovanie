@@ -156,7 +156,7 @@ export default function Auth() {
           </button>
         </p>
 
-        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep/60">
+        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep">
           🔒 Мы не собираем email или личные данные
         </p>
       </div>
