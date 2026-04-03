@@ -102,7 +102,7 @@ const Index = () => {
             {/* My Researches */}
             <section className="mb-10">
               <h2 className="mb-5 font-serif text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-                Мои исследования
+                Текущее исследование
               </h2>
               {myOils.length === 0 ? (
                 <div className="glass-card p-10 text-center">
