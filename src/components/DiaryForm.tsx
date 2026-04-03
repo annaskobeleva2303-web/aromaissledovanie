@@ -62,7 +62,7 @@ const slideVariants = {
   }),
 };
 
-export function DiaryForm({ oilId, date }: DiaryFormProps) {
+export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
