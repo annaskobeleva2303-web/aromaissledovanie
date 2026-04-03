@@ -44,6 +44,7 @@ const STEP_SUBTITLES = [
 interface DiaryFormProps {
   oilId: string;
   date?: string;
+  onSaved?: () => void;
 }
 
 const slideVariants = {
