@@ -106,9 +106,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       if (!user) throw new Error("Not authenticated");
       setShowAlchemy(true);
 
-      // Small delay for the alchemy animation
-      await new Promise((r) => setTimeout(r, 1500));
-
+      // Save entry
       const { error } = await supabase.from("entries").insert({
         user_id: user.id,
         oil_id: oilId,
@@ -119,6 +117,18 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         ...(date ? { date } : {}),
       });
       if (error) throw error;
+
+      // Try generating AI insight (non-blocking — don't fail the save if AI fails)
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke("generate-insight", {
+          body: { oilId },
+        });
+        if (!fnError && data?.insight) {
+          toast.success("Инсайт готов! ✨", { duration: 4000 });
+        }
+      } catch {
+        // AI generation is optional — silently skip
+      }
     },
     onSuccess: () => {
       toast.success("Запись сохранена ✨");
@@ -130,6 +140,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       setShowAlchemy(false);
       queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
       queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["entries-count", oilId] });
       onSaved?.();
     },
     onError: () => {
