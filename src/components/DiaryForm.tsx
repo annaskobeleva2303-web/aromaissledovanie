@@ -23,7 +23,7 @@ interface DiaryFormProps {
   date?: string;
 }
 
-export function DiaryForm({ oilId }: DiaryFormProps) {
+export function DiaryForm({ oilId, date }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [mood, setMood] = useState<string | null>(null);
