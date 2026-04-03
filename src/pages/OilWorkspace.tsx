@@ -105,12 +105,7 @@ const OilWorkspace = () => {
           </TabsContent>
 
           <TabsContent value="group" className="mt-8">
-            <div className="glass-card p-12 text-center">
-              <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" strokeWidth={1.5} />
-              <p className="text-sm text-muted-foreground">
-                Групповое поле будет доступно позже
-              </p>
-            </div>
+            <GroupField oilId={oil.id} />
           </TabsContent>
         </Tabs>
       </main>
