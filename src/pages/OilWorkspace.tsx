@@ -80,6 +80,13 @@ const OilWorkspace = () => {
               Мой Дневник
             </TabsTrigger>
             <TabsTrigger
+              value="ai"
+              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Анализ ИИ
+            </TabsTrigger>
+            <TabsTrigger
               value="group"
               className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
             >
