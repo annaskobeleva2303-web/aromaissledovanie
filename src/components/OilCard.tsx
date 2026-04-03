@@ -1,10 +1,14 @@
-import { Leaf, Lock } from "lucide-react";
+import { Leaf, Lock, Flame } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import type { Oil } from "@/hooks/useOils";
+
+const RESEARCH_DAYS = 21;
 
 interface OilCardProps {
   oil: Oil;
   locked?: boolean;
+  daysCompleted?: number;
   onClick?: () => void;
 }
 
