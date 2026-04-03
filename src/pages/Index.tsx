@@ -33,7 +33,7 @@ const Index = () => {
 
       {/* Content */}
       <main className="mx-auto max-w-2xl px-5 py-8">
-        <h1 className="mb-10 font-serif text-3xl font-light tracking-[0.12em]">
+        <h1 className="mb-10 font-serif text-3xl font-medium tracking-[0.12em] text-violet-deep">
           Привет, {profile?.nickname} 👋
         </h1>
 

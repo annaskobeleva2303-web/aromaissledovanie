@@ -140,7 +140,7 @@ export default function Auth() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-8 text-center text-sm text-muted-foreground">
+        <p className="mt-8 text-center text-sm text-violet-deep/70">
           {isRegister ? "Уже есть аккаунт?" : "Нет аккаунта?"}{" "}
           <button
             type="button"
@@ -148,13 +148,13 @@ export default function Auth() {
               setIsRegister(!isRegister);
               setError(null);
             }}
-            className="font-medium text-primary hover:underline transition-colors"
+            className="font-medium text-violet-deep hover:underline transition-colors"
           >
             {isRegister ? "Войти" : "Создать"}
           </button>
         </p>
 
-        <p className="mt-5 text-center text-xs tracking-wide text-muted-foreground/60">
+        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep/50">
           🔒 Мы не собираем email или личные данные
         </p>
       </div>
