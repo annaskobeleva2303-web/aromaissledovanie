@@ -4,9 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOils } from "@/hooks/useOils";
 import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
-import { LogOut, Loader2, Settings } from "lucide-react";
+import { LogOut, Loader2, Settings, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,6 +25,12 @@ const Index = () => {
   const isAdmin = useIsAdmin();
   const [remindersEnabled, setRemindersEnabled] = useState(profile?.reminders_enabled ?? true);
   const [activationOil, setActivationOil] = useState<Oil | null>(null);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     setRemindersEnabled(profile?.reminders_enabled ?? true);
