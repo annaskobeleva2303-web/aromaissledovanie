@@ -246,6 +246,28 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     }
   };
 
+  const handleGenerateSummary = async () => {
+    setIsGeneratingSummary(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-personal-summary", {
+        body: { oilId },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setSummaryIndex(0);
+      queryClient.invalidateQueries({ queryKey: ["personal-summaries", oilId] });
+      toast.success("Еженедельное саммари готово ✨");
+    } catch (e) {
+      console.error("Summary generation failed:", e);
+      toast.error("Не удалось сгенерировать саммари");
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
   if (insightLoading) {
     return (
       <div className="glass-card p-12 text-center">
