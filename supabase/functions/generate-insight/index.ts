@@ -21,11 +21,17 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // User client for auth + reading
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Service client for inserting (bypasses RLS since edge function acts on behalf of user)
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const {
       data: { user },
@@ -60,7 +66,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch user entries for this oil
+    // Fetch user entries
     const { data: entries, error: entriesError } = await supabase
       .from("entries")
       .select("date, mood, content")
@@ -82,12 +88,8 @@ serve(async (req) => {
       );
     }
 
-    // Build diary text
     const diaryText = entries
-      .map(
-        (e) =>
-          `[${e.date}] Состояние: ${e.mood || "не указано"}\n${e.content}`
-      )
+      .map((e) => `[${e.date}] Состояние: ${e.mood || "не указано"}\n${e.content}`)
       .join("\n\n---\n\n");
 
     const systemPrompt = `Ты — эмпатичный, глубокий психолог и наставник. Проанализируй эти дневниковые записи участницы, которая исследовала эфирное масло «${oil.title}» (его фокус: ${oil.focus || "общее исследование"}). Найди скрытые паттерны, отметь изменения в состояниях и дай поддерживающий, глубокий инсайт (3-4 абзаца). Обращайся на Вы, используй бережный, премиальный, метафоричный стиль. Без банальных советов, только глубина и смыслы.`;
@@ -141,6 +143,20 @@ serve(async (req) => {
     const aiData = await aiResponse.json();
     const insightText =
       aiData.choices?.[0]?.message?.content || "Не удалось сгенерировать инсайт";
+
+    // Save insight to database
+    const { error: insertError } = await supabaseAdmin
+      .from("ai_insights")
+      .insert({
+        user_id: user.id,
+        oil_id: oilId,
+        content: insightText,
+      });
+
+    if (insertError) {
+      console.error("Failed to save insight:", insertError);
+      // Still return the insight even if save fails
+    }
 
     return new Response(JSON.stringify({ insight: insightText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
