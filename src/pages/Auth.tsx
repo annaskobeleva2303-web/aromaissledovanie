@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Droplet, Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const nicknameSchema = z
@@ -64,21 +64,19 @@ export default function Auth() {
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-10 flex flex-col items-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-lg shadow-primary/25">
-            <Leaf className="h-8 w-8 text-primary-foreground" strokeWidth={1.5} />
-          </div>
-          <h1 className="font-serif text-3xl font-medium tracking-wide text-foreground">Essence Lab</h1>
-          <p className="mt-2 text-sm tracking-wide text-muted-foreground">
+        <div className="mb-10 flex flex-col items-center gap-4">
+          <Droplet className="h-12 w-12 text-violet-deep" strokeWidth={1} />
+          <h1 className="font-serif text-3xl font-light tracking-wide text-foreground whitespace-nowrap">Живые Смыслы</h1>
+          <p className="mt-1.5 text-xs tracking-wide text-violet-deep/50">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="glass-card p-7 space-y-5">
+          <div className="glass-card p-9 space-y-6">
             <div className="space-y-2.5">
-              <Label htmlFor="nickname" className="text-sm font-medium tracking-wide">
+              <Label htmlFor="nickname" className="text-xs font-light tracking-wide text-muted-foreground">
                 Никнейм
               </Label>
               <Input
@@ -87,14 +85,14 @@ export default function Auth() {
                 placeholder="Ваш никнейм"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="rounded-full border-white/30 bg-white/40 px-5 backdrop-blur-sm focus-visible:ring-primary/30"
+              className="rounded-full border-white/30 bg-white/40 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/40"
                 autoComplete="username"
                 maxLength={24}
               />
             </div>
 
             <div className="space-y-2.5">
-              <Label htmlFor="password" className="text-sm font-medium tracking-wide">
+              <Label htmlFor="password" className="text-xs font-light tracking-wide text-muted-foreground">
                 Пароль
               </Label>
               <div className="relative">
@@ -104,7 +102,7 @@ export default function Auth() {
                   placeholder="Минимум 6 символов"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-full border-white/30 bg-white/40 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30"
+                  className="rounded-full border-white/30 bg-white/40 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/40"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                   maxLength={72}
                 />
@@ -125,7 +123,7 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full rounded-full py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+              className="w-full rounded-full py-6 text-sm tracking-wide bg-violet-deep text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-deep/30 hover:bg-violet-deep/90"
               size="lg"
               disabled={loading}
             >
