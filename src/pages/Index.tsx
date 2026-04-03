@@ -12,6 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BrandIcon from "@/components/BrandIcon";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { AdminCodePanel } from "@/components/AdminCodePanel";
+import { ActivationModal } from "@/components/ActivationModal";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import type { Oil } from "@/hooks/useOils";
 
 const Index = () => {
   const navigate = useNavigate();
