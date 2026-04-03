@@ -9,6 +9,7 @@ import { DiaryCalendar } from "@/components/DiaryCalendar";
 import { AiInsight } from "@/components/AiInsight";
 import { GroupField } from "@/components/GroupField";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { SparkleBackground } from "@/components/SparkleBackground";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
