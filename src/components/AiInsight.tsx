@@ -1,9 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History, Trash2, CalendarDays } from "lucide-react";
+import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History, Trash2, CalendarDays, BarChart3 } from "lucide-react";
+
+const MOOD_LABELS: Record<string, { label: string; emoji: string }> = {
+  calm: { label: "Спокойствие", emoji: "😌" },
+  anxious: { label: "Тревога", emoji: "😟" },
+  joyful: { label: "Радость", emoji: "😊" },
+  sad: { label: "Грусть", emoji: "😢" },
+  energetic: { label: "Энергия", emoji: "⚡" },
+  irritated: { label: "Раздражение", emoji: "😤" },
+  reflective: { label: "Задумчивость", emoji: "🤔" },
+  grateful: { label: "Благодарность", emoji: "🙏" },
+};
+
+const ENERGY_LABELS: Record<string, { label: string; emoji: string }> = {
+  support: { label: "Опора", emoji: "🏔️" },
+  transformation: { label: "Трансформация", emoji: "🦋" },
+  release: { label: "Отпускание", emoji: "🍃" },
+  expansion: { label: "Расширение", emoji: "✨" },
+  silence: { label: "Тишина", emoji: "🌙" },
+};
 import { toast } from "sonner";
 import {
   AlertDialog,
