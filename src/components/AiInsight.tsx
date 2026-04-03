@@ -219,6 +219,62 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     enabled: !!user,
   });
 
+  // Load all entries for stats
+  const { data: allEntries = [] } = useQuery({
+    queryKey: ["entries-stats", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("mood, energy_tags")
+        .eq("oil_id", oilId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  // Compute top moods and energy tags
+  const stats = useMemo(() => {
+    const moodCounts: Record<string, number> = {};
+    const energyCounts: Record<string, number> = {};
+    let totalMoods = 0;
+    let totalEnergy = 0;
+
+    for (const e of allEntries) {
+      if (e.mood) {
+        moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+        totalMoods++;
+      }
+      if (Array.isArray(e.energy_tags)) {
+        for (const tag of e.energy_tags as string[]) {
+          energyCounts[tag] = (energyCounts[tag] || 0) + 1;
+          totalEnergy++;
+        }
+      }
+    }
+
+    const topMoods = Object.entries(moodCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, count]) => ({
+        key,
+        ...(MOOD_LABELS[key] || { label: key, emoji: "•" }),
+        percent: totalMoods > 0 ? Math.round((count / totalMoods) * 100) : 0,
+      }));
+
+    const topEnergy = Object.entries(energyCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([key, count]) => ({
+        key,
+        ...(ENERGY_LABELS[key] || { label: key, emoji: "•" }),
+        percent: totalEnergy > 0 ? Math.round((count / totalEnergy) * 100) : 0,
+      }));
+
+    return { topMoods, topEnergy, totalEntries: allEntries.length };
+  }, [allEntries]);
+
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
 
