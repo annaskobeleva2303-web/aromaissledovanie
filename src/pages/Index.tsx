@@ -5,6 +5,7 @@ import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
 import BrandIcon from "@/components/BrandIcon";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const Index = () => {
   const navigate = useNavigate();
