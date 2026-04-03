@@ -59,6 +59,7 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          is_public: boolean
           mood: string | null
           oil_id: string
           updated_at: string
@@ -69,6 +70,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          is_public?: boolean
           mood?: string | null
           oil_id: string
           updated_at?: string
@@ -79,6 +81,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          is_public?: boolean
           mood?: string | null
           oil_id?: string
           updated_at?: string
