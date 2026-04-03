@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import BrandIcon from "@/components/BrandIcon";
+import { z } from "zod";
 import { nicknameSchema } from "@/lib/nickname";
 
 const passwordSchema = z
