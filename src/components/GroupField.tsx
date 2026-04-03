@@ -84,28 +84,13 @@ export function GroupField({ oilId }: GroupFieldProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, content, mood, date, user_id")
+        .select("id, content, mood, date")
         .eq("oil_id", oilId)
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-
-      // Fetch nicknames for unique user_ids
-      const userIds = [...new Set((data ?? []).map((e) => e.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, nickname")
-        .in("id", userIds);
-
-      const profileMap = new Map(
-        (profiles ?? []).map((p) => [p.id, p.nickname])
-      );
-
-      return (data ?? []).map((e) => ({
-        ...e,
-        nickname: profileMap.get(e.user_id) ?? "Аноним",
-      }));
+      return data ?? [];
     },
     enabled: !!user,
   });
