@@ -64,7 +64,7 @@ export default function Auth() {
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-10 flex flex-col items-center">
+        <div className="mb-10 flex flex-col items-center gap-4">
           <Droplet className="h-12 w-12 text-violet-deep" strokeWidth={1} />
           <h1 className="font-serif text-3xl font-light tracking-wide text-foreground whitespace-nowrap">Живые Смыслы</h1>
           <p className="mt-1.5 text-xs tracking-wide text-violet-deep/50">
