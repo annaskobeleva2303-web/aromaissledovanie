@@ -69,7 +69,7 @@ serve(async (req) => {
     // Fetch user entries
     const { data: entries, error: entriesError } = await supabase
       .from("entries")
-      .select("date, mood, content")
+      .select("date, mood, content, energy_tags")
       .eq("oil_id", oilId)
       .eq("user_id", user.id)
       .order("date", { ascending: true });
