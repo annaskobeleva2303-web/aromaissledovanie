@@ -53,6 +53,7 @@ const Index = () => {
             <span className="font-serif text-xl font-semibold tracking-normal text-violet-deep whitespace-nowrap">Живые Смыслы</span>
           </div>
           <div className="flex items-center gap-1">
+            {isAdmin && <AdminCodePanel />}
             <NotificationCenter />
             <Popover>
               <PopoverTrigger asChild>
