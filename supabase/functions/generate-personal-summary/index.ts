@@ -141,17 +141,34 @@ serve(async (req) => {
 
         const { topMoods, topEnergy } = computeStats(userEntries);
 
+        // Compute transformation stats
+        const fullEntries = userEntries.filter((e: any) => e.record_type === "full" && e.energy_before != null && e.energy_after != null);
+        let transformBlock = "";
+        if (fullEntries.length > 0) {
+          const avgEnergyBefore = fullEntries.reduce((s: number, e: any) => s + (e.energy_before || 0), 0) / fullEntries.length;
+          const avgEnergyAfter = fullEntries.reduce((s: number, e: any) => s + (e.energy_after || 0), 0) / fullEntries.length;
+          const avgMoodBefore = fullEntries.filter((e: any) => e.mood_score_before != null).reduce((s: number, e: any) => s + e.mood_score_before, 0) / (fullEntries.filter((e: any) => e.mood_score_before != null).length || 1);
+          const avgMoodAfter = fullEntries.filter((e: any) => e.mood_score_after != null).reduce((s: number, e: any) => s + e.mood_score_after, 0) / (fullEntries.filter((e: any) => e.mood_score_after != null).length || 1);
+          transformBlock = `\nДанные трансформации «До → После» (${fullEntries.length} полных записей):\n- Средняя энергия: ${avgEnergyBefore.toFixed(1)} → ${avgEnergyAfter.toFixed(1)} (дельта: ${(avgEnergyAfter - avgEnergyBefore).toFixed(1)})\n- Среднее настроение: ${avgMoodBefore.toFixed(1)} → ${avgMoodAfter.toFixed(1)} (дельта: ${(avgMoodAfter - avgMoodBefore).toFixed(1)})`;
+        }
+
         const statsBlock = [
           topMoods.length > 0 ? `Топ состояний за неделю: ${topMoods.join(", ")}` : "",
           topEnergy.length > 0 ? `Топ энергий масла за неделю: ${topEnergy.join(", ")}` : "",
+          transformBlock,
         ].filter(Boolean).join("\n");
 
         const diaryText = userEntries
-          .map((e) => {
+          .map((e: any) => {
             const tags = Array.isArray(e.energy_tags) && (e.energy_tags as string[]).length > 0
               ? `\nЭнергия масла: ${(e.energy_tags as string[]).join(", ")}`
               : "";
-            return `[${e.date}] Состояние: ${e.mood || "не указано"}${tags}\n${e.content}`;
+            const delta = (e.record_type === "full" && e.energy_before != null)
+              ? `\nЭнергия: ${e.energy_before} → ${e.energy_after} | Настроение: ${e.mood_score_before} → ${e.mood_score_after}`
+              : "";
+            const sensory = [e.oil_body_location, e.oil_sensation, e.oil_visual_image].filter(Boolean);
+            const sensoryLine = sensory.length > 0 ? `\nСенсорика: ${sensory.join(" | ")}` : "";
+            return `[${e.date}] Состояние: ${e.mood || "не указано"}${tags}${delta}${sensoryLine}\n${e.content}`;
           })
           .join("\n\n---\n\n");
 
