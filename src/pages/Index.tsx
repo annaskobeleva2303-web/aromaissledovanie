@@ -12,12 +12,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BrandIcon from "@/components/BrandIcon";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { AdminCodePanel } from "@/components/AdminCodePanel";
+import { ActivationModal } from "@/components/ActivationModal";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import type { Oil } from "@/hooks/useOils";
 
 const Index = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const { myOils, newOils, entryCounts, isLoading } = useOils();
+  const isAdmin = useIsAdmin();
   const [remindersEnabled, setRemindersEnabled] = useState(profile?.reminders_enabled ?? true);
+  const [activationOil, setActivationOil] = useState<Oil | null>(null);
 
   useEffect(() => {
     setRemindersEnabled(profile?.reminders_enabled ?? true);
@@ -47,6 +53,7 @@ const Index = () => {
             <span className="font-serif text-xl font-semibold tracking-normal text-violet-deep whitespace-nowrap">Живые Смыслы</span>
           </div>
           <div className="flex items-center gap-1">
+            {isAdmin && <AdminCodePanel />}
             <NotificationCenter />
             <Popover>
               <PopoverTrigger asChild>
@@ -131,7 +138,7 @@ const Index = () => {
                 </h2>
                 <div className="grid gap-5">
                   {newOils.map((oil) => (
-                    <OilCard key={oil.id} oil={oil} locked />
+                    <OilCard key={oil.id} oil={oil} locked onClick={() => setActivationOil(oil)} />
                   ))}
                 </div>
               </section>
@@ -139,6 +146,14 @@ const Index = () => {
           </>
         )}
       </main>
+
+      {activationOil && (
+        <ActivationModal
+          oil={activationOil}
+          open={!!activationOil}
+          onOpenChange={(open) => !open && setActivationOil(null)}
+        />
+      )}
     </div>
   );
 };
