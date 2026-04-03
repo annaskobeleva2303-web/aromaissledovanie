@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Droplet, Loader2, RefreshCw } from "lucide-react";
+import { Sparkles, Droplet, Loader2, RefreshCw, ChevronLeft, ChevronRight, History } from "lucide-react";
 import { toast } from "sonner";
 
 interface AiInsightProps {
@@ -11,10 +11,105 @@ interface AiInsightProps {
   oilTitle: string;
 }
 
+function InsightCard({
+  content,
+  createdAt,
+  index,
+  total,
+  onPrev,
+  onNext,
+}: {
+  content: string;
+  createdAt: string;
+  index: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
+      style={{
+        background:
+          "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
+        backdropFilter: "blur(24px)",
+        boxShadow:
+          "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
+      }}
+    >
+      <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="relative flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+            <Droplet className="h-5 w-5 text-primary" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
+              Глубокий инсайт
+            </h3>
+            {total > 1 && (
+              <p className="text-xs text-muted-foreground/60">
+                {index + 1} из {total}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {total > 1 && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onPrev}
+              disabled={index === 0}
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-30"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onNext}
+              disabled={index === total - 1}
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-30"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+        {content.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+          part.startsWith("**") && part.endsWith("**") ? (
+            <strong key={i} className="font-semibold text-foreground">
+              {part.slice(2, -2)}
+            </strong>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground/60">
+        Сгенерировано:{" "}
+        {new Date(createdAt).toLocaleDateString("ru-RU", {
+          day: "numeric",
+          month: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </p>
+    </div>
+  );
+}
+
 export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const { data: entryCount = 0 } = useQuery({
     queryKey: ["entries-count", oilId],
@@ -30,27 +125,24 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     enabled: !!user,
   });
 
-  // Load latest saved insight
-  const { data: savedInsight, isLoading: insightLoading } = useQuery({
-    queryKey: ["ai-insight", oilId],
+  // Load ALL saved insights (newest first)
+  const { data: insights = [], isLoading: insightLoading } = useQuery({
+    queryKey: ["ai-insights-history", oilId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ai_insights")
-        .select("content, created_at")
+        .select("id, content, created_at")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
     enabled: !!user,
   });
 
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
-  const insight = savedInsight?.content ?? null;
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -70,8 +162,8 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
         return;
       }
 
-      // Refresh saved insight from DB
-      queryClient.invalidateQueries({ queryKey: ["ai-insight", oilId] });
+      setCurrentIndex(0);
+      queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
     } catch (e) {
       console.error("Insight generation failed:", e);
       toast.error("Произошла ошибка при генерации инсайта.");
@@ -131,64 +223,39 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     );
   }
 
-  // Result or generate button
+  const currentInsight = insights[currentIndex];
+
   return (
     <div className="space-y-6">
-      {insight ? (
-        <div
-          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
-          style={{
-            background:
-              "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
-            backdropFilter: "blur(24px)",
-            boxShadow:
-              "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
-          }}
-        >
-          <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+      {currentInsight ? (
+        <>
+          <InsightCard
+            content={currentInsight.content}
+            createdAt={currentInsight.created_at}
+            index={currentIndex}
+            total={insights.length}
+            onPrev={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+            onNext={() => setCurrentIndex((i) => Math.min(insights.length - 1, i + 1))}
+          />
 
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-              <Droplet className="h-5 w-5 text-primary" strokeWidth={1.5} />
-            </div>
-            <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-              Глубокий инсайт
-            </h3>
-          </div>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={handleGenerate}
+              className="rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Обновить анализ
+            </Button>
 
-          <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-            {insight.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-              part.startsWith("**") && part.endsWith("**") ? (
-                <strong key={i} className="font-semibold text-foreground">
-                  {part.slice(2, -2)}
-                </strong>
-              ) : (
-                <span key={i}>{part}</span>
-              )
+            {insights.length > 1 && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground/50">
+                <History className="h-3 w-3" />
+                {insights.length} {insights.length === 1 ? "анализ" : insights.length < 5 ? "анализа" : "анализов"} в истории
+              </p>
             )}
           </div>
-
-          {savedInsight?.created_at && (
-            <p className="text-xs text-muted-foreground/60">
-              Сгенерировано:{" "}
-              {new Date(savedInsight.created_at).toLocaleDateString("ru-RU", {
-                day: "numeric",
-                month: "long",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          )}
-
-          <Button
-            variant="ghost"
-            onClick={handleGenerate}
-            className="rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Обновить анализ
-          </Button>
-        </div>
+        </>
       ) : (
         <div className="glass-card p-10 text-center space-y-5">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
