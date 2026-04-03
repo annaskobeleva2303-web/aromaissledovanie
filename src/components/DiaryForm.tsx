@@ -91,18 +91,21 @@ function ChipButton({
   label: string;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm transition-all duration-300 ${
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm backdrop-blur-sm border transition-all duration-200 ${
         selected
-          ? "bg-primary text-primary-foreground shadow-[0_0_16px_hsl(var(--primary)/0.35)] -translate-y-0.5 scale-105"
-          : "bg-white/40 text-foreground/70 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-sm backdrop-blur-sm border border-white/20"
+          ? "bg-white/45 text-foreground border-amber-300/60 shadow-[0_0_14px_hsla(38,90%,55%,0.35),0_0_28px_hsla(38,85%,60%,0.15)]"
+          : "bg-white/40 text-foreground/70 border-white/20 hover:bg-white/60 hover:shadow-sm"
       }`}
     >
       <span className="text-base">{emoji}</span>
       <span>{label}</span>
-    </button>
+    </motion.button>
   );
 }
 
