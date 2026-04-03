@@ -8,24 +8,15 @@ const corsHeaders = {
 };
 
 const MOOD_RU: Record<string, string> = { calm: "Спокойствие", anxious: "Тревога", joyful: "Радость", sad: "Грусть", energetic: "Энергия", irritated: "Раздражение", reflective: "Задумчивость", grateful: "Благодарность" };
-const ENERGY_RU: Record<string, string> = { support: "Опора", transformation: "Трансформация", release: "Отпускание", expansion: "Расширение", silence: "Тишина" };
 
 function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) {
   const moodCounts: Record<string, number> = {};
-  const energyCounts: Record<string, number> = {};
   let totalMoods = 0;
-  let totalEnergy = 0;
 
   for (const e of entries) {
     if (e.mood) {
       moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
       totalMoods++;
-    }
-    if (Array.isArray(e.energy_tags)) {
-      for (const tag of e.energy_tags as string[]) {
-        energyCounts[tag] = (energyCounts[tag] || 0) + 1;
-        totalEnergy++;
-      }
     }
   }
 
@@ -34,12 +25,7 @@ function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) 
     .slice(0, 3)
     .map(([mood, count]) => `${MOOD_RU[mood] || mood} (${Math.round((count / totalMoods) * 100)}%)`);
 
-  const topEnergy = Object.entries(energyCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([tag, count]) => `${ENERGY_RU[tag] || tag} (${Math.round((count / totalEnergy) * 100)}%)`);
-
-  return { topMoods, topEnergy };
+  return { topMoods };
 }
 
 serve(async (req) => {
@@ -100,7 +86,7 @@ serve(async (req) => {
 
     const { data: entries, error: entriesError } = await supabase
       .from("entries")
-      .select("date, mood, content, energy_tags")
+      .select("date, mood, content, energy_tags, energy_before, mood_score_before, energy_after, mood_score_after, oil_body_location, oil_sensation, oil_visual_image, record_type")
       .eq("oil_id", oilId)
       .eq("user_id", user.id)
       .order("date", { ascending: true });
@@ -119,21 +105,46 @@ serve(async (req) => {
       );
     }
 
-    const { topMoods, topEnergy } = computeStats(entries);
+    const { topMoods } = computeStats(entries);
 
-    const statsBlock = [
-      topMoods.length > 0 ? `Топ состояний за всё время: ${topMoods.join(", ")}` : "",
-      topEnergy.length > 0 ? `Топ энергий масла: ${topEnergy.join(", ")}` : "",
-    ].filter(Boolean).join("\n");
+    const statsBlock = topMoods.length > 0 ? `Топ состояний за всё время: ${topMoods.join(", ")}` : "";
 
-    const currentEntry = entries[entries.length - 1];
+    const currentEntry = entries[entries.length - 1] as Record<string, unknown>;
+
+    // Build delta block for before/after
+    let deltaBlock = "";
+    if (currentEntry.record_type === "full" && currentEntry.energy_before != null && currentEntry.energy_after != null) {
+      const eBefore = currentEntry.energy_before as number;
+      const eAfter = currentEntry.energy_after as number;
+      const mBefore = currentEntry.mood_score_before as number;
+      const mAfter = currentEntry.mood_score_after as number;
+      const eDelta = eAfter - eBefore;
+      const mDelta = mAfter - mBefore;
+      deltaBlock = `
+ЗАМЕР ТРАНСФОРМАЦИИ:
+- Энергия: ${eBefore} → ${eAfter} (${eDelta >= 0 ? "+" : ""}${eDelta})
+- Настроение: ${mBefore} → ${mAfter} (${mDelta >= 0 ? "+" : ""}${mDelta})`;
+    }
+
+    // Build sensory block
+    let sensoryBlock = "";
+    const bodyLoc = currentEntry.oil_body_location as string | null;
+    const sens = currentEntry.oil_sensation as string | null;
+    const visual = currentEntry.oil_visual_image as string | null;
+    if (bodyLoc || sens || visual) {
+      sensoryBlock = `
+СЕНСОРИКА МАСЛА:
+${bodyLoc ? `- Где в теле: ${bodyLoc}` : ""}
+${sens ? `- Ощущение: ${sens}` : ""}
+${visual ? `- Образ: ${visual}` : ""}`;
+    }
 
     const userContent = `
 СЕГОДНЯШНЯЯ ЗАПИСЬ (Анализируй ТОЛЬКО её):
 
 Настроение: ${currentEntry.mood || "не указано"}
-
-Энергия: ${Array.isArray(currentEntry.energy_tags) ? (currentEntry.energy_tags as string[]).join(", ") : "не указана"}
+${deltaBlock}
+${sensoryBlock}
 
 Текст: ${currentEntry.content}
 `;
@@ -145,8 +156,10 @@ ${statsBlock}
 
 СТРОГИЕ ПРАВИЛА:
 - НЕ пересказывай то, что написал клиент. НЕ констатируй очевидное.
+- Если есть данные трансформации (До/После) — используй ДЕЛЬТУ энергии и настроения как ключевую точку анализа. Покажи, что изменилось и ПОЧЕМУ это значимо психологически.
+- Если клиент описал сенсорику масла (где в теле, ощущение, образ) — интерпретируй эти телесные сигналы через призму психосоматики.
 - Ищи СКРЫТЫЙ МЕХАНИЗМ за эмоцией: какую защиту, потребность или противоречие она маскирует. Назови это прямо.
-- Если используешь метафору — она должна быть одна, хирургически точная, объясняющая психический механизм (например, «гнев как сторожевая собака твоих границ»). ЗАПРЕЩЕНЫ эзотерические клише: «коконы», «свет», «вибрации», «потоки энергии».
+- Если используешь метафору — она должна быть одна, хирургически точная, объясняющая психический механизм. ЗАПРЕЩЕНЫ эзотерические клише: «коконы», «свет», «вибрации», «потоки энергии».
 - Заверши одним коротким вопросом для рефлексии, который вернёт клиенту ответственность.
 - Анализируй ТОЛЬКО сегодняшнюю запись. ЗАПРЕЩЕНО упоминать прошлые состояния, если клиент не говорит о них сейчас.
 - Обращайся на «ты». Тон: ясный, профессиональный, вызывающий мурашки правдивостью. Максимум 2-3 предложения + вопрос.`;

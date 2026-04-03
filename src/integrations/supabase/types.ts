@@ -100,11 +100,19 @@ export type Database = {
           content: string
           created_at: string
           date: string
+          energy_after: number | null
+          energy_before: number | null
           energy_tags: Json | null
           id: string
           is_public: boolean
           mood: string | null
+          mood_score_after: number | null
+          mood_score_before: number | null
+          oil_body_location: string | null
           oil_id: string
+          oil_sensation: string | null
+          oil_visual_image: string | null
+          record_type: string
           sensation: string | null
           updated_at: string
           user_id: string
@@ -113,11 +121,19 @@ export type Database = {
           content: string
           created_at?: string
           date?: string
+          energy_after?: number | null
+          energy_before?: number | null
           energy_tags?: Json | null
           id?: string
           is_public?: boolean
           mood?: string | null
+          mood_score_after?: number | null
+          mood_score_before?: number | null
+          oil_body_location?: string | null
           oil_id: string
+          oil_sensation?: string | null
+          oil_visual_image?: string | null
+          record_type?: string
           sensation?: string | null
           updated_at?: string
           user_id: string
@@ -126,11 +142,19 @@ export type Database = {
           content?: string
           created_at?: string
           date?: string
+          energy_after?: number | null
+          energy_before?: number | null
           energy_tags?: Json | null
           id?: string
           is_public?: boolean
           mood?: string | null
+          mood_score_after?: number | null
+          mood_score_before?: number | null
+          oil_body_location?: string | null
           oil_id?: string
+          oil_sensation?: string | null
+          oil_visual_image?: string | null
+          record_type?: string
           sensation?: string | null
           updated_at?: string
           user_id?: string
