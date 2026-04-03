@@ -171,7 +171,7 @@ ${statsBlock}
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: diaryText },
+            { role: "user", content: userContent },
           ],
         }),
       }
