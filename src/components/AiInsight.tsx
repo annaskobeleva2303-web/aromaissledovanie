@@ -18,6 +18,7 @@ function InsightCard({
   total,
   onPrev,
   onNext,
+  onDelete,
 }: {
   content: string;
   createdAt: string;
@@ -25,6 +26,7 @@ function InsightCard({
   total: number;
   onPrev: () => void;
   onNext: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div
