@@ -287,6 +287,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_group_stats: { Args: { _oil_id: string }; Returns: Json }
       has_oil_access: {
         Args: { _oil_id: string; _user_id: string }
         Returns: boolean
