@@ -81,6 +81,12 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           onSelect={handleDateSelect}
           locale={ru}
           className="p-3 pointer-events-auto"
+          classNames={{
+            cell: "h-11 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+            day: "h-11 w-10 p-0 font-normal aria-selected:opacity-100 hover:bg-accent/50 rounded-xl transition-colors",
+            head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
+            row: "flex w-full mt-1",
+          }}
           disabled={(date) => date > new Date()}
           components={{
             DayContent: (props: DayContentProps) => {
