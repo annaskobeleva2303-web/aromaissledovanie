@@ -1,9 +1,11 @@
-import { Leaf, Lock, Flame, Trophy } from "lucide-react";
+import { useState } from "react";
+import { Leaf, Lock, Flame, Trophy, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { Oil } from "@/hooks/useOils";
 
 const RESEARCH_DAYS = 21;
+const DESC_LIMIT = 100;
 
 interface OilCardProps {
   oil: Oil;
@@ -13,9 +15,18 @@ interface OilCardProps {
 }
 
 export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: OilCardProps) {
+  const [expanded, setExpanded] = useState(false);
   const progress = Math.min((daysCompleted / RESEARCH_DAYS) * 100, 100);
   const isComplete = daysCompleted >= RESEARCH_DAYS;
   const streakLabel = daysCompleted === 1 ? "день" : daysCompleted < 5 ? "дня" : "дней";
+
+  const description = oil.description || "";
+  const isLong = description.length > DESC_LIMIT;
+
+  const handleExpandToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpanded((v) => !v);
+  };
 
   return (
     <div
@@ -73,10 +84,32 @@ export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: Oil
           {oil.title}
         </h3>
 
-        {oil.description && (
-          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-            {oil.description}
-          </p>
+        {description && (
+          <div className="relative mt-1.5">
+            <div
+              className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{ maxHeight: expanded || !isLong ? "500px" : "3.6em" }}
+            >
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            </div>
+            {isLong && !expanded && (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white/90 to-transparent" />
+            )}
+            {isLong && (
+              <button
+                onClick={handleExpandToggle}
+                className="mx-auto mt-1 flex w-full items-center justify-center rounded-full p-1 text-muted-foreground/60 transition-all duration-300 hover:text-primary/80"
+              >
+                <ChevronDown
+                  className="h-4 w-4 transition-transform duration-300"
+                  style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                  strokeWidth={1.5}
+                />
+              </button>
+            )}
+          </div>
         )}
 
         {!locked && (
