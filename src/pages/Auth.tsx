@@ -153,6 +153,12 @@ export default function Auth() {
         <p className="mt-5 text-center text-xs tracking-wide text-violet-deep">
           🔒 Мы не собираем email или личные данные
         </p>
+
+        {!isRegister && (
+          <p className="mt-3 text-center text-[11px] text-violet-deep/60">
+            Забыли пароль? Напишите ведущей в Telegram для получения временного кода
+          </p>
+        )}
       </div>
     </div>
   );
