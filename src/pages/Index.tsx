@@ -50,6 +50,43 @@ const Index = () => {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword) {
+      toast.error("Заполните оба поля");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Новый пароль должен быть не менее 6 символов");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      // Verify old password by re-signing in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: (await supabase.auth.getUser()).data.user?.email ?? "",
+        password: oldPassword,
+      });
+      if (signInError) {
+        toast.error("Старый пароль неверный");
+        setChangingPassword(false);
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast.error("Не удалось сменить пароль");
+      } else {
+        toast.success("Пароль успешно изменён");
+        setOldPassword("");
+        setNewPassword("");
+        setShowPasswordForm(false);
+      }
+    } catch {
+      toast.error("Произошла ошибка");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Header */}
