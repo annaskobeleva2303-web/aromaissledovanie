@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, BookOpen, Users, Sparkles } from "lucide-react";
 import { DiaryCalendar } from "@/components/DiaryCalendar";
 import { AiInsight } from "@/components/AiInsight";
 import { GroupField } from "@/components/GroupField";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
