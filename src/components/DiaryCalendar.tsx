@@ -8,6 +8,7 @@ import { ru } from "date-fns/locale";
 import { DiaryForm } from "@/components/DiaryForm";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { DayContentProps } from "react-day-picker";
 
 const MOODS: Record<string, { label: string; emoji: string }> = {
   calm: { label: "Спокойно", emoji: "😌" },
@@ -39,7 +40,7 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, date, mood, content, created_at")
+        .select("id, date, mood, content, created_at, energy_tags")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
@@ -80,13 +81,36 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           onSelect={handleDateSelect}
           locale={ru}
           className="p-3 pointer-events-auto"
-          modifiers={{
-            hasEntry: entries.map((e) => parseISO(e.date)),
-          }}
-          modifiersClassNames={{
-            hasEntry: "diary-dot",
+          classNames={{
+            cell: "h-11 w-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+            day: "h-11 w-10 p-0 font-normal aria-selected:opacity-100 hover:bg-accent/50 rounded-xl transition-colors",
+            head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
+            row: "flex w-full mt-1",
           }}
           disabled={(date) => date > new Date()}
+          components={{
+            DayContent: (props: DayContentProps) => {
+              const dateStr = format(props.date, "yyyy-MM-dd");
+              const entry = entryByDate.get(dateStr);
+              const moodEmoji = entry?.mood && MOODS[entry.mood]?.emoji;
+              const hasEnergy = entry?.energy_tags && Array.isArray(entry.energy_tags) && (entry.energy_tags as string[]).length > 0;
+
+              return (
+                <div className="relative flex flex-col items-center justify-center w-full h-full">
+                  <span>{props.date.getDate()}</span>
+                  {moodEmoji && (
+                    <span className="absolute -bottom-0.5 text-[10px] leading-none">{moodEmoji}</span>
+                  )}
+                  {hasEnergy && !moodEmoji && entry && (
+                    <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-primary/50" />
+                  )}
+                  {hasEnergy && moodEmoji && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-secondary/70" />
+                  )}
+                </div>
+              );
+            },
+          }}
         />
       </div>
 
