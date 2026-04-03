@@ -44,6 +44,7 @@ const STEP_SUBTITLES = [
 interface DiaryFormProps {
   oilId: string;
   date?: string;
+  onSaved?: () => void;
 }
 
 const slideVariants = {
@@ -61,7 +62,7 @@ const slideVariants = {
   }),
 };
 
-export function DiaryForm({ oilId, date }: DiaryFormProps) {
+export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
@@ -129,6 +130,7 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
       setShowAlchemy(false);
       queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
       queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
+      onSaved?.();
     },
     onError: () => {
       setShowAlchemy(false);

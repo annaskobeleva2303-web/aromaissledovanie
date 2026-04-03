@@ -130,7 +130,26 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
 
       {/* New entry form */}
       {showForm && (
-        <DiaryForm oilId={oilId} date={selectedDateStr} />
+        <DiaryForm
+          oilId={oilId}
+          date={selectedDateStr}
+          onSaved={() => {
+            // After saving, switch to viewing the new entry
+            const refetch = async () => {
+              const { data } = await supabase
+                .from("entries")
+                .select("id, date, mood, content, created_at")
+                .eq("oil_id", oilId)
+                .eq("user_id", user!.id)
+                .eq("date", selectedDateStr)
+                .single();
+              if (data) {
+                setViewingEntry(data);
+              }
+            };
+            refetch();
+          }}
+        />
       )}
     </div>
   );
