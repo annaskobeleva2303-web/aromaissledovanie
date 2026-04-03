@@ -97,10 +97,10 @@ function ChipButton({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.95 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm backdrop-blur-sm border transition-all duration-200 ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm backdrop-blur-sm transition-all duration-300 ${
         selected
-          ? "bg-white/45 text-foreground border-amber-300/60 shadow-[0_0_14px_hsla(38,90%,55%,0.35),0_0_28px_hsla(38,85%,60%,0.15)]"
-          : "bg-white/40 text-foreground/70 border-white/20 hover:bg-white/60 hover:shadow-sm"
+          ? "bg-[rgba(255,210,120,0.13)] text-foreground border-transparent shadow-[0_0_20px_6px_rgba(255,180,80,0.30),0_0_40px_10px_rgba(255,160,60,0.12)]"
+          : "bg-white/40 text-foreground/70 border border-white/20 hover:bg-white/60 hover:shadow-sm"
       }`}
     >
       <span className="text-base">{emoji}</span>
