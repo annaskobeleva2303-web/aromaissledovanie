@@ -8,6 +8,7 @@ export interface Oil {
   description: string | null;
   focus: string | null;
   is_active: boolean;
+  image_url: string | null;
 }
 
 export function useOils() {
