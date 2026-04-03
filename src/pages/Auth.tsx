@@ -67,8 +67,8 @@ export default function Auth() {
         {/* Logo */}
         <div className="mb-14 flex flex-col items-center gap-5">
           <BrandIcon className="h-14 w-14 text-violet-deep" strokeWidth={0.8} />
-          <h1 className="font-serif text-3xl font-light tracking-[0.2em] text-foreground whitespace-nowrap">Живые Смыслы</h1>
-          <p className="mt-2 text-xs tracking-widest uppercase text-violet-deep/40 font-light">
+          <h1 className="font-serif text-3xl font-medium tracking-[0.2em] text-violet-deep text-glow-peach whitespace-nowrap">Живые Смыслы</h1>
+          <p className="mt-2 text-xs tracking-widest uppercase text-violet-deep/70 font-normal">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
