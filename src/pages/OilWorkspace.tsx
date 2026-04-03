@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, BookOpen, Users } from "lucide-react";
-import { DiaryForm } from "@/components/DiaryForm";
+import { DiaryCalendar } from "@/components/DiaryCalendar";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
