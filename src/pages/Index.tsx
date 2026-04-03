@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOils } from "@/hooks/useOils";
 import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
-import { Leaf, LogOut, Loader2 } from "lucide-react";
+import { Droplet, LogOut, Loader2 } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
