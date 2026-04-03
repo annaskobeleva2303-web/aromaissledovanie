@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, TrendingUp, Droplet, BarChart3 } from "lucide-react";
+import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 const MOOD_MAP: Record<string, { label: string; emoji: string }> = {
   calm: { label: "Спокойно", emoji: "😌" },
