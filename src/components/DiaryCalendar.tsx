@@ -81,13 +81,30 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           onSelect={handleDateSelect}
           locale={ru}
           className="p-3 pointer-events-auto"
-          modifiers={{
-            hasEntry: entries.map((e) => parseISO(e.date)),
-          }}
-          modifiersClassNames={{
-            hasEntry: "diary-dot",
-          }}
           disabled={(date) => date > new Date()}
+          components={{
+            DayContent: (props: DayContentProps) => {
+              const dateStr = format(props.date, "yyyy-MM-dd");
+              const entry = entryByDate.get(dateStr);
+              const moodEmoji = entry?.mood && MOODS[entry.mood]?.emoji;
+              const hasEnergy = entry?.energy_tags && Array.isArray(entry.energy_tags) && (entry.energy_tags as string[]).length > 0;
+
+              return (
+                <div className="relative flex flex-col items-center justify-center w-full h-full">
+                  <span>{props.date.getDate()}</span>
+                  {moodEmoji && (
+                    <span className="absolute -bottom-0.5 text-[10px] leading-none">{moodEmoji}</span>
+                  )}
+                  {hasEnergy && !moodEmoji && entry && (
+                    <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-primary/50" />
+                  )}
+                  {hasEnergy && moodEmoji && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-secondary/70" />
+                  )}
+                </div>
+              );
+            },
+          }}
         />
       </div>
 
