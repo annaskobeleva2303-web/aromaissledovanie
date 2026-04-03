@@ -65,19 +65,21 @@ export default function Auth() {
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-14 flex flex-col items-center gap-5">
-          <BrandIcon className="h-14 w-14 text-violet-deep" strokeWidth={0.8} />
-          <h1 className="font-serif text-3xl font-medium tracking-[0.2em] text-violet-deep text-glow-peach whitespace-nowrap">Живые Смыслы</h1>
-          <p className="mt-2 text-xs tracking-widest uppercase text-violet-deep/70 font-normal">
+        <div className="mb-10 flex flex-col items-center gap-4">
+          <BrandIcon className="h-16 w-16" withBackground strokeWidth={1.8} />
+          <h1 className="font-serif text-[2rem] font-semibold tracking-wide text-violet-deep whitespace-nowrap">
+            Живые Смыслы
+          </h1>
+          <p className="text-sm text-violet-deep/70 font-normal">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="glass-card p-9 space-y-6">
-            <div className="space-y-2.5">
-              <Label htmlFor="nickname" className="text-xs font-normal tracking-wide text-violet-deep/80">
+          <div className="glass-card p-8 space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="nickname" className="text-sm font-medium text-violet-deep/90">
                 Никнейм
               </Label>
               <Input
@@ -86,14 +88,14 @@ export default function Auth() {
                 placeholder="Ваш никнейм"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-              className="rounded-full border-white/30 bg-white/40 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/40"
+                className="rounded-full border-white/30 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/50"
                 autoComplete="username"
                 maxLength={24}
               />
             </div>
 
-            <div className="space-y-2.5">
-              <Label htmlFor="password" className="text-xs font-normal tracking-wide text-violet-deep/80">
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium text-violet-deep/90">
                 Пароль
               </Label>
               <div className="relative">
@@ -103,7 +105,7 @@ export default function Auth() {
                   placeholder="Минимум 6 символов"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-full border-white/30 bg-white/40 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/40"
+                  className="rounded-full border-white/30 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/50"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                   maxLength={72}
                 />
@@ -140,7 +142,7 @@ export default function Auth() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-8 text-center text-sm text-violet-deep/70">
+        <p className="mt-8 text-center text-sm text-violet-deep/80">
           {isRegister ? "Уже есть аккаунт?" : "Нет аккаунта?"}{" "}
           <button
             type="button"
@@ -148,13 +150,13 @@ export default function Auth() {
               setIsRegister(!isRegister);
               setError(null);
             }}
-            className="font-medium text-violet-deep hover:underline transition-colors"
+            className="font-semibold text-primary hover:underline transition-colors"
           >
             {isRegister ? "Войти" : "Создать"}
           </button>
         </p>
 
-        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep/50">
+        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep/60">
           🔒 Мы не собираем email или личные данные
         </p>
       </div>
