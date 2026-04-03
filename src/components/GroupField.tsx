@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const MOOD_MAP: Record<string, { label: string; emoji: string }> = {
   calm: { label: "Спокойно", emoji: "😌" },
@@ -28,8 +30,25 @@ interface GroupFieldProps {
 
 export function GroupField({ oilId }: GroupFieldProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const [trendIndex, setTrendIndex] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Check if user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user,
+  });
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["group-stats", oilId],
@@ -44,7 +63,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
     refetchInterval: 30000,
   });
 
-  const { data: trends = [], isLoading: trendsLoading } = useQuery({
+  const { data: trends = [] } = useQuery({
     queryKey: ["group-trends", oilId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,6 +77,54 @@ export function GroupField({ oilId }: GroupFieldProps) {
     },
     enabled: !!user,
   });
+
+  // Public entries feed
+  const { data: publicEntries = [] } = useQuery({
+    queryKey: ["public-entries", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id, content, mood, date, user_id")
+        .eq("oil_id", oilId)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+
+      // Fetch nicknames for unique user_ids
+      const userIds = [...new Set((data ?? []).map((e) => e.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, nickname")
+        .in("id", userIds);
+
+      const profileMap = new Map(
+        (profiles ?? []).map((p) => [p.id, p.nickname])
+      );
+
+      return (data ?? []).map((e) => ({
+        ...e,
+        nickname: profileMap.get(e.user_id) ?? "Аноним",
+      }));
+    },
+    enabled: !!user,
+  });
+
+  const handleGenerateTrend = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-group-trends");
+      if (error) throw error;
+      toast.success("Групповой тренд сгенерирован!");
+      setTrendIndex(0);
+      queryClient.invalidateQueries({ queryKey: ["group-trends", oilId] });
+    } catch (e) {
+      console.error("Generate trend error:", e);
+      toast.error("Не удалось сгенерировать тренд");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -107,27 +174,14 @@ export function GroupField({ oilId }: GroupFieldProps) {
 
       {/* Mood distribution */}
       {moodEntries.length > 0 && (
-        <div
-          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
-          style={{
-            background:
-              "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
-            backdropFilter: "blur(24px)",
-            boxShadow:
-              "0 8px 40px hsla(263,72%,52%,0.1), inset 0 1px 0 hsla(0,0%,100%,0.5)",
-          }}
-        >
+        <GlassSection>
           <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
-
           <div className="relative flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-              <Droplet className="h-5 w-5 text-primary" strokeWidth={1.5} />
-            </div>
+            <IconBox><Droplet className="h-5 w-5 text-primary" strokeWidth={1.5} /></IconBox>
             <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
               Эмоциональное поле группы
             </h3>
           </div>
-
           <div className="relative space-y-3">
             {moodEntries.map(([mood, count]) => {
               const info = MOOD_MAP[mood];
@@ -139,9 +193,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                       <span className="text-base">{info?.emoji ?? "❓"}</span>
                       {info?.label ?? mood}
                     </span>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {percent}%
-                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">{percent}%</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-white/40">
                     <div
@@ -153,74 +205,44 @@ export function GroupField({ oilId }: GroupFieldProps) {
               );
             })}
           </div>
-        </div>
+        </GlassSection>
       )}
 
-      {/* Activity chart (last 14 days) */}
+      {/* Activity chart */}
       {stats.recent_days.length > 0 && (
-        <div
-          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
-          style={{
-            background:
-              "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
-            backdropFilter: "blur(24px)",
-            boxShadow:
-              "0 8px 40px hsla(263,72%,52%,0.1), inset 0 1px 0 hsla(0,0%,100%,0.5)",
-          }}
-        >
+        <GlassSection>
           <div className="relative flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-              <TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} />
-            </div>
+            <IconBox><TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} /></IconBox>
             <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
               Активность за 2 недели
             </h3>
           </div>
-
           <div className="relative flex items-end gap-1.5 h-24">
             {stats.recent_days.map((day) => {
               const height = Math.max(8, (day.count / maxDayCount) * 100);
-              const date = new Date(day.date);
-              const dayNum = date.getDate();
+              const dayNum = new Date(day.date).getDate();
               return (
-                <div
-                  key={day.date}
-                  className="flex-1 flex flex-col items-center gap-1"
-                >
+                <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
                   <div
                     className="w-full rounded-t-md bg-gradient-to-t from-primary/60 to-primary/30 transition-all duration-500"
                     style={{ height: `${height}%` }}
                     title={`${day.date}: ${day.count} записей`}
                   />
-                  <span className="text-[9px] text-muted-foreground/50">
-                    {dayNum}
-                  </span>
+                  <span className="text-[9px] text-muted-foreground/50">{dayNum}</span>
                 </div>
               );
             })}
           </div>
-        </div>
+        </GlassSection>
       )}
 
       {/* AI Group Trends */}
       {trends.length > 0 && (
-        <div
-          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
-          style={{
-            background:
-              "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
-            backdropFilter: "blur(24px)",
-            boxShadow:
-              "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
-          }}
-        >
+        <GlassSection glow>
           <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
-
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
-              </div>
+              <IconBox><Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} /></IconBox>
               <div>
                 <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
                   ИИ-обзор недели
@@ -232,7 +254,6 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 )}
               </div>
             </div>
-
             {trends.length > 1 && (
               <div className="flex items-center gap-1">
                 <button
@@ -252,19 +273,9 @@ export function GroupField({ oilId }: GroupFieldProps) {
               </div>
             )}
           </div>
-
           <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-            {trends[trendIndex].trend_text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-              part.startsWith("**") && part.endsWith("**") ? (
-                <strong key={i} className="font-semibold text-foreground">
-                  {part.slice(2, -2)}
-                </strong>
-              ) : (
-                <span key={i}>{part}</span>
-              )
-            )}
+            {renderBoldText(trends[trendIndex].trend_text)}
           </div>
-
           <p className="text-xs text-muted-foreground/60">
             Неделя с{" "}
             {new Date(trends[trendIndex].week_start).toLocaleDateString("ru-RU", {
@@ -272,6 +283,76 @@ export function GroupField({ oilId }: GroupFieldProps) {
               month: "long",
             })}
           </p>
+        </GlassSection>
+      )}
+
+      {/* Admin: manual trend generation */}
+      {isAdmin && (
+        <Button
+          variant="ghost"
+          onClick={handleGenerateTrend}
+          disabled={isGenerating}
+          className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
+        >
+          {isGenerating ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+          Сгенерировать групповой тренд сейчас
+        </Button>
+      )}
+
+      {/* Public entries feed */}
+      {publicEntries.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 px-1">
+            <MessageCircle className="h-5 w-5 text-primary/60" strokeWidth={1.5} />
+            <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
+              Смыслы нашей группы
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {publicEntries.map((entry) => {
+              const moodInfo = entry.mood ? MOOD_MAP[entry.mood] : null;
+              return (
+                <div
+                  key={entry.id}
+                  className="relative overflow-hidden rounded-2xl border border-white/20 p-5 space-y-3"
+                  style={{
+                    background: "hsla(0,0%,100%,0.35)",
+                    backdropFilter: "blur(16px)",
+                    boxShadow:
+                      "0 2px 12px hsla(263,72%,52%,0.04), inset 0 1px 0 hsla(0,0%,100%,0.4)",
+                  }}
+                >
+                  <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
+                    {entry.content}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                      <span className="font-medium text-foreground/50">
+                        {entry.nickname}
+                      </span>
+                      <span>·</span>
+                      <span>
+                        {new Date(entry.date).toLocaleDateString("ru-RU", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    </div>
+                    {moodInfo && (
+                      <span className="text-base" title={moodInfo.label}>
+                        {moodInfo.emoji}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -283,15 +364,47 @@ export function GroupField({ oilId }: GroupFieldProps) {
   );
 }
 
-function StatCard({
-  icon,
-  value,
-  label,
-}: {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-}) {
+// --- Helpers ---
+
+function renderBoldText(text: string) {
+  return text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={i} className="font-semibold text-foreground">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
+function GlassSection({ children, glow }: { children: React.ReactNode; glow?: boolean }) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
+      style={{
+        background:
+          "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
+        backdropFilter: "blur(24px)",
+        boxShadow: glow
+          ? "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)"
+          : "0 8px 40px hsla(263,72%,52%,0.1), inset 0 1px 0 hsla(0,0%,100%,0.5)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function IconBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+      {children}
+    </div>
+  );
+}
+
+function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
   return (
     <div
       className="relative overflow-hidden rounded-2xl border border-white/25 p-6 text-center space-y-2"
@@ -304,9 +417,7 @@ function StatCard({
       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
         {icon}
       </div>
-      <p className="text-2xl font-serif font-semibold tracking-wide text-foreground">
-        {value}
-      </p>
+      <p className="text-2xl font-serif font-semibold tracking-wide text-foreground">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
