@@ -1,0 +1,1 @@
+ALTER TABLE public.entries ADD COLUMN energy_tags jsonb DEFAULT '[]'::jsonb;
