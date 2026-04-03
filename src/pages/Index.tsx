@@ -16,6 +16,7 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { AdminCodePanel } from "@/components/AdminCodePanel";
 import { ActivationModal } from "@/components/ActivationModal";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { SparkleBackground } from "@/components/SparkleBackground";
 import type { Oil } from "@/hooks/useOils";
 
 const Index = () => {
