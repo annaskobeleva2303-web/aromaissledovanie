@@ -107,9 +107,9 @@ export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: Oil
         )}
 
         {locked && (
-          <p className="mt-3 text-xs text-muted-foreground/70 italic">
-            Запросите доступ у администратора
-          </p>
+          <div className="mt-3 flex items-center gap-1.5 text-xs text-primary/70 font-medium">
+            <span>Ввести код доступа →</span>
+          </div>
         )}
       </div>
     </div>
