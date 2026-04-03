@@ -263,6 +263,7 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
             total={insights.length}
             onPrev={() => setCurrentIndex((i) => Math.max(0, i - 1))}
             onNext={() => setCurrentIndex((i) => Math.min(insights.length - 1, i + 1))}
+            onDelete={() => handleDelete(currentInsight.id)}
           />
 
           <div className="flex items-center justify-between">
