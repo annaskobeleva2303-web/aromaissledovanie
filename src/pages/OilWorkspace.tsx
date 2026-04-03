@@ -9,6 +9,7 @@ import { DiaryCalendar } from "@/components/DiaryCalendar";
 import { AiInsight } from "@/components/AiInsight";
 import { GroupField } from "@/components/GroupField";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { SparkleBackground } from "@/components/SparkleBackground";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +50,8 @@ const OilWorkspace = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <SparkleBackground />
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-4">

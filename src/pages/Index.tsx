@@ -16,6 +16,7 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { AdminCodePanel } from "@/components/AdminCodePanel";
 import { ActivationModal } from "@/components/ActivationModal";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { SparkleBackground } from "@/components/SparkleBackground";
 import type { Oil } from "@/hooks/useOils";
 
 const Index = () => {
@@ -88,7 +89,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <SparkleBackground />
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">

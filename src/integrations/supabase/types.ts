@@ -105,6 +105,7 @@ export type Database = {
           is_public: boolean
           mood: string | null
           oil_id: string
+          sensation: string | null
           updated_at: string
           user_id: string
         }
@@ -117,6 +118,7 @@ export type Database = {
           is_public?: boolean
           mood?: string | null
           oil_id: string
+          sensation?: string | null
           updated_at?: string
           user_id: string
         }
@@ -129,6 +131,7 @@ export type Database = {
           is_public?: boolean
           mood?: string | null
           oil_id?: string
+          sensation?: string | null
           updated_at?: string
           user_id?: string
         }
