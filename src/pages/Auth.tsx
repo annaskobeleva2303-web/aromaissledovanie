@@ -92,7 +92,7 @@ export default function Auth() {
             </div>
 
             <div className="space-y-2.5">
-              <Label htmlFor="password" className="text-sm font-medium tracking-wide">
+              <Label htmlFor="password" className="text-xs font-light tracking-wide text-muted-foreground">
                 Пароль
               </Label>
               <div className="relative">
