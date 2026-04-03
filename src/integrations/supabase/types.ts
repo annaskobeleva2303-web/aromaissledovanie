@@ -245,16 +245,19 @@ export type Database = {
           created_at: string
           id: string
           nickname: string
+          reminders_enabled: boolean
         }
         Insert: {
           created_at?: string
           id: string
           nickname: string
+          reminders_enabled?: boolean
         }
         Update: {
           created_at?: string
           id?: string
           nickname?: string
+          reminders_enabled?: boolean
         }
         Relationships: []
       }
