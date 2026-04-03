@@ -130,6 +130,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       setShowAlchemy(false);
       queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
       queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
+      onSaved?.();
     },
     onError: () => {
       setShowAlchemy(false);
