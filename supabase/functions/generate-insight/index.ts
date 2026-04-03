@@ -112,9 +112,9 @@ serve(async (req) => {
       });
     }
 
-    if (!entries || entries.length < 3) {
+    if (!entries || entries.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Недостаточно записей для анализа (минимум 3)" }),
+        JSON.stringify({ error: "Нет записей для анализа" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
