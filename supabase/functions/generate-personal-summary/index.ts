@@ -7,6 +7,38 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) {
+  const moodCounts: Record<string, number> = {};
+  const energyCounts: Record<string, number> = {};
+  let totalMoods = 0;
+  let totalEnergy = 0;
+
+  for (const e of entries) {
+    if (e.mood) {
+      moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+      totalMoods++;
+    }
+    if (Array.isArray(e.energy_tags)) {
+      for (const tag of e.energy_tags as string[]) {
+        energyCounts[tag] = (energyCounts[tag] || 0) + 1;
+        totalEnergy++;
+      }
+    }
+  }
+
+  const topMoods = Object.entries(moodCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([mood, count]) => `${mood} (${Math.round((count / totalMoods) * 100)}%)`);
+
+  const topEnergy = Object.entries(energyCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([tag, count]) => `${tag} (${Math.round((count / totalEnergy) * 100)}%)`);
+
+  return { topMoods, topEnergy };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,13 +58,11 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Determine if called by a user (manual) or cron (automatic for all)
     let targetUserId: string | null = null;
     let targetOilId: string | null = null;
 
     const authHeader = req.headers.get("Authorization");
     if (authHeader && authHeader !== `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`) {
-      // User-initiated call
       const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: authHeader } },
       });
@@ -46,11 +76,10 @@ serve(async (req) => {
       }
     }
 
-    // Calculate week boundaries
     const now = new Date();
     const dayOfWeek = now.getUTCDay();
     const weekStart = new Date(now);
-    weekStart.setUTCDate(now.getUTCDate() - ((dayOfWeek + 6) % 7)); // Monday
+    weekStart.setUTCDate(now.getUTCDate() - ((dayOfWeek + 6) % 7));
     weekStart.setUTCHours(0, 0, 0, 0);
     const weekStartStr = weekStart.toISOString().split("T")[0];
 
@@ -58,7 +87,6 @@ serve(async (req) => {
     sevenDaysAgo.setUTCDate(now.getUTCDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
-    // Get active oils
     let oilsQuery = supabaseAdmin.from("oils").select("id, title, focus").eq("is_active", true);
     if (targetOilId) {
       oilsQuery = oilsQuery.eq("id", targetOilId);
@@ -73,7 +101,6 @@ serve(async (req) => {
     let generated = 0;
 
     for (const oil of oils) {
-      // Get users who have entries for this oil in the last 7 days
       let entriesQuery = supabaseAdmin
         .from("entries")
         .select("user_id, date, mood, content, energy_tags")
@@ -88,7 +115,6 @@ serve(async (req) => {
       const { data: entries } = await entriesQuery;
       if (!entries || entries.length === 0) continue;
 
-      // Group entries by user
       const byUser = new Map<string, typeof entries>();
       for (const e of entries) {
         const arr = byUser.get(e.user_id) || [];
@@ -97,9 +123,8 @@ serve(async (req) => {
       }
 
       for (const [userId, userEntries] of byUser) {
-        if (userEntries.length < 2) continue; // Need at least 2 entries for a summary
+        if (userEntries.length < 2) continue;
 
-        // Check if summary already exists for this week
         if (!targetUserId) {
           const { data: existing } = await supabaseAdmin
             .from("personal_summaries")
@@ -111,6 +136,13 @@ serve(async (req) => {
           if (existing) continue;
         }
 
+        const { topMoods, topEnergy } = computeStats(userEntries);
+
+        const statsBlock = [
+          topMoods.length > 0 ? `Топ состояний за неделю: ${topMoods.join(", ")}` : "",
+          topEnergy.length > 0 ? `Топ энергий масла за неделю: ${topEnergy.join(", ")}` : "",
+        ].filter(Boolean).join("\n");
+
         const diaryText = userEntries
           .map((e) => {
             const tags = Array.isArray(e.energy_tags) && (e.energy_tags as string[]).length > 0
@@ -120,7 +152,14 @@ serve(async (req) => {
           })
           .join("\n\n---\n\n");
 
-        const systemPrompt = `Ты — эмпатичный наставник и психолог. Проанализируй дневниковые записи участника за последнюю неделю по эфирному маслу «${oil.title}» (фокус: ${oil.focus || "общее исследование"}). Обрати внимание на выбранные энергетические теги масла (Опора, Трансформация, Отпускание, Расширение, Тишина) — они показывают, как участник ощущал энергию масла каждый день. Напиши тёплое, поддерживающее еженедельное саммари (2-3 абзаца): отметь прогресс, проследи динамику энергий, выдели ключевые паттерны и мягко подсвети направление для следующей недели. Обращайся на «Вы», используй бережный, премиальный стиль.`;
+        const systemPrompt = `Ты — эмпатичный наставник и психолог. Проанализируй дневниковые записи участника за последнюю неделю по эфирному маслу «${oil.title}» (фокус: ${oil.focus || "общее исследование"}).
+
+Обрати внимание на выбранные энергетические теги масла (Опора, Трансформация, Отпускание, Расширение, Тишина) — они показывают, как участник ощущал энергию масла каждый день.
+
+Вот статистика за неделю:
+${statsBlock}
+
+Используй эту статистику как основу: упомяни доминирующее состояние и его процент, проследи динамику энергий. Напиши тёплое, поддерживающее еженедельное саммари (2-3 абзаца): отметь прогресс, выдели ключевые паттерны и мягко подсвети направление для следующей недели. Обращайся на «Вы», используй бережный, премиальный стиль.`;
 
         const aiResponse = await fetch(
           "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -149,7 +188,6 @@ serve(async (req) => {
         const summaryText = aiData.choices?.[0]?.message?.content;
         if (!summaryText) continue;
 
-        // Upsert — if manual trigger, replace existing for this week
         if (targetUserId) {
           await supabaseAdmin
             .from("personal_summaries")
@@ -172,7 +210,6 @@ serve(async (req) => {
           console.error("Insert error:", insertError);
         } else {
           generated++;
-          // Send notification
           await supabaseAdmin.from("notifications").insert({
             user_id: userId,
             title: "✨ Итоги недели готовы",
