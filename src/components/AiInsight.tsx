@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Droplet, Loader2 } from "lucide-react";
+import { Sparkles, Droplet, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface AiInsightProps {
@@ -13,7 +13,7 @@ interface AiInsightProps {
 
 export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
   const { user } = useAuth();
-  const [insight, setInsight] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: entryCount = 0 } = useQuery({
@@ -30,8 +30,27 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     enabled: !!user,
   });
 
+  // Load latest saved insight
+  const { data: savedInsight, isLoading: insightLoading } = useQuery({
+    queryKey: ["ai-insight", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ai_insights")
+        .select("content, created_at")
+        .eq("oil_id", oilId)
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
+  const insight = savedInsight?.content ?? null;
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -43,17 +62,16 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
       if (error) {
         console.error("Edge function error:", error);
         toast.error("Не удалось сгенерировать инсайт. Попробуйте позже.");
-        setIsGenerating(false);
         return;
       }
 
       if (data?.error) {
         toast.error(data.error);
-        setIsGenerating(false);
         return;
       }
 
-      setInsight(data.insight);
+      // Refresh saved insight from DB
+      queryClient.invalidateQueries({ queryKey: ["ai-insight", oilId] });
     } catch (e) {
       console.error("Insight generation failed:", e);
       toast.error("Произошла ошибка при генерации инсайта.");
@@ -61,6 +79,14 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
       setIsGenerating(false);
     }
   };
+
+  if (insightLoading) {
+    return (
+      <div className="glass-card p-12 text-center">
+        <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary/50" />
+      </div>
+    );
+  }
 
   // Not enough entries
   if (!canGenerate) {
@@ -109,14 +135,16 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
   return (
     <div className="space-y-6">
       {insight ? (
-        <div className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
           style={{
-            background: "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
+            background:
+              "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
             backdropFilter: "blur(24px)",
-            boxShadow: "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
+            boxShadow:
+              "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
           }}
         >
-          {/* Glow accent */}
           <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
 
           <div className="relative flex items-center gap-3">
@@ -131,20 +159,34 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
           <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
             {insight.split(/(\*\*.*?\*\*)/g).map((part, i) =>
               part.startsWith("**") && part.endsWith("**") ? (
-                <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+                <strong key={i} className="font-semibold text-foreground">
+                  {part.slice(2, -2)}
+                </strong>
               ) : (
                 <span key={i}>{part}</span>
               )
             )}
           </div>
 
+          {savedInsight?.created_at && (
+            <p className="text-xs text-muted-foreground/60">
+              Сгенерировано:{" "}
+              {new Date(savedInsight.created_at).toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "long",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          )}
+
           <Button
             variant="ghost"
             onClick={handleGenerate}
             className="rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground"
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            Сгенерировать заново
+            <RefreshCw className="h-3.5 w-3.5" />
+            Обновить анализ
           </Button>
         </div>
       ) : (
@@ -157,7 +199,8 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
               Анализ готов к запуску
             </p>
             <p className="text-sm text-muted-foreground">
-              У вас {entryCount} {entryCount >= 5 ? "записей" : "записи"} — достаточно для глубокого инсайта
+              У вас {entryCount} {entryCount >= 5 ? "записей" : "записи"} — достаточно для
+              глубокого инсайта
             </p>
           </div>
           <Button
