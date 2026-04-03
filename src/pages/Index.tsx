@@ -146,6 +146,14 @@ const Index = () => {
           </>
         )}
       </main>
+
+      {activationOil && (
+        <ActivationModal
+          oil={activationOil}
+          open={!!activationOil}
+          onOpenChange={(open) => !open && setActivationOil(null)}
+        />
+      )}
     </div>
   );
 };
