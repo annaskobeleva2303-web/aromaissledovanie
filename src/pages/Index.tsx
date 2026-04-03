@@ -16,7 +16,7 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 const Index = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const { myOils, newOils, isLoading } = useOils();
+  const { myOils, newOils, entryCounts, isLoading } = useOils();
   const [remindersEnabled, setRemindersEnabled] = useState(profile?.reminders_enabled ?? true);
 
   useEffect(() => {
