@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, BookOpen, Users } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, Users, Sparkles } from "lucide-react";
 import { DiaryCalendar } from "@/components/DiaryCalendar";
+import { AiInsight } from "@/components/AiInsight";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
@@ -79,6 +80,13 @@ const OilWorkspace = () => {
               Мой Дневник
             </TabsTrigger>
             <TabsTrigger
+              value="ai"
+              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Анализ ИИ
+            </TabsTrigger>
+            <TabsTrigger
               value="group"
               className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
             >
@@ -89,6 +97,10 @@ const OilWorkspace = () => {
 
           <TabsContent value="diary" className="mt-8">
             <DiaryCalendar oilId={oil.id} />
+          </TabsContent>
+
+          <TabsContent value="ai" className="mt-8">
+            <AiInsight oilId={oil.id} oilTitle={oil.title} />
           </TabsContent>
 
           <TabsContent value="group" className="mt-8">
