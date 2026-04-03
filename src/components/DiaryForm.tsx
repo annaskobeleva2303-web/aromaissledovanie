@@ -118,22 +118,87 @@ function GlassSlider({
   minLabel: string;
   maxLabel: string;
 }) {
+  const range = max - min;
+  const pct = ((value - min) / range) * 100;
+  const hasZero = min < 0 && max > 0;
+  const zeroPct = ((0 - min) / range) * 100;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 select-none">
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
         <span className="text-sm font-medium text-foreground/80">{label}</span>
-        <span className="ml-auto text-sm font-semibold text-primary">{value}</span>
       </div>
-      <Slider
-        value={[value]}
-        onValueChange={([v]) => onChange(v)}
-        min={min}
-        max={max}
-        step={1}
-        className="w-full"
-      />
-      <div className="flex justify-between text-[10px] text-muted-foreground">
+
+      {/* Slider container */}
+      <div className="relative pt-8 pb-1 px-1">
+        {/* Floating value bubble */}
+        <motion.div
+          className="absolute -top-0 pointer-events-none"
+          style={{ left: `${pct}%` }}
+          animate={{ left: `${pct}%` }}
+          transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        >
+          <div className="relative -translate-x-1/2">
+            <span className="text-lg font-serif font-semibold text-primary drop-shadow-sm">
+              {value > 0 && min < 0 ? `+${value}` : value}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Track background */}
+        <div className="relative h-8 flex items-center">
+          <div className="w-full h-[3px] rounded-full bg-white/20 relative overflow-visible">
+            {/* Filled range with glow gradient */}
+            <motion.div
+              className="absolute top-0 left-0 h-full rounded-full"
+              style={{
+                width: `${pct}%`,
+                background: "linear-gradient(90deg, hsl(263 72% 62% / 0.7), hsl(35 90% 60% / 0.8))",
+                boxShadow: "0 0 12px 2px hsl(263 72% 52% / 0.25), 0 0 20px 4px hsl(35 90% 60% / 0.15)",
+              }}
+              animate={{ width: `${pct}%` }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+            />
+
+            {/* Zero center mark for mood slider */}
+            {hasZero && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-[1.5px] h-3 rounded-full bg-foreground/15"
+                style={{ left: `${zeroPct}%` }}
+              />
+            )}
+          </div>
+
+          {/* Custom pearl thumb */}
+          <motion.div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
+            style={{ left: `${pct}%` }}
+            animate={{ left: `${pct}%` }}
+            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+          >
+            <div
+              className="w-5 h-5 rounded-full bg-white border border-white/60"
+              style={{
+                boxShadow: `0 0 14px 4px hsl(263 72% 62% / 0.35), 0 0 6px 1px hsl(35 90% 65% / 0.3), 0 2px 8px rgba(0,0,0,0.08)`,
+              }}
+            />
+          </motion.div>
+
+          {/* Invisible native slider for interaction */}
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={1}
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-between text-[9px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium">
         <span>{minLabel}</span>
         <span>{maxLabel}</span>
       </div>
