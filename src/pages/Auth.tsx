@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Droplet, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import BrandIcon from "@/components/BrandIcon";
 import { z } from "zod";
 
 const nicknameSchema = z
@@ -64,10 +65,10 @@ export default function Auth() {
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="mb-10 flex flex-col items-center gap-4">
-          <Droplet className="h-12 w-12 text-violet-deep" strokeWidth={1} />
-          <h1 className="font-serif text-3xl font-light tracking-wide text-foreground whitespace-nowrap">Живые Смыслы</h1>
-          <p className="mt-1.5 text-xs tracking-wide text-violet-deep/50">
+        <div className="mb-14 flex flex-col items-center gap-5">
+          <BrandIcon className="h-14 w-14 text-violet-deep" strokeWidth={0.8} />
+          <h1 className="font-serif text-3xl font-light tracking-[0.2em] text-foreground whitespace-nowrap">Живые Смыслы</h1>
+          <p className="mt-2 text-xs tracking-widest uppercase text-violet-deep/40 font-light">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>

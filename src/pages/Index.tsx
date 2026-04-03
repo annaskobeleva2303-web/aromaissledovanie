@@ -3,7 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOils } from "@/hooks/useOils";
 import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
-import { Droplet, LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
+import BrandIcon from "@/components/BrandIcon";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,8 +17,8 @@ const Index = () => {
       <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <Droplet className="h-6 w-6 text-violet-deep" strokeWidth={1.2} />
-            <span className="font-serif text-xl font-light tracking-wide whitespace-nowrap">Живые Смыслы</span>
+            <BrandIcon className="h-7 w-7 text-violet-deep" strokeWidth={0.9} />
+            <span className="font-serif text-xl font-light tracking-[0.15em] whitespace-nowrap">Живые Смыслы</span>
           </div>
           <Button
             variant="ghost"
@@ -32,7 +33,7 @@ const Index = () => {
 
       {/* Content */}
       <main className="mx-auto max-w-2xl px-5 py-8">
-        <h1 className="mb-8 font-serif text-3xl font-medium tracking-wide">
+        <h1 className="mb-10 font-serif text-3xl font-light tracking-[0.12em]">
           Привет, {profile?.nickname} 👋
         </h1>
 
@@ -49,7 +50,7 @@ const Index = () => {
               </h2>
               {myOils.length === 0 ? (
                 <div className="glass-card p-10 text-center">
-                  <Droplet className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" strokeWidth={1} />
+                  <BrandIcon className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" strokeWidth={0.8} />
                   <p className="text-sm text-muted-foreground">
                     У вас пока нет доступных масел
                   </p>
