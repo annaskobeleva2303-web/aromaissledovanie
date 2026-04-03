@@ -119,7 +119,7 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
         </div>
         {isPublic && (
           <p className="mt-2.5 ml-7 text-xs text-muted-foreground/60 leading-relaxed">
-            Ваш никнейм и текст будут видны другим участникам этого исследования
+            Ваш инсайт будет анонимно опубликован в общем поле без указания автора. Это поможет другим почувствовать поддержку группы.
           </p>
         )}
       </div>

@@ -84,28 +84,13 @@ export function GroupField({ oilId }: GroupFieldProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, content, mood, date, user_id")
+        .select("id, content, mood, date")
         .eq("oil_id", oilId)
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-
-      // Fetch nicknames for unique user_ids
-      const userIds = [...new Set((data ?? []).map((e) => e.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, nickname")
-        .in("id", userIds);
-
-      const profileMap = new Map(
-        (profiles ?? []).map((p) => [p.id, p.nickname])
-      );
-
-      return (data ?? []).map((e) => ({
-        ...e,
-        nickname: profileMap.get(e.user_id) ?? "Аноним",
-      }));
+      return data ?? [];
     },
     enabled: !!user,
   });
@@ -319,36 +304,25 @@ export function GroupField({ oilId }: GroupFieldProps) {
               return (
                 <div
                   key={entry.id}
-                  className="relative overflow-hidden rounded-2xl border border-white/20 p-5 space-y-3"
+                  className="relative overflow-hidden rounded-2xl border border-white/20 p-5"
                   style={{
                     background: "hsla(0,0%,100%,0.35)",
                     backdropFilter: "blur(16px)",
                     boxShadow:
-                      "0 2px 12px hsla(263,72%,52%,0.04), inset 0 1px 0 hsla(0,0%,100%,0.4)",
+                      "0 4px 20px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.45)",
                   }}
                 >
-                  <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
+                  <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap pr-8">
                     {entry.content}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-                      <span className="font-medium text-foreground/50">
-                        {entry.nickname}
-                      </span>
-                      <span>·</span>
-                      <span>
-                        {new Date(entry.date).toLocaleDateString("ru-RU", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </span>
-                    </div>
-                    {moodInfo && (
-                      <span className="text-base" title={moodInfo.label}>
-                        {moodInfo.emoji}
-                      </span>
-                    )}
-                  </div>
+                  {moodInfo && (
+                    <span
+                      className="absolute bottom-4 right-4 text-lg opacity-60"
+                      title={moodInfo.label}
+                    >
+                      {moodInfo.emoji}
+                    </span>
+                  )}
                 </div>
               );
             })}
