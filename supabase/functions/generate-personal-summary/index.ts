@@ -167,6 +167,12 @@ serve(async (req) => {
           console.error("Insert error:", insertError);
         } else {
           generated++;
+          // Send notification
+          await supabaseAdmin.from("notifications").insert({
+            user_id: userId,
+            title: "✨ Итоги недели готовы",
+            message: `Ваше персональное саммари по маслу «${oil.title}» готово. Загляните на вкладку «Анализ ИИ».`,
+          });
         }
       }
     }

@@ -5,6 +5,7 @@ import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
 import BrandIcon from "@/components/BrandIcon";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,14 +21,17 @@ const Index = () => {
             <BrandIcon className="h-8 w-8" withBackground strokeWidth={1.8} />
             <span className="font-serif text-xl font-semibold tracking-normal text-violet-deep whitespace-nowrap">Живые Смыслы</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            className="rounded-full text-muted-foreground hover:text-foreground transition-all duration-300"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationCenter />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className="rounded-full text-muted-foreground hover:text-foreground transition-all duration-300"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
