@@ -94,15 +94,25 @@ function InsightCard({
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground/60">
-        Сгенерировано:{" "}
-        {new Date(createdAt).toLocaleDateString("ru-RU", {
-          day: "numeric",
-          month: "long",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-      </p>
+      <div className="relative flex items-center justify-between">
+        <p className="text-xs text-muted-foreground/60">
+          Сгенерировано:{" "}
+          {new Date(createdAt).toLocaleDateString("ru-RU", {
+            day: "numeric",
+            month: "long",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          className="h-7 w-7 rounded-full text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     </div>
   );
 }
