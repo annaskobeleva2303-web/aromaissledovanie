@@ -138,7 +138,7 @@ const Index = () => {
                 </h2>
                 <div className="grid gap-5">
                   {newOils.map((oil) => (
-                    <OilCard key={oil.id} oil={oil} locked />
+                    <OilCard key={oil.id} oil={oil} locked onClick={() => setActivationOil(oil)} />
                   ))}
                 </div>
               </section>
