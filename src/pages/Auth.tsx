@@ -142,7 +142,7 @@ export default function Auth() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-8 text-center text-sm text-violet-deep/80">
+        <p className="mt-8 text-center text-sm text-violet-deep">
           {isRegister ? "Уже есть аккаунт?" : "Нет аккаунта?"}{" "}
           <button
             type="button"
