@@ -76,7 +76,7 @@ serve(async (req) => {
       // Get users who have entries for this oil in the last 7 days
       let entriesQuery = supabaseAdmin
         .from("entries")
-        .select("user_id, date, mood, content")
+        .select("user_id, date, mood, content, energy_tags")
         .eq("oil_id", oil.id)
         .gte("date", sevenDaysAgoStr)
         .order("date", { ascending: true });
