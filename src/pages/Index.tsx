@@ -48,6 +48,33 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-1">
             <NotificationCenter />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full text-muted-foreground hover:text-foreground transition-all duration-300"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 glass-card border-white/30 p-4">
+                <h3 className="font-serif text-sm font-semibold text-foreground mb-3">Настройки</h3>
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="reminders" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+                    Напоминания о практике
+                  </Label>
+                  <Switch
+                    id="reminders"
+                    checked={remindersEnabled}
+                    onCheckedChange={toggleReminders}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground/60 mt-2">
+                  Бережные напоминания, если вы давно не заглядывали в дневник
+                </p>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="icon"
