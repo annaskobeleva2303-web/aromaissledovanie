@@ -202,6 +202,79 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </div>
       )}
 
+      {/* AI Group Trends */}
+      {trends.length > 0 && (
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(263,50%,92%,0.6) 0%, hsla(0,0%,100%,0.5) 50%, hsla(20,90%,88%,0.4) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 40px hsla(263,72%,52%,0.1), 0 0 60px hsla(263,72%,52%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
+          }}
+        >
+          <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
+                  ИИ-обзор недели
+                </h3>
+                {trends.length > 1 && (
+                  <p className="text-xs text-muted-foreground/60">
+                    {trendIndex + 1} из {trends.length}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {trends.length > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setTrendIndex((i) => Math.max(0, i - 1))}
+                  disabled={trendIndex === 0}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setTrendIndex((i) => Math.min(trends.length - 1, i + 1))}
+                  disabled={trendIndex === trends.length - 1}
+                  className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+            {trends[trendIndex].trend_text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+              part.startsWith("**") && part.endsWith("**") ? (
+                <strong key={i} className="font-semibold text-foreground">
+                  {part.slice(2, -2)}
+                </strong>
+              ) : (
+                <span key={i}>{part}</span>
+              )
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground/60">
+            Неделя с{" "}
+            {new Date(trends[trendIndex].week_start).toLocaleDateString("ru-RU", {
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+        </div>
+      )}
+
       {/* Privacy note */}
       <p className="text-center text-xs text-muted-foreground/50">
         🔒 Все данные анонимны — видны только общие паттерны группы
