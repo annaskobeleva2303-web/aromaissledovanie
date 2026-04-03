@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { SparkleBackground } from "@/components/SparkleBackground";
 
 const MOODS = [
   { value: "calm", label: "Спокойствие", emoji: "😌" },
@@ -21,6 +22,13 @@ const MOODS = [
   { value: "grateful", label: "Благодарность", emoji: "🙏" },
 ];
 
+const SENSATIONS = [
+  { value: "body", label: "В теле", emoji: "🧘‍♀️" },
+  { value: "mind", label: "В мыслях", emoji: "🧠" },
+  { value: "emotions", label: "В эмоциях", emoji: "✨" },
+  { value: "unclear", label: "Сложно понять", emoji: "🌱" },
+];
+
 const ENERGY_TAGS = [
   { value: "support", label: "Опора", emoji: "🏔️" },
   { value: "transformation", label: "Трансформация", emoji: "🦋" },
@@ -30,18 +38,22 @@ const ENERGY_TAGS = [
 ];
 
 const STEP_TITLES = [
-  "Что ты чувствуешь сейчас?",
+  "Что сейчас поднимает масло?",
+  "Где это ощущается?",
   "Как сегодня звучит Давана?",
-  "Твои смыслы и наблюдения...",
+  "Проживи этот момент...",
   "Твой инсайт от Даваны ✨",
 ];
 
 const STEP_SUBTITLES = [
   "Вход в состояние",
+  "Сенсорика",
   "Энергия Масла",
   "Свободный полёт",
   "Послание Даваны",
 ];
+
+const TOTAL_INTERACTIVE_STEPS = 4; // 0-3 are interactive, 4 is insight reveal
 
 interface DiaryFormProps {
   oilId: string;
@@ -64,12 +76,40 @@ const slideVariants = {
   }),
 };
 
+function ChipButton({
+  selected,
+  onClick,
+  emoji,
+  label,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  emoji: string;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm transition-all duration-300 ${
+        selected
+          ? "bg-primary text-primary-foreground shadow-[0_0_16px_hsl(var(--primary)/0.35)] -translate-y-0.5 scale-105"
+          : "bg-white/40 text-foreground/70 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-sm backdrop-blur-sm border border-white/20"
+      }`}
+    >
+      <span className="text-base">{emoji}</span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
 export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [selectedSensation, setSelectedSensation] = useState<string | null>(null);
   const [selectedEnergy, setSelectedEnergy] = useState<string[]>([]);
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(false);
@@ -95,7 +135,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
   const goNext = () => {
     setDirection(1);
-    setStep((s) => Math.min(s + 1, 2));
+    setStep((s) => Math.min(s + 1, TOTAL_INTERACTIVE_STEPS - 1));
   };
 
   const goBack = () => {
@@ -105,6 +145,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
   const finishSession = () => {
     setSelectedMoods([]);
+    setSelectedSensation(null);
     setSelectedEnergy([]);
     setContent("");
     setIsPublic(false);
@@ -121,7 +162,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      // Save entry
       const { error } = await supabase.from("entries").insert({
         user_id: user.id,
         oil_id: oilId,
@@ -129,11 +169,11 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         content: content.trim(),
         is_public: isPublic,
         energy_tags: selectedEnergy,
+        sensation: selectedSensation,
         ...(date ? { date } : {}),
       });
       if (error) throw error;
 
-      // Generate AI insight
       let insight: string | null = null;
       try {
         const { data, error: fnError } = await supabase.functions.invoke("generate-insight", {
@@ -152,7 +192,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       if (insight) {
         setInsightText(insight);
         setDirection(1);
-        setStep(3);
+        setStep(4);
       } else {
         finishSession();
       }
@@ -163,16 +203,17 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   });
 
   const canSave = content.trim().length > 0;
-  const totalSteps = insightText !== null ? 4 : 3;
+  const totalDots = insightText !== null ? 5 : TOTAL_INTERACTIVE_STEPS;
 
-  // Alchemy loading overlay (shown during save + AI generation)
+  // Alchemy loading overlay
   if (isPending) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card p-12 flex flex-col items-center justify-center gap-6"
+        className="glass-card p-12 flex flex-col items-center justify-center gap-6 relative overflow-hidden"
       >
+        <SparkleBackground count={12} />
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -190,10 +231,10 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Progress indicator */}
       <div className="flex items-center justify-center gap-2">
-        {Array.from({ length: totalSteps }).map((_, i) => (
+        {Array.from({ length: totalDots }).map((_, i) => (
           <div key={i} className="flex items-center gap-2">
             <div
               className={`h-2 rounded-full transition-all duration-500 ${
@@ -228,71 +269,85 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
+            {/* Step 0: Moods */}
             {step === 0 && (
-              <div className="glass-card p-6">
+              <div className="glass-card p-6 rounded-[1.75rem]">
                 <p className="mb-4 text-xs text-muted-foreground tracking-wide">
                   Выбери 1–2 состояния
                 </p>
                 <div className="flex flex-wrap gap-2.5">
                   {MOODS.map((m) => (
-                    <button
+                    <ChipButton
                       key={m.value}
-                      type="button"
+                      selected={selectedMoods.includes(m.value)}
                       onClick={() => toggleMood(m.value)}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-sm transition-all duration-300 ${
-                        selectedMoods.includes(m.value)
-                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 -translate-y-0.5 scale-105"
-                          : "bg-white/40 text-foreground/70 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-sm backdrop-blur-sm"
-                      }`}
-                    >
-                      <span className="text-base">{m.emoji}</span>
-                      <span>{m.label}</span>
-                    </button>
+                      emoji={m.emoji}
+                      label={m.label}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
+            {/* Step 1: Sensation */}
             {step === 1 && (
-              <div className="glass-card p-6">
+              <div className="glass-card p-6 rounded-[1.75rem]">
+                <p className="mb-4 text-xs text-muted-foreground tracking-wide">
+                  Отметь, где откликается сильнее всего
+                </p>
+                <div className="flex flex-wrap gap-2.5">
+                  {SENSATIONS.map((s) => (
+                    <ChipButton
+                      key={s.value}
+                      selected={selectedSensation === s.value}
+                      onClick={() =>
+                        setSelectedSensation((prev) =>
+                          prev === s.value ? null : s.value
+                        )
+                      }
+                      emoji={s.emoji}
+                      label={s.label}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Energy */}
+            {step === 2 && (
+              <div className="glass-card p-6 rounded-[1.75rem]">
                 <p className="mb-4 text-xs text-muted-foreground tracking-wide">
                   Что откликается сегодня?
                 </p>
                 <div className="flex flex-wrap gap-2.5">
                   {ENERGY_TAGS.map((e) => (
-                    <button
+                    <ChipButton
                       key={e.value}
-                      type="button"
+                      selected={selectedEnergy.includes(e.value)}
                       onClick={() => toggleEnergy(e.value)}
-                      className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm transition-all duration-300 ${
-                        selectedEnergy.includes(e.value)
-                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 -translate-y-0.5 scale-105"
-                          : "bg-white/40 text-foreground/70 hover:bg-white/60 hover:-translate-y-0.5 hover:shadow-sm backdrop-blur-sm"
-                      }`}
-                    >
-                      <span className="text-lg">{e.emoji}</span>
-                      <span>{e.label}</span>
-                    </button>
+                      emoji={e.emoji}
+                      label={e.label}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
-            {step === 2 && (
+            {/* Step 3: Free writing */}
+            {step === 3 && (
               <div className="space-y-5">
-                <div className="glass-card p-5">
+                <div className="glass-card p-5 rounded-[1.75rem]">
                   <Textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Позволь словам течь свободно. Что масло открывает тебе сегодня?"
+                    placeholder="Просто дыши и позволь словам литься. Начни с физических ощущений или образов... Что масло открывает тебе сегодня?"
                     className="min-h-[200px] resize-none rounded-2xl border-0 bg-transparent px-4 py-3 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
 
-                {/* Share toggle */}
-                <div className="glass-card p-4">
+                <div className="glass-card p-4 rounded-[1.75rem]">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <Users className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
@@ -314,14 +369,14 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             )}
 
             {/* Step 4: Insight reveal */}
-            {step === 3 && insightText && (
+            {step === 4 && insightText && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="space-y-5"
               >
-                <div className="relative overflow-hidden rounded-3xl border border-white/30 bg-white/50 p-6 shadow-xl shadow-primary/5 backdrop-blur-2xl">
+                <div className="relative overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/50 p-7 shadow-xl shadow-primary/5 backdrop-blur-2xl">
                   {/* Decorative glow */}
                   <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
                   <div className="pointer-events-none absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
@@ -348,7 +403,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
       {/* Navigation */}
       <div className="flex gap-3">
-        {step > 0 && step < 3 && (
+        {step > 0 && step < 4 && (
           <Button
             variant="ghost"
             onClick={goBack}
@@ -359,7 +414,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
           </Button>
         )}
 
-        {step < 2 ? (
+        {step < 3 ? (
           <Button
             onClick={goNext}
             className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
@@ -367,7 +422,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             Далее
             <ArrowRight className="h-4 w-4" />
           </Button>
-        ) : step === 2 ? (
+        ) : step === 3 ? (
           <Button
             onClick={() => saveEntry()}
             disabled={!canSave || isPending}
