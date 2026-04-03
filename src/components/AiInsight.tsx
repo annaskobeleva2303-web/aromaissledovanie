@@ -376,6 +376,119 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
           </Button>
         </div>
       )}
+
+      {/* Weekly Personal Summary */}
+      {canGenerate && (
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/25 p-8 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(20,90%,88%,0.5) 0%, hsla(0,0%,100%,0.5) 50%, hsla(263,50%,92%,0.5) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 40px hsla(263,72%,52%,0.08), 0 0 60px hsla(20,90%,74%,0.05), inset 0 1px 0 hsla(0,0%,100%,0.5)",
+          }}
+        >
+          <div className="absolute -top-20 -left-20 h-40 w-40 rounded-full bg-secondary/20 blur-3xl" />
+
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/20">
+                <CalendarDays className="h-5 w-5 text-secondary-foreground" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
+                  Итоги недели
+                </h3>
+                {summaries.length > 1 && (
+                  <p className="text-xs text-muted-foreground/60">
+                    {summaryIndex + 1} из {summaries.length}
+                  </p>
+                )}
+              </div>
+            </div>
+            {summaries.length > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSummaryIndex((i) => Math.max(0, i - 1))}
+                  disabled={summaryIndex === 0}
+                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSummaryIndex((i) => Math.min(summaries.length - 1, i + 1))}
+                  disabled={summaryIndex === summaries.length - 1}
+                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground disabled:opacity-30"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {summaries.length > 0 ? (
+            <>
+              <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                {summaries[summaryIndex].summary_text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+                  part.startsWith("**") && part.endsWith("**") ? (
+                    <strong key={i} className="font-semibold text-foreground">
+                      {part.slice(2, -2)}
+                    </strong>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  )
+                )}
+              </div>
+              <div className="relative flex items-center justify-between">
+                <p className="text-xs text-muted-foreground/60">
+                  Неделя с{" "}
+                  {new Date(summaries[summaryIndex].week_start).toLocaleDateString("ru-RU", {
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </p>
+                <Button
+                  variant="ghost"
+                  onClick={handleGenerateSummary}
+                  disabled={isGeneratingSummary}
+                  className="rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {isGeneratingSummary ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Обновить
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="relative text-center space-y-3 py-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Персональное еженедельное саммари появится здесь после генерации.
+              </p>
+              <Button
+                onClick={handleGenerateSummary}
+                disabled={isGeneratingSummary}
+                variant="outline"
+                className="rounded-full gap-2 text-sm border-white/30 bg-white/30 hover:bg-white/50"
+              >
+                {isGeneratingSummary ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CalendarDays className="h-4 w-4" />
+                )}
+                Сгенерировать итоги недели
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
