@@ -5,6 +5,7 @@ import type { User, Session } from "@supabase/supabase-js";
 interface Profile {
   id: string;
   nickname: string;
+  reminders_enabled: boolean;
 }
 
 interface AuthContextType {
