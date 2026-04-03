@@ -17,8 +17,8 @@ const Index = () => {
       <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <BrandIcon className="h-7 w-7 text-violet-deep" strokeWidth={0.9} />
-            <span className="font-serif text-xl font-medium tracking-[0.15em] text-violet-deep text-glow-peach whitespace-nowrap">Живые Смыслы</span>
+            <BrandIcon className="h-8 w-8" withBackground strokeWidth={1.8} />
+            <span className="font-serif text-xl font-semibold tracking-wide text-violet-deep whitespace-nowrap">Живые Смыслы</span>
           </div>
           <Button
             variant="ghost"
@@ -33,7 +33,7 @@ const Index = () => {
 
       {/* Content */}
       <main className="mx-auto max-w-2xl px-5 py-8">
-        <h1 className="mb-10 font-serif text-3xl font-medium tracking-[0.12em] text-violet-deep">
+        <h1 className="mb-10 font-serif text-3xl font-semibold tracking-wide text-violet-deep">
           Привет, {profile?.nickname} 👋
         </h1>
 
@@ -45,7 +45,7 @@ const Index = () => {
           <>
             {/* My Researches */}
             <section className="mb-10">
-              <h2 className="mb-5 font-serif text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">
+              <h2 className="mb-5 font-serif text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                 Мои исследования
               </h2>
               {myOils.length === 0 ? (
@@ -70,7 +70,7 @@ const Index = () => {
             {/* New Oils */}
             {newOils.length > 0 && (
               <section>
-                <h2 className="mb-5 font-serif text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">
+                <h2 className="mb-5 font-serif text-sm font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                   Новые масла
                 </h2>
                 <div className="grid gap-5">
