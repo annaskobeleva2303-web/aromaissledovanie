@@ -76,12 +76,6 @@
       hsl(270 20% 96%);
     background-attachment: fixed;
     min-height: 100vh;
-    animation: breathe 9s ease-in-out infinite;
-  }
-
-  @keyframes breathe {
-    0%, 100% { filter: saturate(1) brightness(1); }
-    50% { filter: saturate(1.08) brightness(1.02); }
   }
 
   h1, h2, h3, h4, h5, h6 {
