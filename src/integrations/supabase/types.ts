@@ -177,6 +177,7 @@ export type Database = {
           description: string | null
           focus: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           title: string
         }
@@ -185,6 +186,7 @@ export type Database = {
           description?: string | null
           focus?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           title: string
         }
@@ -193,6 +195,7 @@ export type Database = {
           description?: string | null
           focus?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           title?: string
         }

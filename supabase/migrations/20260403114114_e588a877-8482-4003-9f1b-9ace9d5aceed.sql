@@ -1,0 +1,1 @@
+ALTER TABLE public.oils ADD COLUMN image_url text DEFAULT NULL;
