@@ -24,7 +24,7 @@ const BrandIcon = ({
 
   if (withBackground) {
     return (
-      <div className={`flex items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 ${className}`}>
+      <div className={`flex items-center justify-center rounded-2xl bg-violet-deep text-white/70 shadow-lg shadow-violet-deep/30 ${className}`}>
         {icon}
       </div>
     );

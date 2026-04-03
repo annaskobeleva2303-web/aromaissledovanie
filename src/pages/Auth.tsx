@@ -67,10 +67,10 @@ export default function Auth() {
         {/* Logo */}
         <div className="mb-10 flex flex-col items-center gap-4">
           <BrandIcon className="h-16 w-16" withBackground strokeWidth={1.8} />
-          <h1 className="font-serif text-[2rem] font-semibold tracking-wide text-violet-deep whitespace-nowrap">
+          <h1 className="font-serif text-[2rem] font-semibold tracking-normal text-violet-deep whitespace-nowrap">
             Живые Смыслы
           </h1>
-          <p className="text-sm text-violet-deep/70 font-normal">
+          <p className="text-sm text-violet-deep font-normal">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
@@ -79,7 +79,7 @@ export default function Auth() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="glass-card p-8 space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="nickname" className="text-sm font-medium text-violet-deep/90">
+              <Label htmlFor="nickname" className="text-sm font-medium text-violet-deep">
                 Никнейм
               </Label>
               <Input
@@ -88,14 +88,14 @@ export default function Auth() {
                 placeholder="Ваш никнейм"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="rounded-full border-white/30 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/50"
+                className="rounded-full border-white/30 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-violet-deep/40"
                 autoComplete="username"
                 maxLength={24}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-violet-deep/90">
+              <Label htmlFor="password" className="text-sm font-medium text-violet-deep">
                 Пароль
               </Label>
               <div className="relative">
@@ -105,7 +105,7 @@ export default function Auth() {
                   placeholder="Минимум 6 символов"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-full border-white/30 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/50"
+                  className="rounded-full border-white/30 bg-white/50 px-5 pr-11 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-violet-deep/40"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                   maxLength={72}
                 />
@@ -142,7 +142,7 @@ export default function Auth() {
         </form>
 
         {/* Toggle */}
-        <p className="mt-8 text-center text-sm text-violet-deep/80">
+        <p className="mt-8 text-center text-sm text-violet-deep">
           {isRegister ? "Уже есть аккаунт?" : "Нет аккаунта?"}{" "}
           <button
             type="button"
@@ -156,7 +156,7 @@ export default function Auth() {
           </button>
         </p>
 
-        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep/60">
+        <p className="mt-5 text-center text-xs tracking-wide text-violet-deep">
           🔒 Мы не собираем email или личные данные
         </p>
       </div>
