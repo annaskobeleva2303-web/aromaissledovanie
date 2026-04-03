@@ -124,6 +124,75 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground/60 mt-2">
                   Бережные напоминания, если вы давно не заглядывали в дневник
                 </p>
+
+                <div className="mt-4 pt-3 border-t border-white/20">
+                  {!showPasswordForm ? (
+                    <button
+                      onClick={() => setShowPasswordForm(true)}
+                      className="text-xs text-primary hover:underline cursor-pointer"
+                    >
+                      Сменить пароль
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-foreground">Смена пароля</p>
+                      <div className="relative">
+                        <Input
+                          type={showOld ? "text" : "password"}
+                          placeholder="Старый пароль"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          className="h-8 text-xs pr-8 bg-white/40 border-white/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowOld(!showOld)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showOld ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type={showNew ? "text" : "password"}
+                          placeholder="Новый пароль"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="h-8 text-xs pr-8 bg-white/40 border-white/30"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNew(!showNew)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs flex-1"
+                          onClick={handleChangePassword}
+                          disabled={changingPassword}
+                        >
+                          {changingPassword ? <Loader2 className="h-3 w-3 animate-spin" /> : "Сохранить"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setOldPassword("");
+                            setNewPassword("");
+                          }}
+                        >
+                          Отмена
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </PopoverContent>
             </Popover>
             <Button
