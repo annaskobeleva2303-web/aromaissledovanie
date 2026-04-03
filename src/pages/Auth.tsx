@@ -88,7 +88,7 @@ export default function Auth() {
                 placeholder="Ваш никнейм"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="rounded-full border-white/30 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-muted-foreground/50"
+                className="rounded-full border-white/30 bg-white/50 px-5 backdrop-blur-sm focus-visible:ring-primary/30 placeholder:text-violet-deep/40"
                 autoComplete="username"
                 maxLength={24}
               />
