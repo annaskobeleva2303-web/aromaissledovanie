@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, BookOpen, Users } from "lucide-react";
+import { ArrowLeft, Loader2, BookOpen, Users, Sparkles } from "lucide-react";
 import { DiaryCalendar } from "@/components/DiaryCalendar";
+import { AiInsight } from "@/components/AiInsight";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
