@@ -8,6 +8,7 @@ import { ru } from "date-fns/locale";
 import { DiaryForm } from "@/components/DiaryForm";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { DayContentProps } from "react-day-picker";
 
 const MOODS: Record<string, { label: string; emoji: string }> = {
   calm: { label: "Спокойно", emoji: "😌" },
