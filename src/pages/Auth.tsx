@@ -65,11 +65,9 @@ export default function Auth() {
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
         <div className="mb-10 flex flex-col items-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary shadow-lg shadow-primary/25">
-            <Leaf className="h-8 w-8 text-primary-foreground" strokeWidth={1.5} />
-          </div>
-          <h1 className="font-serif text-3xl font-medium tracking-wide text-foreground">Essence Lab</h1>
-          <p className="mt-2 text-sm tracking-wide text-muted-foreground">
+          <Droplet className="h-12 w-12 text-violet-deep" strokeWidth={1} />
+          <h1 className="font-serif text-3xl font-light tracking-wide text-foreground whitespace-nowrap">Живые Смыслы</h1>
+          <p className="mt-1.5 text-xs tracking-wide text-violet-deep/50">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
           </p>
         </div>
