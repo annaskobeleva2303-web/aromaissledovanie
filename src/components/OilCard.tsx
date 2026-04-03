@@ -91,9 +91,6 @@ export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: Oil
     </div>
   );
 }
-  return (
-    <div
-      className={`glass-card cursor-pointer overflow-hidden transition-all duration-300 ${
         locked
           ? "opacity-60 hover:opacity-75"
           : "hover:-translate-y-1 hover:shadow-[0_12px_40px_hsla(263,72%,52%,0.1)]"
