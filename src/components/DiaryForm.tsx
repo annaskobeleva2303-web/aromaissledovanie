@@ -275,7 +275,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             {/* Step 0: Moods */}
             {step === 0 && (
