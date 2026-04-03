@@ -106,7 +106,7 @@ serve(async (req) => {
     for (const oil of oils) {
       let entriesQuery = supabaseAdmin
         .from("entries")
-        .select("user_id, date, mood, content, energy_tags")
+        .select("user_id, date, mood, content, energy_tags, energy_before, mood_score_before, energy_after, mood_score_after, oil_body_location, oil_sensation, oil_visual_image, record_type")
         .eq("oil_id", oil.id)
         .gte("date", sevenDaysAgoStr)
         .order("date", { ascending: true });
