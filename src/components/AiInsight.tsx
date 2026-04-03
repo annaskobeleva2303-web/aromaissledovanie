@@ -183,6 +183,23 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     enabled: !!user,
   });
 
+  // Load personal weekly summaries
+  const { data: summaries = [] } = useQuery({
+    queryKey: ["personal-summaries", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("personal_summaries")
+        .select("id, summary_text, week_start, created_at")
+        .eq("oil_id", oilId)
+        .eq("user_id", user!.id)
+        .order("week_start", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
   const remaining = Math.max(0, 3 - entryCount);
   const canGenerate = entryCount >= 3;
 
