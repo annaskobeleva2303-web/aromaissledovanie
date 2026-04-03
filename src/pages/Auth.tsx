@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Droplet, Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const nicknameSchema = z
