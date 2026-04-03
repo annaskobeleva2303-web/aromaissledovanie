@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Save, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Save, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const MOODS = [
@@ -28,6 +30,7 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
   const queryClient = useQueryClient();
   const [mood, setMood] = useState<string | null>(null);
   const [content, setContent] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
 
   const { mutate: saveEntry, isPending } = useMutation({
     mutationFn: async () => {
@@ -37,6 +40,7 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
         oil_id: oilId,
         mood,
         content: content.trim(),
+        is_public: isPublic,
         ...(date ? { date } : {}),
       });
       if (error) throw error;
@@ -45,7 +49,9 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
       toast.success("Запись сохранена ✨");
       setMood(null);
       setContent("");
+      setIsPublic(false);
       queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
     },
     onError: () => {
       toast.error("Не удалось сохранить запись");
@@ -91,6 +97,31 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
           placeholder="Опишите ваш опыт, ощущения, мысли…"
           className="min-h-[180px] resize-none rounded-2xl border-0 bg-transparent px-5 py-4 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
+      </div>
+
+      {/* Share toggle */}
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Users className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
+            <Label
+              htmlFor="is-public"
+              className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer"
+            >
+              Поделиться анонимно в Групповом поле
+            </Label>
+          </div>
+          <Switch
+            id="is-public"
+            checked={isPublic}
+            onCheckedChange={setIsPublic}
+          />
+        </div>
+        {isPublic && (
+          <p className="mt-2.5 ml-7 text-xs text-muted-foreground/60 leading-relaxed">
+            Ваш никнейм и текст будут видны другим участникам этого исследования
+          </p>
+        )}
       </div>
 
       {/* Save */}
