@@ -16,7 +16,7 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 const Index = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const { myOils, newOils, isLoading } = useOils();
+  const { myOils, newOils, entryCounts, isLoading } = useOils();
   const [remindersEnabled, setRemindersEnabled] = useState(profile?.reminders_enabled ?? true);
 
   useEffect(() => {
@@ -117,7 +117,7 @@ const Index = () => {
               ) : (
                 <div className="grid gap-5">
                   {myOils.map((oil) => (
-                    <OilCard key={oil.id} oil={oil} onClick={() => navigate(`/oils/${oil.id}`)} />
+                    <OilCard key={oil.id} oil={oil} daysCompleted={entryCounts[oil.id] || 0} onClick={() => navigate(`/oils/${oil.id}`)} />
                   ))}
                 </div>
               )}

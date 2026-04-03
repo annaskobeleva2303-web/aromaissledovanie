@@ -1,14 +1,21 @@
-import { Leaf, Lock } from "lucide-react";
+import { Leaf, Lock, Flame } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import type { Oil } from "@/hooks/useOils";
+
+const RESEARCH_DAYS = 21;
 
 interface OilCardProps {
   oil: Oil;
   locked?: boolean;
+  daysCompleted?: number;
   onClick?: () => void;
 }
 
-export function OilCard({ oil, locked = false, onClick }: OilCardProps) {
+export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: OilCardProps) {
+  const progress = Math.min((daysCompleted / RESEARCH_DAYS) * 100, 100);
+  const streakLabel = daysCompleted === 1 ? "день" : daysCompleted < 5 ? "дня" : "дней";
+
   return (
     <div
       className={`glass-card cursor-pointer overflow-hidden transition-all duration-300 ${
@@ -60,6 +67,19 @@ export function OilCard({ oil, locked = false, onClick }: OilCardProps) {
           <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
             {oil.description}
           </p>
+        )}
+
+        {!locked && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Flame className="h-3.5 w-3.5 text-secondary" strokeWidth={1.8} />
+                {daysCompleted} {streakLabel} из {RESEARCH_DAYS}
+              </span>
+              <span className="font-medium text-primary">{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="h-1.5 bg-muted" />
+          </div>
         )}
 
         {locked && (
