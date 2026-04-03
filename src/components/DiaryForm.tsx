@@ -37,6 +37,7 @@ export function DiaryForm({ oilId, date }: DiaryFormProps) {
         oil_id: oilId,
         mood,
         content: content.trim(),
+        ...(date ? { date } : {}),
       });
       if (error) throw error;
     },

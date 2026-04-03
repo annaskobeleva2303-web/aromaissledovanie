@@ -88,7 +88,7 @@ const OilWorkspace = () => {
           </TabsList>
 
           <TabsContent value="diary" className="mt-8">
-            <DiaryForm oilId={oil.id} />
+            <DiaryCalendar oilId={oil.id} />
           </TabsContent>
 
           <TabsContent value="group" className="mt-8">
