@@ -7,6 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const MOOD_RU: Record<string, string> = { calm: "Спокойствие", anxious: "Тревога", joyful: "Радость", sad: "Грусть", energetic: "Энергия", irritated: "Раздражение", reflective: "Задумчивость", grateful: "Благодарность" };
+const ENERGY_RU: Record<string, string> = { support: "Опора", transformation: "Трансформация", release: "Отпускание", expansion: "Расширение", silence: "Тишина" };
+
 function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) {
   const moodCounts: Record<string, number> = {};
   const energyCounts: Record<string, number> = {};
@@ -29,12 +32,12 @@ function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) 
   const topMoods = Object.entries(moodCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([mood, count]) => `${mood} (${Math.round((count / totalMoods) * 100)}%)`);
+    .map(([mood, count]) => `${MOOD_RU[mood] || mood} (${Math.round((count / totalMoods) * 100)}%)`);
 
   const topEnergy = Object.entries(energyCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([tag, count]) => `${tag} (${Math.round((count / totalEnergy) * 100)}%)`);
+    .map(([tag, count]) => `${ENERGY_RU[tag] || tag} (${Math.round((count / totalEnergy) * 100)}%)`);
 
   return { topMoods, topEnergy };
 }
