@@ -149,7 +149,9 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [summaryIndex, setSummaryIndex] = useState(0);
 
   const { data: entryCount = 0 } = useQuery({
     queryKey: ["entries-count", oilId],
