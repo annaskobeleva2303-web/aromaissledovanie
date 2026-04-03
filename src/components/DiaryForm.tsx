@@ -20,6 +20,7 @@ const MOODS = [
 
 interface DiaryFormProps {
   oilId: string;
+  date?: string;
 }
 
 export function DiaryForm({ oilId }: DiaryFormProps) {
