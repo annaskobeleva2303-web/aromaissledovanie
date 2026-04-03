@@ -123,7 +123,7 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full rounded-full py-6 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+              className="w-full rounded-full py-6 text-sm tracking-wide bg-violet-deep text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-deep/30 hover:bg-violet-deep/90"
               size="lg"
               disabled={loading}
             >

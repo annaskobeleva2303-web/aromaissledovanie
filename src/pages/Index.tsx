@@ -49,7 +49,7 @@ const Index = () => {
               </h2>
               {myOils.length === 0 ? (
                 <div className="glass-card p-10 text-center">
-                  <Leaf className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" strokeWidth={1.5} />
+                  <Droplet className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" strokeWidth={1} />
                   <p className="text-sm text-muted-foreground">
                     У вас пока нет доступных масел
                   </p>
