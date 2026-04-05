@@ -757,13 +757,40 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
           )}
 
           {!isLastInteractive && !isInsightStep ? (
-            <Button
-              onClick={goNext}
-              className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
-            >
-              Далее
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <AnimatePresence mode="wait">
+              {isBreathStep && !breathDone ? (
+                <motion.div
+                  key="breath-waiting"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  className="flex-1"
+                >
+                  <Button
+                    disabled
+                    className="w-full rounded-full gap-2 py-5 text-sm tracking-wide opacity-40"
+                  >
+                    Далее
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="next-ready"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="flex-1"
+                >
+                  <Button
+                    onClick={goNext}
+                    className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+                  >
+                    Далее
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           ) : isLastInteractive ? (
             <Button
               onClick={() => saveEntry()}
