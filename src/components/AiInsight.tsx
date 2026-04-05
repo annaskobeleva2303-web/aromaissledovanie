@@ -235,12 +235,18 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     enabled: !!user,
   });
 
-  // Compute top moods and energy tags
+  // Compute top moods, energy tags, and transformation deltas
   const stats = useMemo(() => {
     const moodCounts: Record<string, number> = {};
     const energyCounts: Record<string, number> = {};
     let totalMoods = 0;
     let totalEnergy = 0;
+
+    // Delta tracking
+    const deltas: { date: string; energyDelta: number; moodDelta: number }[] = [];
+    let sumEnergyDelta = 0;
+    let sumMoodDelta = 0;
+    let deltaCount = 0;
 
     for (const e of allEntries) {
       if (e.mood) {
@@ -252,6 +258,19 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
           energyCounts[tag] = (energyCounts[tag] || 0) + 1;
           totalEnergy++;
         }
+      }
+      // Compute deltas for full records
+      if (
+        e.record_type === "full" &&
+        e.energy_before != null && e.energy_after != null &&
+        e.mood_score_before != null && e.mood_score_after != null
+      ) {
+        const eDelta = e.energy_after - e.energy_before;
+        const mDelta = e.mood_score_after - e.mood_score_before;
+        deltas.push({ date: e.date, energyDelta: eDelta, moodDelta: mDelta });
+        sumEnergyDelta += eDelta;
+        sumMoodDelta += mDelta;
+        deltaCount++;
       }
     }
 
@@ -273,7 +292,12 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
         percent: totalEnergy > 0 ? Math.round((count / totalEnergy) * 100) : 0,
       }));
 
-    return { topMoods, topEnergy, totalEntries: allEntries.length };
+    const avgEnergyDelta = deltaCount > 0 ? +(sumEnergyDelta / deltaCount).toFixed(1) : null;
+    const avgMoodDelta = deltaCount > 0 ? +(sumMoodDelta / deltaCount).toFixed(1) : null;
+    // Last 5 deltas for sparkline (chronological)
+    const recentDeltas = deltas.slice(0, 5).reverse();
+
+    return { topMoods, topEnergy, totalEntries: allEntries.length, avgEnergyDelta, avgMoodDelta, deltaCount, recentDeltas };
   }, [allEntries]);
 
   const remaining = Math.max(0, 3 - entryCount);
