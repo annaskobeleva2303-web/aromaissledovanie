@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart, Zap, Smile } from "lucide-react";
+import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart, Zap, Smile, Check } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
