@@ -550,6 +550,116 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
         </div>
       )}
 
+      {/* Transformation Delta Card */}
+      {stats.deltaCount > 0 && stats.avgEnergyDelta !== null && stats.avgMoodDelta !== null && (
+        <div
+          className="relative overflow-hidden rounded-3xl border border-white/25 p-6 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(160,50%,92%,0.5) 0%, hsla(0,0%,100%,0.4) 50%, hsla(35,90%,90%,0.4) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow: "inset 0 1px 0 hsla(0,0%,100%,0.5)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10">
+              <TrendingUp className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />
+            </div>
+            <h3 className="font-serif text-base font-semibold tracking-wide text-foreground">
+              Динамика трансформации
+            </h3>
+          </div>
+
+          {/* Delta Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Energy Delta */}
+            <div className="rounded-2xl border border-white/30 bg-white/40 backdrop-blur-sm p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Zap className="h-3.5 w-3.5 text-amber-500" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-medium">
+                  Энергия
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                {stats.avgEnergyDelta > 0 ? (
+                  <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
+                ) : stats.avgEnergyDelta < 0 ? (
+                  <TrendingDown className="h-4 w-4 text-rose-400 shrink-0" />
+                ) : (
+                  <Minus className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
+                <span className={`text-2xl font-serif font-bold ${
+                  stats.avgEnergyDelta > 0 ? "text-emerald-600" : stats.avgEnergyDelta < 0 ? "text-rose-500" : "text-muted-foreground"
+                }`}>
+                  {stats.avgEnergyDelta > 0 ? "+" : ""}{stats.avgEnergyDelta}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground/60">средняя дельта за сессию</p>
+            </div>
+
+            {/* Mood Delta */}
+            <div className="rounded-2xl border border-white/30 bg-white/40 backdrop-blur-sm p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Smile className="h-3.5 w-3.5 text-primary" strokeWidth={1.5} />
+                <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-medium">
+                  Настроение
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                {stats.avgMoodDelta > 0 ? (
+                  <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
+                ) : stats.avgMoodDelta < 0 ? (
+                  <TrendingDown className="h-4 w-4 text-rose-400 shrink-0" />
+                ) : (
+                  <Minus className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
+                <span className={`text-2xl font-serif font-bold ${
+                  stats.avgMoodDelta > 0 ? "text-emerald-600" : stats.avgMoodDelta < 0 ? "text-rose-500" : "text-muted-foreground"
+                }`}>
+                  {stats.avgMoodDelta > 0 ? "+" : ""}{stats.avgMoodDelta}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground/60">средняя дельта за сессию</p>
+            </div>
+          </div>
+
+          {/* Mini sparkline of recent deltas */}
+          {stats.recentDeltas.length >= 2 && (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-medium">
+                Последние сессии
+              </p>
+              <div className="flex items-end gap-1.5 h-12">
+                {stats.recentDeltas.map((d, i) => {
+                  const maxDelta = Math.max(...stats.recentDeltas.map(r => Math.abs(r.energyDelta)), 1);
+                  const heightPct = Math.max(15, (Math.abs(d.energyDelta) / maxDelta) * 100);
+                  const isPositive = d.energyDelta >= 0;
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div
+                        className={`w-full rounded-lg transition-all duration-500 ${
+                          isPositive
+                            ? "bg-gradient-to-t from-emerald-400/60 to-emerald-300/30"
+                            : "bg-gradient-to-t from-rose-400/60 to-rose-300/30"
+                        }`}
+                        style={{ height: `${heightPct}%`, minHeight: "6px" }}
+                      />
+                      <span className="text-[8px] text-muted-foreground/50">
+                        {d.energyDelta > 0 ? "+" : ""}{d.energyDelta}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <p className="text-[10px] text-muted-foreground/50">
+            На основе {stats.deltaCount} {stats.deltaCount === 1 ? "полной сессии" : stats.deltaCount < 5 ? "полных сессий" : "полных сессий"}
+          </p>
+        </div>
+      )}
+
       {/* Weekly Personal Summary */}
       {canGenerate && (
         <div
