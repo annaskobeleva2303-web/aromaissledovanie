@@ -225,9 +225,10 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("mood, energy_tags")
+        .select("mood, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, date")
         .eq("oil_id", oilId)
-        .eq("user_id", user!.id);
+        .eq("user_id", user!.id)
+        .order("date", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
