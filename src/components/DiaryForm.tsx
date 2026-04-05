@@ -26,10 +26,11 @@ const MOODS = [
 
 type RecordType = "full" | "quick";
 
-// Steps: 0=choose path, 1=before, 2=oil contact, 3=after, 4=free writing, 5=insight
+// Steps: 0=choose path, 1=before, 6=breath, 2=oil contact, 3=after, 4=free writing, 5=insight
 const STEP_TITLES: Record<number, string> = {
   0: "Начнём исследование?",
   1: "Твоё состояние сейчас",
+  6: "Сделай глубокий вдох...",
   2: "Контакт с Даваной",
   3: "Сверь своё состояние",
   4: "Свободный поток",
@@ -39,6 +40,7 @@ const STEP_TITLES: Record<number, string> = {
 const STEP_SUBTITLES: Record<number, string> = {
   0: "Выбери путь",
   1: "Замер ДО",
+  6: "Контакт с Маслом",
   2: "Сенсорика и образы",
   3: "Замер ПОСЛЕ",
   4: "Свободный полёт",
