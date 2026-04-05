@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart, Zap, Smile } from "lucide-react";
+import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart, Zap, Smile, Check } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
@@ -26,10 +26,11 @@ const MOODS = [
 
 type RecordType = "full" | "quick";
 
-// Steps: 0=choose path, 1=before, 2=oil contact, 3=after, 4=free writing, 5=insight
+// Steps: 0=choose path, 1=before, 6=breath, 2=oil contact, 3=after, 4=free writing, 5=insight
 const STEP_TITLES: Record<number, string> = {
   0: "Начнём исследование?",
   1: "Твоё состояние сейчас",
+  6: "Сделай глубокий вдох...",
   2: "Контакт с Даваной",
   3: "Сверь своё состояние",
   4: "Свободный поток",
@@ -39,6 +40,7 @@ const STEP_TITLES: Record<number, string> = {
 const STEP_SUBTITLES: Record<number, string> = {
   0: "Выбери путь",
   1: "Замер ДО",
+  6: "Контакт с Маслом",
   2: "Сенсорика и образы",
   3: "Замер ПОСЛЕ",
   4: "Свободный полёт",
@@ -255,9 +257,36 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
   // Navigation for full vs quick paths
   const getStepSequence = (): number[] => {
-    if (recordType === "full") return [0, 1, 2, 3, 4];
-    return [0, 2, 4]; // quick: skip before/after
+    if (recordType === "full") return [0, 1, 6, 2, 3, 4];
+    return [0, 2, 4]; // quick: skip before/after/breath
   };
+
+  const [breathTimer, setBreathTimer] = useState(10);
+  const [breathDone, setBreathDone] = useState(false);
+  const breathIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startBreathTimer = useCallback(() => {
+    setBreathTimer(10);
+    setBreathDone(false);
+    if (breathIntervalRef.current) clearInterval(breathIntervalRef.current);
+    breathIntervalRef.current = setInterval(() => {
+      setBreathTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(breathIntervalRef.current!);
+          breathIntervalRef.current = null;
+          setBreathDone(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (breathIntervalRef.current) clearInterval(breathIntervalRef.current);
+    };
+  }, []);
 
   const sequence = getStepSequence();
   const currentSeqIndex = sequence.indexOf(step);
@@ -265,7 +294,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const goNext = () => {
     setDirection(1);
     if (currentSeqIndex < sequence.length - 1) {
-      setStep(sequence[currentSeqIndex + 1]);
+      const nextStep = sequence[currentSeqIndex + 1];
+      if (nextStep === 6) startBreathTimer();
+      setStep(nextStep);
     }
   };
 
@@ -368,6 +399,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const canSave = content.trim().length > 0;
   const isLastInteractive = step === 4;
   const isInsightStep = step === 5;
+  const isBreathStep = step === 6;
 
   // Progress dots
   const totalDots = insightText !== null ? sequence.length + 1 : sequence.length;
@@ -515,6 +547,52 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Step 6: Breath pause */}
+            {step === 6 && (
+              <div className="flex flex-col items-center justify-center py-6 gap-6">
+                {/* Pulsing circle with timer */}
+                <motion.div
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative flex items-center justify-center"
+                >
+                  <div
+                    className="w-40 h-40 rounded-full bg-white/30 backdrop-blur-2xl border border-white/25 flex items-center justify-center"
+                    style={{
+                      boxShadow: "0 0 60px 15px hsl(263 72% 52% / 0.12), 0 0 30px 8px hsl(20 95% 73% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.4)",
+                    }}
+                  >
+                    <AnimatePresence mode="wait">
+                      {!breathDone ? (
+                        <motion.span
+                          key="timer"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="font-serif text-5xl font-light text-primary/70"
+                        >
+                          {breathTimer}
+                        </motion.span>
+                      ) : (
+                        <motion.div
+                          key="done"
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                        >
+                          <Check className="h-12 w-12 text-primary/60" strokeWidth={1.5} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+
+                <p className="text-sm text-muted-foreground/70 tracking-wide font-light">
+                  Подыши, это время для тебя.
+                </p>
               </div>
             )}
 
@@ -679,13 +757,40 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
           )}
 
           {!isLastInteractive && !isInsightStep ? (
-            <Button
-              onClick={goNext}
-              className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
-            >
-              Далее
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <AnimatePresence mode="wait">
+              {isBreathStep && !breathDone ? (
+                <motion.div
+                  key="breath-waiting"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  className="flex-1"
+                >
+                  <Button
+                    disabled
+                    className="w-full rounded-full gap-2 py-5 text-sm tracking-wide opacity-40"
+                  >
+                    Далее
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="next-ready"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="flex-1"
+                >
+                  <Button
+                    onClick={goNext}
+                    className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+                  >
+                    Далее
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           ) : isLastInteractive ? (
             <Button
               onClick={() => saveEntry()}
