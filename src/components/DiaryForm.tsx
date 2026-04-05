@@ -549,6 +549,52 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               </div>
             )}
 
+            {/* Step 6: Breath pause */}
+            {step === 6 && (
+              <div className="flex flex-col items-center justify-center py-6 gap-6">
+                {/* Pulsing circle with timer */}
+                <motion.div
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative flex items-center justify-center"
+                >
+                  <div
+                    className="w-40 h-40 rounded-full bg-white/30 backdrop-blur-2xl border border-white/25 flex items-center justify-center"
+                    style={{
+                      boxShadow: "0 0 60px 15px hsl(263 72% 52% / 0.12), 0 0 30px 8px hsl(20 95% 73% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.4)",
+                    }}
+                  >
+                    <AnimatePresence mode="wait">
+                      {!breathDone ? (
+                        <motion.span
+                          key="timer"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="font-serif text-5xl font-light text-primary/70"
+                        >
+                          {breathTimer}
+                        </motion.span>
+                      ) : (
+                        <motion.div
+                          key="done"
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                        >
+                          <Check className="h-12 w-12 text-primary/60" strokeWidth={1.5} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+
+                <p className="text-sm text-muted-foreground/70 tracking-wide font-light">
+                  Подыши, это время для тебя.
+                </p>
+              </div>
+            )}
+
             {/* Step 2: Oil contact */}
             {step === 2 && (
               <div className="glass-card p-6 rounded-[1.75rem] space-y-5">
