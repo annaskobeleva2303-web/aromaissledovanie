@@ -193,7 +193,16 @@ function GlassSlider({
             max={max}
             step={1}
             value={value}
-            onChange={(e) => onChange(Number(e.target.value))}
+            onChange={(e) => {
+              const newVal = Number(e.target.value);
+              if (newVal !== prevValue.current) {
+                prevValue.current = newVal;
+                if (navigator.vibrate) {
+                  navigator.vibrate(8);
+                }
+              }
+              onChange(newVal);
+            }}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
         </div>
