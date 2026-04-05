@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,6 +118,7 @@ function GlassSlider({
   minLabel: string;
   maxLabel: string;
 }) {
+  const prevValue = useRef(value);
   const range = max - min;
   const pct = ((value - min) / range) * 100;
   const hasZero = min < 0 && max > 0;
@@ -192,7 +193,16 @@ function GlassSlider({
             max={max}
             step={1}
             value={value}
-            onChange={(e) => onChange(Number(e.target.value))}
+            onChange={(e) => {
+              const newVal = Number(e.target.value);
+              if (newVal !== prevValue.current) {
+                prevValue.current = newVal;
+                if (navigator.vibrate) {
+                  navigator.vibrate(8);
+                }
+              }
+              onChange(newVal);
+            }}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
         </div>
