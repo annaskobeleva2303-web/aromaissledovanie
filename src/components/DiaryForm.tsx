@@ -294,7 +294,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const goNext = () => {
     setDirection(1);
     if (currentSeqIndex < sequence.length - 1) {
-      setStep(sequence[currentSeqIndex + 1]);
+      const nextStep = sequence[currentSeqIndex + 1];
+      if (nextStep === 6) startBreathTimer();
+      setStep(nextStep);
     }
   };
 
