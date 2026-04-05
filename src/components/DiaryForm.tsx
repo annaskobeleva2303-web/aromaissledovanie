@@ -399,6 +399,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const canSave = content.trim().length > 0;
   const isLastInteractive = step === 4;
   const isInsightStep = step === 5;
+  const isBreathStep = step === 6;
 
   // Progress dots
   const totalDots = insightText !== null ? sequence.length + 1 : sequence.length;
