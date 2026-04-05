@@ -257,9 +257,36 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
   // Navigation for full vs quick paths
   const getStepSequence = (): number[] => {
-    if (recordType === "full") return [0, 1, 2, 3, 4];
-    return [0, 2, 4]; // quick: skip before/after
+    if (recordType === "full") return [0, 1, 6, 2, 3, 4];
+    return [0, 2, 4]; // quick: skip before/after/breath
   };
+
+  const [breathTimer, setBreathTimer] = useState(10);
+  const [breathDone, setBreathDone] = useState(false);
+  const breathIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startBreathTimer = useCallback(() => {
+    setBreathTimer(10);
+    setBreathDone(false);
+    if (breathIntervalRef.current) clearInterval(breathIntervalRef.current);
+    breathIntervalRef.current = setInterval(() => {
+      setBreathTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(breathIntervalRef.current!);
+          breathIntervalRef.current = null;
+          setBreathDone(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (breathIntervalRef.current) clearInterval(breathIntervalRef.current);
+    };
+  }, []);
 
   const sequence = getStepSequence();
   const currentSeqIndex = sequence.indexOf(step);
