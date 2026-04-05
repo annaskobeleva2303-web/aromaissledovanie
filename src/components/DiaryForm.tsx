@@ -118,6 +118,7 @@ function GlassSlider({
   minLabel: string;
   maxLabel: string;
 }) {
+  const prevValue = useRef(value);
   const range = max - min;
   const pct = ((value - min) / range) * 100;
   const hasZero = min < 0 && max > 0;
