@@ -70,6 +70,7 @@ const OilWorkspace = () => {
               <p className="truncate text-xs tracking-wide text-muted-foreground">{oil.focus}</p>
             )}
           </div>
+          <OilInfoSheet oil={oil} />
           <NotificationCenter />
         </div>
       </header>
