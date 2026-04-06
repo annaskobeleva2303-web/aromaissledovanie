@@ -245,31 +245,40 @@ export type Database = {
       }
       oils: {
         Row: {
+          cautions: string | null
           created_at: string
           description: string | null
           focus: string | null
           id: string
           image_url: string | null
           is_active: boolean
+          properties: string | null
           title: string
+          usage: string | null
         }
         Insert: {
+          cautions?: string | null
           created_at?: string
           description?: string | null
           focus?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          properties?: string | null
           title: string
+          usage?: string | null
         }
         Update: {
+          cautions?: string | null
           created_at?: string
           description?: string | null
           focus?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          properties?: string | null
           title?: string
+          usage?: string | null
         }
         Relationships: []
       }
