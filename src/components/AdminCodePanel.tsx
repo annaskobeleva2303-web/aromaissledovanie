@@ -3,7 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOils } from "@/hooks/useOils";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -28,6 +31,152 @@ function generateCode(): string {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return `${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
+function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
+  const queryClient = useQueryClient();
+  const [selectedOilId, setSelectedOilId] = useState<string>("");
+
+  const { data: oilData, isLoading } = useQuery({
+    queryKey: ["oil_edit", selectedOilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oils")
+        .select("*")
+        .eq("id", selectedOilId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedOilId,
+  });
+
+  const [form, setForm] = useState({
+    description: "",
+    properties: "",
+    usage: "",
+    cautions: "",
+    image_url: "",
+  });
+
+  // Sync form when oil loads
+  const [lastLoadedId, setLastLoadedId] = useState("");
+  if (oilData && oilData.id !== lastLoadedId) {
+    setLastLoadedId(oilData.id);
+    setForm({
+      description: (oilData as any).description || "",
+      properties: (oilData as any).properties || "",
+      usage: (oilData as any).usage || "",
+      cautions: (oilData as any).cautions || "",
+      image_url: (oilData as any).image_url || "",
+    });
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("oils")
+        .update({
+          description: form.description || null,
+          image_url: form.image_url || null,
+          ...({ properties: form.properties || null, usage: form.usage || null, cautions: form.cautions || null } as any),
+        })
+        .eq("id", selectedOilId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["oil_edit", selectedOilId] });
+      queryClient.invalidateQueries({ queryKey: ["oil"] });
+      queryClient.invalidateQueries({ queryKey: ["oils"] });
+      toast.success("Изменения сохранены!");
+    },
+    onError: () => toast.error("Ошибка сохранения"),
+  });
+
+  return (
+    <div className="space-y-4">
+      <Select value={selectedOilId} onValueChange={(v) => { setSelectedOilId(v); setLastLoadedId(""); }}>
+        <SelectTrigger className="glass-card border-white/30">
+          <SelectValue placeholder="Выберите масло" />
+        </SelectTrigger>
+        <SelectContent>
+          {allOils.map((oil) => (
+            <SelectItem key={oil.id} value={oil.id}>{oil.title}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {isLoading && selectedOilId && (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
+      {oilData && (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-muted-foreground">Изображение (URL)</Label>
+            <Input
+              value={form.image_url}
+              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+              placeholder="https://..."
+              className="mt-1 bg-white/40 border-white/30 text-sm"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Описание</Label>
+            <Textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Свойства</Label>
+            <Textarea
+              value={form.properties}
+              onChange={(e) => setForm({ ...form, properties: e.target.value })}
+              rows={3}
+              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Способы применения</Label>
+            <Textarea
+              value={form.usage}
+              onChange={(e) => setForm({ ...form, usage: e.target.value })}
+              rows={3}
+              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Противопоказания</Label>
+            <Textarea
+              value={form.cautions}
+              onChange={(e) => setForm({ ...form, cautions: e.target.value })}
+              rows={2}
+              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
+            />
+          </div>
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="w-full gap-2 rounded-xl bg-primary/90 hover:bg-primary"
+          >
+            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Сохранить изменения
+          </Button>
+        </div>
+      )}
+
+      {!selectedOilId && (
+        <p className="text-center text-sm text-muted-foreground py-4">
+          Выберите масло для редактирования
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function AdminCodePanel() {
@@ -137,12 +286,15 @@ export function AdminCodePanel() {
         </DialogHeader>
 
         <Tabs defaultValue="codes" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 bg-white/30">
-            <TabsTrigger value="codes" className="gap-1.5 text-xs">
+          <TabsList className="grid w-full grid-cols-3 bg-white/30">
+            <TabsTrigger value="codes" className="gap-1 text-[11px]">
               <KeyRound className="h-3.5 w-3.5" /> Коды
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5 text-xs">
+            <TabsTrigger value="users" className="gap-1 text-[11px]">
               <Users className="h-3.5 w-3.5" /> Участники
+            </TabsTrigger>
+            <TabsTrigger value="oils" className="gap-1 text-[11px]">
+              <BookOpen className="h-3.5 w-3.5" /> Масла
             </TabsTrigger>
           </TabsList>
 
@@ -285,6 +437,11 @@ export function AdminCodePanel() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* Oils Editor Tab */}
+          <TabsContent value="oils" className="overflow-y-auto flex-1 pr-1 mt-4">
+            <OilEditor allOils={allOils} />
           </TabsContent>
         </Tabs>
 
