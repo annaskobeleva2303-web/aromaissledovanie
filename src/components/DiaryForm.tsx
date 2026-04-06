@@ -6,9 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, ArrowRight, ArrowLeft, Sparkles, Heart, Zap, Smile, Check } from "lucide-react";
+import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
@@ -24,52 +23,13 @@ const MOODS = [
   { value: "grateful", label: "Благодарность", emoji: "🙏" },
 ];
 
-type RecordType = "full" | "quick";
-
-// Steps: 0=choose path, 1=before, 6=breath, 2=oil contact, 3=after, 4=free writing, 5=insight
-const STEP_TITLES: Record<number, string> = {
-  0: "Начнём исследование?",
-  1: "Твоё состояние сейчас",
-  6: "Сделай глубокий вдох...",
-  2: "Контакт с Даваной",
-  3: "Сверь своё состояние",
-  4: "Свободный поток",
-  5: "Твой инсайт от Даваны ✨",
-};
-
-const STEP_SUBTITLES: Record<number, string> = {
-  0: "Выбери путь",
-  1: "Замер ДО",
-  6: "Контакт с Маслом",
-  2: "Сенсорика и образы",
-  3: "Замер ПОСЛЕ",
-  4: "Свободный полёт",
-  5: "Послание Даваны",
-};
+type SessionPhase = "hub" | "before" | "contact" | "breath" | "sensory" | "after" | "writing" | "insight";
 
 interface DiaryFormProps {
   oilId: string;
   date?: string;
   onSaved?: () => void;
 }
-
-const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 40 : -40,
-    opacity: 0,
-    scale: 0.98,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    scale: 1,
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? -40 : 40,
-    opacity: 0,
-    scale: 0.98,
-  }),
-};
 
 function ChipButton({
   selected,
@@ -133,9 +93,7 @@ function GlassSlider({
         <span className="text-sm font-medium text-foreground/80">{label}</span>
       </div>
 
-      {/* Slider container */}
       <div className="relative pt-8 pb-1 px-1">
-        {/* Floating value bubble */}
         <motion.div
           className="absolute -top-0 pointer-events-none"
           style={{ left: `${pct}%` }}
@@ -149,10 +107,8 @@ function GlassSlider({
           </div>
         </motion.div>
 
-        {/* Track background */}
         <div className="relative h-8 flex items-center">
           <div className="w-full h-[3px] rounded-full bg-white/20 relative overflow-visible">
-            {/* Filled range with glow gradient */}
             <motion.div
               className="absolute top-0 left-0 h-full rounded-full"
               style={{
@@ -163,8 +119,6 @@ function GlassSlider({
               animate={{ width: `${pct}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 28 }}
             />
-
-            {/* Zero center mark for mood slider */}
             {hasZero && (
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-[1.5px] h-3 rounded-full bg-foreground/15"
@@ -173,7 +127,6 @@ function GlassSlider({
             )}
           </div>
 
-          {/* Custom pearl thumb */}
           <motion.div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
             style={{ left: `${pct}%` }}
@@ -188,7 +141,6 @@ function GlassSlider({
             />
           </motion.div>
 
-          {/* Invisible native slider for interaction */}
           <input
             type="range"
             min={min}
@@ -218,19 +170,89 @@ function GlassSlider({
   );
 }
 
+// --- Session Hub Card ---
+function SessionCard({
+  number,
+  title,
+  subtitle,
+  emoji,
+  completed,
+  locked,
+  onClick,
+}: {
+  number: number;
+  title: string;
+  subtitle: string;
+  emoji: string;
+  completed: boolean;
+  locked: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      whileHover={locked ? {} : { scale: 1.01 }}
+      whileTap={locked ? {} : { scale: 0.98 }}
+      onClick={locked ? undefined : onClick}
+      disabled={locked}
+      className={`relative w-full text-left rounded-[1.75rem] p-5 backdrop-blur-2xl border transition-all duration-300 ${
+        locked
+          ? "opacity-40 cursor-not-allowed border-white/10 bg-white/10"
+          : completed
+            ? "border-transparent bg-white/40 shadow-[0_0_20px_6px_rgba(255,180,80,0.20)]"
+            : "border-white/20 bg-white/25 hover:bg-white/35 hover:shadow-lg hover:shadow-primary/10"
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        <div className="relative flex-shrink-0">
+          <span className="text-2xl">{emoji}</span>
+          {completed && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary/80 flex items-center justify-center shadow-md"
+            >
+              <Check className="h-3 w-3 text-white" strokeWidth={3} />
+            </motion.div>
+          )}
+          {locked && (
+            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-foreground/20 flex items-center justify-center">
+              <Lock className="h-3 w-3 text-foreground/40" strokeWidth={2} />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-primary/50 font-medium">
+              Этап {number}
+            </span>
+          </div>
+          <p className="font-medium text-foreground/90 text-sm mt-0.5">{title}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+      </div>
+    </motion.button>
+  );
+}
+
 export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [recordType, setRecordType] = useState<RecordType>("full");
+
+  // Session Hub state
+  const [phase, setPhase] = useState<SessionPhase>("hub");
+  const [beforeDone, setBeforeDone] = useState(false);
+  const [contactDone, setContactDone] = useState(false);
+  const [afterDone, setAfterDone] = useState(false);
+  const [writingDone, setWritingDone] = useState(false);
+  const [skipBefore, setSkipBefore] = useState(false);
 
   // Before state
   const [energyBefore, setEnergyBefore] = useState(5);
   const [moodScoreBefore, setMoodScoreBefore] = useState(0);
   const [moodsBefore, setMoodsBefore] = useState<string[]>([]);
 
-  // Oil contact
+  // Oil contact (sensory)
   const [oilBodyLocation, setOilBodyLocation] = useState("");
   const [oilSensation, setOilSensation] = useState("");
   const [oilVisualImage, setOilVisualImage] = useState("");
@@ -245,6 +267,11 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [isPublic, setIsPublic] = useState(false);
   const [insightText, setInsightText] = useState<string | null>(null);
 
+  // Breath timer
+  const [breathTimer, setBreathTimer] = useState(10);
+  const [breathDone, setBreathDone] = useState(false);
+  const breathIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const toggleMood = (list: string[], setter: (v: string[]) => void, value: string) => {
     setter(
       list.includes(value)
@@ -254,16 +281,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
           : [list[1], value]
     );
   };
-
-  // Navigation for full vs quick paths
-  const getStepSequence = (): number[] => {
-    if (recordType === "full") return [0, 1, 6, 2, 3, 4];
-    return [0, 2, 4]; // quick: skip before/after/breath
-  };
-
-  const [breathTimer, setBreathTimer] = useState(10);
-  const [breathDone, setBreathDone] = useState(false);
-  const breathIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startBreathTimer = useCallback(() => {
     setBreathTimer(10);
@@ -288,38 +305,35 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     };
   }, []);
 
-  const sequence = getStepSequence();
-  const currentSeqIndex = sequence.indexOf(step);
-
-  const goNext = () => {
-    setDirection(1);
-    if (currentSeqIndex < sequence.length - 1) {
-      const nextStep = sequence[currentSeqIndex + 1];
-      if (nextStep === 6) startBreathTimer();
-      setStep(nextStep);
-    }
+  // When entering contact phase, start with breath
+  const enterContact = () => {
+    startBreathTimer();
+    setPhase("breath");
   };
 
-  const goBack = () => {
-    setDirection(-1);
-    if (currentSeqIndex > 0) {
-      setStep(sequence[currentSeqIndex - 1]);
-    }
+  const finishBreath = () => {
+    setPhase("sensory");
   };
 
-  const choosePath = (type: RecordType) => {
-    setRecordType(type);
-    setDirection(1);
-    if (type === "full") {
-      setStep(1);
-    } else {
-      setStep(2);
-    }
+  const completePhase = (p: SessionPhase) => {
+    if (p === "before") setBeforeDone(true);
+    if (p === "sensory") setContactDone(true);
+    if (p === "after") setAfterDone(true);
+    if (p === "writing") setWritingDone(true);
+    setPhase("hub");
   };
+
+  const recordType = beforeDone ? "full" : "quick";
+
+  const canFinishSession = contactDone && writingDone;
 
   const finishSession = () => {
-    setStep(0);
-    setRecordType("full");
+    setPhase("hub");
+    setBeforeDone(false);
+    setContactDone(false);
+    setAfterDone(false);
+    setWritingDone(false);
+    setSkipBefore(false);
     setEnergyBefore(5);
     setMoodScoreBefore(0);
     setMoodsBefore([]);
@@ -385,8 +399,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       toast.success("Запись сохранена ✨");
       if (insight) {
         setInsightText(insight);
-        setDirection(1);
-        setStep(5);
+        setPhase("insight");
       } else {
         finishSession();
       }
@@ -395,15 +408,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       toast.error("Не удалось сохранить запись");
     },
   });
-
-  const canSave = content.trim().length > 0;
-  const isLastInteractive = step === 4;
-  const isInsightStep = step === 5;
-  const isBreathStep = step === 6;
-
-  // Progress dots
-  const totalDots = insightText !== null ? sequence.length + 1 : sequence.length;
-  const dotIndex = isInsightStep ? sequence.length : currentSeqIndex;
 
   // Alchemy loading overlay
   if (isPending) {
@@ -432,385 +436,334 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
   return (
     <div className="space-y-6 relative">
-      {/* Progress indicator */}
-      {step !== 0 && (
-        <div className="flex items-center justify-center gap-2">
-          {Array.from({ length: totalDots }).map((_, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  i === dotIndex
-                    ? "w-8 bg-primary shadow-md shadow-primary/30"
-                    : i < dotIndex
-                      ? "w-2 bg-primary/50"
-                      : "w-2 bg-foreground/10"
-                }`}
+      <AnimatePresence mode="wait">
+        {/* ===== SESSION HUB ===== */}
+        {phase === "hub" && (
+          <motion.div
+            key="hub"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="space-y-4"
+          >
+            <div className="text-center mb-2">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">
+                Сессия
+              </p>
+              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">
+                Твоё пространство исследования
+              </h3>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <SessionCard
+                number={1}
+                title="Точка входа"
+                subtitle="Замерь энергию и настроение до масла"
+                emoji="📊"
+                completed={beforeDone}
+                locked={false}
+                onClick={() => setPhase("before")}
+              />
+              <SessionCard
+                number={2}
+                title="Контакт с Даваной"
+                subtitle="Дыхание, сенсорика и образы"
+                emoji="🌿"
+                completed={contactDone}
+                locked={false}
+                onClick={enterContact}
+              />
+              <SessionCard
+                number={3}
+                title="Интеграция"
+                subtitle="Замер После и свободный дневник"
+                emoji="✨"
+                completed={afterDone && writingDone}
+                locked={!contactDone}
+                onClick={() => {
+                  if (beforeDone && !afterDone) {
+                    setPhase("after");
+                  } else {
+                    setPhase("writing");
+                  }
+                }}
               />
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* Step label */}
-      <div className="text-center">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">
-          {STEP_SUBTITLES[step]}
-        </p>
-        <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">
-          {STEP_TITLES[step]}
-        </h3>
-      </div>
-
-      {/* Step content */}
-      <div className="relative min-h-[280px]">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={step}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            {/* Step 0: Choose path */}
-            {step === 0 && (
-              <div className="flex flex-col gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => choosePath("full")}
-                  className="glass-card p-6 rounded-[1.75rem] text-left space-y-2 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">📊</span>
-                    <span className="font-medium text-foreground/90">Зафиксировать состояние До</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground pl-11">
-                    Замерь энергию и настроение до и после масла — увидишь трансформацию
-                  </p>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => choosePath("quick")}
-                  className="glass-card p-6 rounded-[1.75rem] text-left space-y-2 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">✨</span>
-                    <span className="font-medium text-foreground/90">Сразу к маслу</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground pl-11">
-                    Погрузись в сенсорику и образы без замеров
-                  </p>
-                </motion.button>
-              </div>
-            )}
-
-            {/* Step 1: Before state */}
-            {step === 1 && (
-              <div className="glass-card p-6 rounded-[1.75rem] space-y-6">
-                <GlassSlider
-                  label="Энергия"
-                  icon={Zap}
-                  value={energyBefore}
-                  onChange={setEnergyBefore}
-                  min={0}
-                  max={10}
-                  minLabel="Обесточена"
-                  maxLabel="Вибрирую на максимум"
-                />
-                <GlassSlider
-                  label="Настроение"
-                  icon={Smile}
-                  value={moodScoreBefore}
-                  onChange={setMoodScoreBefore}
-                  min={-5}
-                  max={5}
-                  minLabel="Подавленность"
-                  maxLabel="Эйфория"
-                />
-                <div>
-                  <p className="mb-3 text-xs text-muted-foreground tracking-wide">
-                    Выбери 1–2 состояния
-                  </p>
-                  <div className="flex flex-wrap gap-2.5">
-                    {MOODS.map((m) => (
-                      <ChipButton
-                        key={m.value}
-                        selected={moodsBefore.includes(m.value)}
-                        onClick={() => toggleMood(moodsBefore, setMoodsBefore, m.value)}
-                        emoji={m.emoji}
-                        label={m.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 6: Breath pause */}
-            {step === 6 && (
-              <div className="flex flex-col items-center justify-center py-6 gap-6">
-                {/* Pulsing circle with timer */}
-                <motion.div
-                  animate={{ scale: [1, 1.08, 1] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative flex items-center justify-center"
-                >
-                  <div
-                    className="w-40 h-40 rounded-full bg-white/30 backdrop-blur-2xl border border-white/25 flex items-center justify-center"
-                    style={{
-                      boxShadow: "0 0 60px 15px hsl(263 72% 52% / 0.12), 0 0 30px 8px hsl(20 95% 73% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.4)",
-                    }}
-                  >
-                    <AnimatePresence mode="wait">
-                      {!breathDone ? (
-                        <motion.span
-                          key="timer"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="font-serif text-5xl font-light text-primary/70"
-                        >
-                          {breathTimer}
-                        </motion.span>
-                      ) : (
-                        <motion.div
-                          key="done"
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                        >
-                          <Check className="h-12 w-12 text-primary/60" strokeWidth={1.5} />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-
-                <p className="text-sm text-muted-foreground/70 tracking-wide font-light">
-                  Подыши, это время для тебя.
-                </p>
-              </div>
-            )}
-
-            {/* Step 2: Oil contact */}
-            {step === 2 && (
-              <div className="glass-card p-6 rounded-[1.75rem] space-y-5">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">
-                    🫶 Где в теле ощущается масло?
-                  </label>
-                  <Input
-                    value={oilBodyLocation}
-                    onChange={(e) => setOilBodyLocation(e.target.value)}
-                    placeholder="Грудь, горло, живот..."
-                    className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">
-                    ✋ Как оно ощущается?
-                  </label>
-                  <Input
-                    value={oilSensation}
-                    onChange={(e) => setOilSensation(e.target.value)}
-                    placeholder="Тепло, покалывание, давление..."
-                    className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">
-                    🎨 Какой образ или картинка всплывает?
-                  </label>
-                  <Input
-                    value={oilVisualImage}
-                    onChange={(e) => setOilVisualImage(e.target.value)}
-                    placeholder="Лес, океан, что-то абстрактное..."
-                    className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: After state */}
-            {step === 3 && (
-              <div className="glass-card p-6 rounded-[1.75rem] space-y-6">
-                <GlassSlider
-                  label="Энергия"
-                  icon={Zap}
-                  value={energyAfter}
-                  onChange={setEnergyAfter}
-                  min={0}
-                  max={10}
-                  minLabel="Обесточена"
-                  maxLabel="Вибрирую на максимум"
-                />
-                <GlassSlider
-                  label="Настроение"
-                  icon={Smile}
-                  value={moodScoreAfter}
-                  onChange={setMoodScoreAfter}
-                  min={-5}
-                  max={5}
-                  minLabel="Подавленность"
-                  maxLabel="Эйфория"
-                />
-                <div>
-                  <p className="mb-3 text-xs text-muted-foreground tracking-wide">
-                    Выбери 1–2 состояния
-                  </p>
-                  <div className="flex flex-wrap gap-2.5">
-                    {MOODS.map((m) => (
-                      <ChipButton
-                        key={m.value}
-                        selected={moodsAfter.includes(m.value)}
-                        onClick={() => toggleMood(moodsAfter, setMoodsAfter, m.value)}
-                        emoji={m.emoji}
-                        label={m.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Free writing */}
-            {step === 4 && (
-              <div className="space-y-5">
-                <div className="glass-card p-5 rounded-[1.75rem]">
-                  <Textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Просто дыши и позволь словам литься. Что масло открывает тебе сегодня?"
-                    className="min-h-[200px] resize-none rounded-2xl border-0 bg-transparent px-4 py-3 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                </div>
-
-                <div className="glass-card p-4 rounded-[1.75rem]">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
-                      <Label
-                        htmlFor="is-public"
-                        className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer"
-                      >
-                        Поделиться анонимно
-                      </Label>
-                    </div>
-                    <Switch
-                      id="is-public"
-                      checked={isPublic}
-                      onCheckedChange={setIsPublic}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Insight reveal */}
-            {step === 5 && insightText && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="space-y-5"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Button
+                onClick={() => saveEntry()}
+                disabled={!canFinishSession || !content.trim()}
+                className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20 mt-2"
               >
-                <div className="relative overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/50 p-7 shadow-xl shadow-primary/5 backdrop-blur-2xl">
-                  <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
-                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
+                <Sparkles className="h-4 w-4" />
+                Завершить сессию и получить Инсайт
+              </Button>
+              {!canFinishSession && (
+                <p className="text-center text-[10px] text-muted-foreground/60 mt-2 tracking-wide">
+                  Пройди Контакт с Даваной и напиши в дневник
+                </p>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
 
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.8 }}
-                    className="relative"
-                  >
-                    <Sparkles className="mx-auto mb-4 h-6 w-6 text-primary/60" />
-                    <div className="max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
-                      <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/85 font-light">
-                        {insightText}
-                      </p>
-                    </div>
-                  </motion.div>
+        {/* ===== PHASE: BEFORE ===== */}
+        {phase === "before" && (
+          <PhaseWrapper
+            key="before"
+            title="Твоё состояние сейчас"
+            subtitle="Замер ДО"
+            onBack={() => setPhase("hub")}
+            onComplete={() => completePhase("before")}
+            completeLabel="Завершить этап"
+          >
+            <div className="glass-card p-6 rounded-[1.75rem] space-y-6">
+              <GlassSlider label="Энергия" icon={Zap} value={energyBefore} onChange={setEnergyBefore} min={0} max={10} minLabel="Обесточена" maxLabel="Вибрирую на максимум" />
+              <GlassSlider label="Настроение" icon={Smile} value={moodScoreBefore} onChange={setMoodScoreBefore} min={-5} max={5} minLabel="Подавленность" maxLabel="Эйфория" />
+              <div>
+                <p className="mb-3 text-xs text-muted-foreground tracking-wide">Выбери 1–2 состояния</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {MOODS.map((m) => (
+                    <ChipButton key={m.value} selected={moodsBefore.includes(m.value)} onClick={() => toggleMood(moodsBefore, setMoodsBefore, m.value)} emoji={m.emoji} label={m.label} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </PhaseWrapper>
+        )}
+
+        {/* ===== PHASE: BREATH ===== */}
+        {phase === "breath" && (
+          <PhaseWrapper
+            key="breath"
+            title="Сделай глубокий вдох..."
+            subtitle="Контакт с Маслом"
+            onBack={() => setPhase("hub")}
+            onComplete={finishBreath}
+            completeLabel="Далее"
+            disableComplete={!breathDone}
+          >
+            <div className="flex flex-col items-center justify-center py-6 gap-6">
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="relative flex items-center justify-center"
+              >
+                <div
+                  className="w-40 h-40 rounded-full bg-white/30 backdrop-blur-2xl border border-white/25 flex items-center justify-center"
+                  style={{
+                    boxShadow: "0 0 60px 15px hsl(263 72% 52% / 0.12), 0 0 30px 8px hsl(20 95% 73% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.4)",
+                  }}
+                >
+                  <AnimatePresence mode="wait">
+                    {!breathDone ? (
+                      <motion.span key="timer" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="font-serif text-5xl font-light text-primary/70">
+                        {breathTimer}
+                      </motion.span>
+                    ) : (
+                      <motion.div key="done" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
+                        <Check className="h-12 w-12 text-primary/60" strokeWidth={1.5} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </motion.div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+              <p className="text-sm text-muted-foreground/70 tracking-wide font-light">
+                Подыши, это время для тебя.
+              </p>
+            </div>
+          </PhaseWrapper>
+        )}
 
-      {/* Navigation */}
-      {step !== 0 && (
-        <div className="flex gap-3">
-          {!isInsightStep && currentSeqIndex > 0 && (
-            <Button
-              variant="ghost"
-              onClick={goBack}
-              className="rounded-full gap-2 py-5 text-sm text-muted-foreground transition-all duration-300 hover:-translate-y-0.5"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Назад
-            </Button>
-          )}
+        {/* ===== PHASE: SENSORY ===== */}
+        {phase === "sensory" && (
+          <PhaseWrapper
+            key="sensory"
+            title="Контакт с Даваной"
+            subtitle="Сенсорика и образы"
+            onBack={() => setPhase("hub")}
+            onComplete={() => completePhase("sensory")}
+            completeLabel="Завершить этап"
+          >
+            <div className="glass-card p-6 rounded-[1.75rem] space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">🫶 Где в теле ощущается масло?</label>
+                <Input value={oilBodyLocation} onChange={(e) => setOilBodyLocation(e.target.value)} placeholder="Грудь, горло, живот..." className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">✋ Как оно ощущается?</label>
+                <Input value={oilSensation} onChange={(e) => setOilSensation(e.target.value)} placeholder="Тепло, покалывание, давление..." className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80">🎨 Какой образ или картинка всплывает?</label>
+                <Input value={oilVisualImage} onChange={(e) => setOilVisualImage(e.target.value)} placeholder="Лес, океан, что-то абстрактное..." className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30" />
+              </div>
+            </div>
+          </PhaseWrapper>
+        )}
 
-          {!isLastInteractive && !isInsightStep ? (
-            <AnimatePresence mode="wait">
-              {isBreathStep && !breathDone ? (
-                <motion.div
-                  key="breath-waiting"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.5 }}
-                  className="flex-1"
-                >
-                  <Button
-                    disabled
-                    className="w-full rounded-full gap-2 py-5 text-sm tracking-wide opacity-40"
-                  >
-                    Далее
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="next-ready"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="flex-1"
-                >
-                  <Button
-                    onClick={goNext}
-                    className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
-                  >
-                    Далее
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          ) : isLastInteractive ? (
-            <Button
-              onClick={() => saveEntry()}
-              disabled={!canSave || isPending}
-              className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
-            >
-              <Sparkles className="h-4 w-4" />
-              Алхимия инсайта
-            </Button>
-          ) : (
+        {/* ===== PHASE: AFTER ===== */}
+        {phase === "after" && (
+          <PhaseWrapper
+            key="after"
+            title="Сверь своё состояние"
+            subtitle="Замер ПОСЛЕ"
+            onBack={() => setPhase("hub")}
+            onComplete={() => {
+              completePhase("after");
+              if (!writingDone) {
+                setPhase("writing");
+              }
+            }}
+            completeLabel={writingDone ? "Завершить этап" : "Далее — Дневник"}
+          >
+            <div className="glass-card p-6 rounded-[1.75rem] space-y-6">
+              <GlassSlider label="Энергия" icon={Zap} value={energyAfter} onChange={setEnergyAfter} min={0} max={10} minLabel="Обесточена" maxLabel="Вибрирую на максимум" />
+              <GlassSlider label="Настроение" icon={Smile} value={moodScoreAfter} onChange={setMoodScoreAfter} min={-5} max={5} minLabel="Подавленность" maxLabel="Эйфория" />
+              <div>
+                <p className="mb-3 text-xs text-muted-foreground tracking-wide">Выбери 1–2 состояния</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {MOODS.map((m) => (
+                    <ChipButton key={m.value} selected={moodsAfter.includes(m.value)} onClick={() => toggleMood(moodsAfter, setMoodsAfter, m.value)} emoji={m.emoji} label={m.label} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </PhaseWrapper>
+        )}
+
+        {/* ===== PHASE: WRITING ===== */}
+        {phase === "writing" && (
+          <PhaseWrapper
+            key="writing"
+            title="Свободный поток"
+            subtitle="Свободный полёт"
+            onBack={() => setPhase("hub")}
+            onComplete={() => completePhase("writing")}
+            completeLabel="Завершить этап"
+            disableComplete={!content.trim()}
+          >
+            <div className="space-y-5">
+              <div className="glass-card p-5 rounded-[1.75rem]">
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Просто дыши и позволь словам литься. Что масло открывает тебе сегодня?"
+                  className="min-h-[200px] resize-none rounded-2xl border-0 bg-transparent px-4 py-3 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <div className="glass-card p-4 rounded-[1.75rem]">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
+                    <Label htmlFor="is-public" className="text-sm font-medium tracking-wide text-foreground/80 cursor-pointer">
+                      Поделиться анонимно
+                    </Label>
+                  </div>
+                  <Switch id="is-public" checked={isPublic} onCheckedChange={setIsPublic} />
+                </div>
+              </div>
+            </div>
+          </PhaseWrapper>
+        )}
+
+        {/* ===== PHASE: INSIGHT ===== */}
+        {phase === "insight" && insightText && (
+          <motion.div
+            key="insight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="space-y-5"
+          >
+            <div className="text-center">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">Послание Даваны</p>
+              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">Твой инсайт от Даваны ✨</h3>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/50 p-7 shadow-xl shadow-primary/5 backdrop-blur-2xl">
+              <div className="pointer-events-none absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }} className="relative">
+                <Sparkles className="mx-auto mb-4 h-6 w-6 text-primary/60" />
+                <div className="max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/85 font-light">{insightText}</p>
+                </div>
+              </motion.div>
+            </div>
+
             <Button
               onClick={finishSession}
-              className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+              className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
             >
               <Heart className="h-4 w-4" />
               Благодарю
             </Button>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// --- Reusable phase wrapper with header + nav ---
+function PhaseWrapper({
+  title,
+  subtitle,
+  onBack,
+  onComplete,
+  completeLabel,
+  disableComplete,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  onBack: () => void;
+  onComplete: () => void;
+  completeLabel: string;
+  disableComplete?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="space-y-5"
+    >
+      <div className="text-center">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">{subtitle}</p>
+        <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">{title}</h3>
+      </div>
+
+      {children}
+
+      <div className="flex gap-3">
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="rounded-full gap-2 py-5 text-sm text-muted-foreground transition-all duration-300 hover:-translate-y-0.5"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Назад
+        </Button>
+        <Button
+          onClick={onComplete}
+          disabled={disableComplete}
+          className="flex-1 rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20"
+        >
+          {completeLabel}
+        </Button>
+      </div>
+    </motion.div>
   );
 }
