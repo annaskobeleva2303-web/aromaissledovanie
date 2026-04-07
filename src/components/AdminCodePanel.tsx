@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X } from "lucide-react";
+import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -31,6 +31,49 @@ function generateCode(): string {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return `${code.slice(0, 4)}-${code.slice(4)}`;
+}
+
+function CreateOilForm({ onCreated }: { onCreated: () => void }) {
+  const [title, setTitle] = useState("");
+  const [focus, setFocus] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const handleCreate = async () => {
+    if (!title.trim()) { toast.error("Введите название масла"); return; }
+    setCreating(true);
+    try {
+      const { error } = await supabase.from("oils").insert({ title: title.trim(), focus: focus.trim() || null });
+      if (error) throw error;
+      toast.success(`Масло "${title.trim()}" создано!`);
+      setTitle("");
+      setFocus("");
+      onCreated();
+    } catch (err: any) {
+      toast.error("Ошибка: " + err.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/20 p-3">
+      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+        <Plus className="h-3.5 w-3.5" /> Новое масло
+      </h4>
+      <div>
+        <Label className="text-xs text-muted-foreground">Название *</Label>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например: Лаванда" className="mt-1 bg-white/40 border-white/30 text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs text-muted-foreground">Фокус исследования</Label>
+        <Input value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="Краткое описание фокуса" className="mt-1 bg-white/40 border-white/30 text-sm" />
+      </div>
+      <Button onClick={handleCreate} disabled={creating || !title.trim()} className="w-full gap-2 rounded-xl bg-primary/90 hover:bg-primary">
+        {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+        Создать масло
+      </Button>
+    </div>
+  );
 }
 
 function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
@@ -80,7 +123,6 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
     try {
       const ext = file.name.split(".").pop();
       const path = `${selectedOilId}.${ext}`;
-      // Remove old file if exists
       await supabase.storage.from("oil-images").remove([path]);
       const { error: uploadError } = await supabase.storage
         .from("oil-images")
@@ -120,18 +162,27 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
     onError: () => toast.error("Ошибка сохранения"),
   });
 
+  const handleOilCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ["oils"] });
+  };
+
   return (
     <div className="space-y-4">
-      <Select value={selectedOilId} onValueChange={(v) => { setSelectedOilId(v); setLastLoadedId(""); }}>
-        <SelectTrigger className="glass-card border-white/30">
-          <SelectValue placeholder="Выберите масло" />
-        </SelectTrigger>
-        <SelectContent>
-          {allOils.map((oil) => (
-            <SelectItem key={oil.id} value={oil.id}>{oil.title}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <CreateOilForm onCreated={handleOilCreated} />
+
+      <div className="border-t border-white/20 pt-4">
+        <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">Редактирование</h4>
+        <Select value={selectedOilId} onValueChange={(v) => { setSelectedOilId(v); setLastLoadedId(""); }}>
+          <SelectTrigger className="glass-card border-white/30">
+            <SelectValue placeholder="Выберите масло" />
+          </SelectTrigger>
+          <SelectContent>
+            {allOils.map((oil) => (
+              <SelectItem key={oil.id} value={oil.id}>{oil.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {isLoading && selectedOilId && (
         <div className="flex justify-center py-6">
@@ -164,45 +215,21 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Описание</Label>
-            <Textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={3}
-              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
-            />
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Свойства</Label>
-            <Textarea
-              value={form.properties}
-              onChange={(e) => setForm({ ...form, properties: e.target.value })}
-              rows={3}
-              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
-            />
+            <Textarea value={form.properties} onChange={(e) => setForm({ ...form, properties: e.target.value })} rows={3} className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Способы применения</Label>
-            <Textarea
-              value={form.usage}
-              onChange={(e) => setForm({ ...form, usage: e.target.value })}
-              rows={3}
-              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
-            />
+            <Textarea value={form.usage} onChange={(e) => setForm({ ...form, usage: e.target.value })} rows={3} className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Противопоказания</Label>
-            <Textarea
-              value={form.cautions}
-              onChange={(e) => setForm({ ...form, cautions: e.target.value })}
-              rows={2}
-              className="mt-1 bg-white/40 border-white/30 text-sm resize-none"
-            />
+            <Textarea value={form.cautions} onChange={(e) => setForm({ ...form, cautions: e.target.value })} rows={2} className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
           </div>
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-            className="w-full gap-2 rounded-xl bg-primary/90 hover:bg-primary"
-          >
+          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full gap-2 rounded-xl bg-primary/90 hover:bg-primary">
             {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Сохранить изменения
           </Button>
@@ -210,7 +237,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
       )}
 
       {!selectedOilId && (
-        <p className="text-center text-sm text-muted-foreground py-4">
+        <p className="text-center text-sm text-muted-foreground py-2">
           Выберите масло для редактирования
         </p>
       )}
