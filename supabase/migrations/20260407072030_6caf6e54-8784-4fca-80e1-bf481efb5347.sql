@@ -1,0 +1,1 @@
+ALTER TABLE public.oils ADD COLUMN additional_info text;
