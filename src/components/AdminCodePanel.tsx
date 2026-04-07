@@ -100,6 +100,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
     properties: "",
     usage: "",
     cautions: "",
+    additional_info: "",
     image_url: "",
   });
 
