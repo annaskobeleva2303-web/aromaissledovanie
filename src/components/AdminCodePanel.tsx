@@ -36,6 +36,7 @@ function generateCode(): string {
 function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
   const queryClient = useQueryClient();
   const [selectedOilId, setSelectedOilId] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
 
   const { data: oilData, isLoading } = useQuery({
     queryKey: ["oil_edit", selectedOilId],
