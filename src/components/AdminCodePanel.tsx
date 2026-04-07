@@ -113,6 +113,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
       properties: (oilData as any).properties || "",
       usage: (oilData as any).usage || "",
       cautions: (oilData as any).cautions || "",
+      additional_info: (oilData as any).additional_info || "",
       image_url: (oilData as any).image_url || "",
     });
   }
