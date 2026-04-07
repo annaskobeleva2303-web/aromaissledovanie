@@ -9,6 +9,7 @@ interface OilInfo {
   properties?: string | null;
   usage?: string | null;
   cautions?: string | null;
+  additional_info?: string | null;
   image_url?: string | null;
 }
 
