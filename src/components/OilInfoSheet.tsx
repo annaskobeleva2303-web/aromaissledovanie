@@ -36,7 +36,7 @@ function InfoBlock({ title, text }: { title: string; text: string }) {
 }
 
 export function OilInfoSheet({ oil }: OilInfoSheetProps) {
-  const hasContent = oil.description || oil.properties || oil.usage || oil.cautions;
+  const hasContent = oil.description || oil.properties || oil.usage || oil.cautions || oil.additional_info;
 
   if (!hasContent && !oil.image_url) return null;
 
