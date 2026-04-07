@@ -85,6 +85,7 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
           {oil.properties && <InfoBlock title="Свойства" text={oil.properties} />}
           {oil.usage && <InfoBlock title="Способы применения" text={oil.usage} />}
           {oil.cautions && <InfoBlock title="Противопоказания" text={oil.cautions} />}
+          {oil.additional_info && <InfoBlock title="Дополнительная информация" text={oil.additional_info} />}
         </div>
       </SheetContent>
     </Sheet>

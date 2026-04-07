@@ -231,6 +231,10 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
             <Label className="text-xs text-muted-foreground">Противопоказания</Label>
             <Textarea value={form.cautions} onChange={(e) => setForm({ ...form, cautions: e.target.value })} rows={2} className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
           </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Дополнительная информация</Label>
+            <Textarea value={form.additional_info} onChange={(e) => setForm({ ...form, additional_info: e.target.value })} rows={3} placeholder="Любая дополнительная информация о масле" className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
+          </div>
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full gap-2 rounded-xl bg-primary/90 hover:bg-primary">
             {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Сохранить изменения
