@@ -73,6 +73,32 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
     });
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedOilId) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${selectedOilId}.${ext}`;
+      // Remove old file if exists
+      await supabase.storage.from("oil-images").remove([path]);
+      const { error: uploadError } = await supabase.storage
+        .from("oil-images")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from("oil-images")
+        .getPublicUrl(path);
+      const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+      setForm((f) => ({ ...f, image_url: publicUrl }));
+      toast.success("Изображение загружено!");
+    } catch (err: any) {
+      toast.error("Ошибка загрузки: " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
