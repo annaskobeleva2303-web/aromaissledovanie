@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save } from "lucide-react";
+import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -36,6 +36,7 @@ function generateCode(): string {
 function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
   const queryClient = useQueryClient();
   const [selectedOilId, setSelectedOilId] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
 
   const { data: oilData, isLoading } = useQuery({
     queryKey: ["oil_edit", selectedOilId],
@@ -71,6 +72,32 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
       image_url: (oilData as any).image_url || "",
     });
   }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedOilId) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${selectedOilId}.${ext}`;
+      // Remove old file if exists
+      await supabase.storage.from("oil-images").remove([path]);
+      const { error: uploadError } = await supabase.storage
+        .from("oil-images")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from("oil-images")
+        .getPublicUrl(path);
+      const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+      setForm((f) => ({ ...f, image_url: publicUrl }));
+      toast.success("Изображение загружено!");
+    } catch (err: any) {
+      toast.error("Ошибка загрузки: " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -115,13 +142,25 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
       {oilData && (
         <div className="space-y-3">
           <div>
-            <Label className="text-xs text-muted-foreground">Изображение (URL)</Label>
-            <Input
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              placeholder="https://..."
-              className="mt-1 bg-white/40 border-white/30 text-sm"
-            />
+            <Label className="text-xs text-muted-foreground">Изображение</Label>
+            {form.image_url && (
+              <div className="relative mt-1 mb-2 rounded-xl overflow-hidden">
+                <img src={form.image_url} alt="Oil" className="w-full h-32 object-cover rounded-xl" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/60 hover:bg-background/80"
+                  onClick={() => setForm({ ...form, image_url: "" })}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            <label className="flex items-center justify-center gap-2 cursor-pointer rounded-xl border border-dashed border-white/30 bg-white/20 hover:bg-white/30 transition-colors px-4 py-3 text-sm text-muted-foreground">
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {uploading ? "Загрузка..." : "Загрузить фото"}
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            </label>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Описание</Label>
