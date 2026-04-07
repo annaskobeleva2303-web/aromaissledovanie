@@ -150,7 +150,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
         .update({
           description: form.description || null,
           image_url: form.image_url || null,
-          ...({ properties: form.properties || null, usage: form.usage || null, cautions: form.cautions || null } as any),
+          ...({ properties: form.properties || null, usage: form.usage || null, cautions: form.cautions || null, additional_info: form.additional_info || null } as any),
         })
         .eq("id", selectedOilId);
       if (error) throw error;
