@@ -245,6 +245,7 @@ export type Database = {
       }
       oils: {
         Row: {
+          additional_info: string | null
           cautions: string | null
           created_at: string
           description: string | null
@@ -257,6 +258,7 @@ export type Database = {
           usage: string | null
         }
         Insert: {
+          additional_info?: string | null
           cautions?: string | null
           created_at?: string
           description?: string | null
@@ -269,6 +271,7 @@ export type Database = {
           usage?: string | null
         }
         Update: {
+          additional_info?: string | null
           cautions?: string | null
           created_at?: string
           description?: string | null

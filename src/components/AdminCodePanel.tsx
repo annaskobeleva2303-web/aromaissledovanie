@@ -100,6 +100,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
     properties: "",
     usage: "",
     cautions: "",
+    additional_info: "",
     image_url: "",
   });
 
@@ -112,6 +113,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
       properties: (oilData as any).properties || "",
       usage: (oilData as any).usage || "",
       cautions: (oilData as any).cautions || "",
+      additional_info: (oilData as any).additional_info || "",
       image_url: (oilData as any).image_url || "",
     });
   }
@@ -148,7 +150,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
         .update({
           description: form.description || null,
           image_url: form.image_url || null,
-          ...({ properties: form.properties || null, usage: form.usage || null, cautions: form.cautions || null } as any),
+          ...({ properties: form.properties || null, usage: form.usage || null, cautions: form.cautions || null, additional_info: form.additional_info || null } as any),
         })
         .eq("id", selectedOilId);
       if (error) throw error;
@@ -228,6 +230,10 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
           <div>
             <Label className="text-xs text-muted-foreground">Противопоказания</Label>
             <Textarea value={form.cautions} onChange={(e) => setForm({ ...form, cautions: e.target.value })} rows={2} className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Дополнительная информация</Label>
+            <Textarea value={form.additional_info} onChange={(e) => setForm({ ...form, additional_info: e.target.value })} rows={3} placeholder="Любая дополнительная информация о масле" className="mt-1 bg-white/40 border-white/30 text-sm resize-none" />
           </div>
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full gap-2 rounded-xl bg-primary/90 hover:bg-primary">
             {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

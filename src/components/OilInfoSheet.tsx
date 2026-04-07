@@ -9,6 +9,7 @@ interface OilInfo {
   properties?: string | null;
   usage?: string | null;
   cautions?: string | null;
+  additional_info?: string | null;
   image_url?: string | null;
 }
 
@@ -35,7 +36,7 @@ function InfoBlock({ title, text }: { title: string; text: string }) {
 }
 
 export function OilInfoSheet({ oil }: OilInfoSheetProps) {
-  const hasContent = oil.description || oil.properties || oil.usage || oil.cautions;
+  const hasContent = oil.description || oil.properties || oil.usage || oil.cautions || oil.additional_info;
 
   if (!hasContent && !oil.image_url) return null;
 
@@ -84,6 +85,7 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
           {oil.properties && <InfoBlock title="Свойства" text={oil.properties} />}
           {oil.usage && <InfoBlock title="Способы применения" text={oil.usage} />}
           {oil.cautions && <InfoBlock title="Противопоказания" text={oil.cautions} />}
+          {oil.additional_info && <InfoBlock title="Дополнительная информация" text={oil.additional_info} />}
         </div>
       </SheetContent>
     </Sheet>
