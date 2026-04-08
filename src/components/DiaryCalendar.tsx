@@ -51,6 +51,23 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     enabled: !!user,
   });
 
+  // Fetch latest AI insight for this oil
+  const { data: latestInsight } = useQuery({
+    queryKey: ["ai-insight-latest", oilId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("ai_insights")
+        .select("content, created_at")
+        .eq("oil_id", oilId)
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Dates that have entries
   const entryDates = new Set(entries.map((e) => e.date));
   const entryByDate = new Map(entries.map((e) => [e.date, e]));
