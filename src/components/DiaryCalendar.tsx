@@ -8,6 +8,7 @@ import { ru } from "date-fns/locale";
 import { DiaryForm } from "@/components/DiaryForm";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InsightShareCard } from "@/components/InsightShareCard";
 import type { DayContentProps } from "react-day-picker";
 
 const MOODS: Record<string, { label: string; emoji: string }> = {
@@ -40,11 +41,28 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, date, mood, content, created_at, energy_tags")
+        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
       if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch latest AI insight for this oil
+  const { data: latestInsight } = useQuery({
+    queryKey: ["ai-insight-latest", oilId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("ai_insights")
+        .select("content, created_at")
+        .eq("oil_id", oilId)
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       return data;
     },
     enabled: !!user,
@@ -135,6 +153,18 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
               {viewingEntry.content}
             </p>
           </div>
+
+          {/* Share insight card for this entry */}
+          {latestInsight?.content && (
+            <InsightShareCard
+              insightText={latestInsight.content}
+              moodBefore={viewingEntry.mood || null}
+              moodAfter={null}
+              energyBefore={(viewingEntry as any).energy_before ?? null}
+              energyAfter={(viewingEntry as any).energy_after ?? null}
+            />
+          )}
+
           {/* Back to form button — only if today doesn't have an entry yet */}
           {isTodaySelected ? null : !hasEntryToday ? (
             <Button
