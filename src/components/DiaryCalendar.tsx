@@ -153,6 +153,18 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
               {viewingEntry.content}
             </p>
           </div>
+
+          {/* Share insight card for this entry */}
+          {latestInsight?.content && (
+            <InsightShareCard
+              insightText={latestInsight.content}
+              moodBefore={viewingEntry.mood || null}
+              moodAfter={null}
+              energyBefore={(viewingEntry as any).energy_before ?? null}
+              energyAfter={(viewingEntry as any).energy_after ?? null}
+            />
+          )}
+
           {/* Back to form button — only if today doesn't have an entry yet */}
           {isTodaySelected ? null : !hasEntryToday ? (
             <Button
