@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff } from "lucide-react";
+import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
@@ -842,6 +843,16 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
                 </div>
               </motion.div>
             </div>
+
+            <InsightShareCard
+              insightText={insightText}
+              moodBefore={moodsBefore[0] || null}
+              moodAfter={moodsAfter[0] || null}
+              energyBefore={beforeDone ? energyBefore : null}
+              energyAfter={afterDone ? energyAfter : null}
+              moodScoreBefore={beforeDone ? moodScoreBefore : null}
+              moodScoreAfter={afterDone ? moodScoreAfter : null}
+            />
 
             <Button
               onClick={finishSession}
