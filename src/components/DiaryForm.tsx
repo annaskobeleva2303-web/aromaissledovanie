@@ -787,13 +787,20 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             disableComplete={!content.trim()}
           >
             <div className="space-y-5">
-              <div className="glass-card p-5 rounded-[1.75rem]">
+              <div className="glass-card p-5 rounded-[1.75rem] space-y-4">
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Просто дыши и позволь словам литься. Что масло открывает тебе сегодня?"
                   className="min-h-[200px] resize-none rounded-2xl border-0 bg-transparent px-4 py-3 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
+                <div className="flex justify-center pt-1">
+                  <VoiceInputButton
+                    onTranscript={(text) =>
+                      setContent((prev) => (prev ? prev + " " + text : text))
+                    }
+                  />
+                </div>
               </div>
               <div className="glass-card p-4 rounded-[1.75rem]">
                 <div className="flex items-center justify-between gap-4">
