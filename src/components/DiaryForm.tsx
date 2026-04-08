@@ -7,10 +7,146 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock } from "lucide-react";
+import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
+
+// --- Voice Input Button ---
+function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => void }) {
+  const [isListening, setIsListening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const isSupported = !!SpeechRecognition;
+
+  const toggleListening = useCallback(() => {
+    if (!isSupported) {
+      setError("Голосовой ввод не поддерживается в этом браузере");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "ru-RU";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event: any) => {
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      if (finalTranscript) {
+        onTranscript(finalTranscript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error === "not-allowed") {
+        setError("Доступ к микрофону запрещён. Разреши его в настройках браузера");
+      } else if (event.error !== "aborted") {
+        setError("Ошибка распознавания. Попробуй ещё раз");
+      }
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    try {
+      recognition.start();
+      setIsListening(true);
+      setError(null);
+    } catch {
+      setError("Не удалось запустить распознавание речи");
+    }
+  }, [isListening, isSupported, onTranscript]);
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, []);
+
+  if (!isSupported) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <motion.button
+        type="button"
+        onClick={toggleListening}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.92 }}
+        className={`relative w-14 h-14 rounded-full backdrop-blur-2xl border flex items-center justify-center transition-all duration-300 ${
+          isListening
+            ? "bg-white/50 border-white/40"
+            : "bg-white/30 border-white/20 hover:bg-white/40"
+        }`}
+        style={
+          isListening
+            ? {
+                boxShadow:
+                  "0 0 24px 8px hsl(20 95% 73% / 0.35), 0 0 48px 16px hsl(263 72% 52% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.4)",
+              }
+            : {
+                boxShadow:
+                  "0 4px 20px hsl(263 72% 52% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
+              }
+        }
+      >
+        {isListening && (
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0, 0.4] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              background: "radial-gradient(circle, hsl(20 95% 73% / 0.3), transparent 70%)",
+            }}
+          />
+        )}
+        {isListening ? (
+          <MicOff className="h-6 w-6 text-destructive/80 relative z-10" strokeWidth={1.5} />
+        ) : (
+          <Mic className="h-6 w-6 text-primary/70 relative z-10" strokeWidth={1.5} />
+        )}
+      </motion.button>
+
+      <AnimatePresence>
+        {isListening && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="text-xs text-primary/70 tracking-wide font-light"
+          >
+            Слушаю... говорите
+          </motion.p>
+        )}
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="text-xs text-destructive/70 text-center max-w-[200px]"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 const MOODS = [
   { value: "calm", label: "Спокойствие", emoji: "😌" },
@@ -651,13 +787,20 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             disableComplete={!content.trim()}
           >
             <div className="space-y-5">
-              <div className="glass-card p-5 rounded-[1.75rem]">
+              <div className="glass-card p-5 rounded-[1.75rem] space-y-4">
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Просто дыши и позволь словам литься. Что масло открывает тебе сегодня?"
                   className="min-h-[200px] resize-none rounded-2xl border-0 bg-transparent px-4 py-3 text-sm leading-relaxed placeholder:text-muted-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
+                <div className="flex justify-center pt-1">
+                  <VoiceInputButton
+                    onTranscript={(text) =>
+                      setContent((prev) => (prev ? prev + " " + text : text))
+                    }
+                  />
+                </div>
               </div>
               <div className="glass-card p-4 rounded-[1.75rem]">
                 <div className="flex items-center justify-between gap-4">
