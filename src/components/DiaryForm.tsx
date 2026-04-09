@@ -484,6 +484,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setContent("");
     setIsPublic(false);
     setInsightText(null);
+    setShareQuote(null);
     queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
     queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
     queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
