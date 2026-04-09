@@ -851,6 +851,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
             <InsightShareCard
               insightText={insightText}
+              shareQuote={shareQuote}
               moodBefore={moodsBefore[0] || null}
               moodAfter={moodsAfter[0] || null}
               energyBefore={beforeDone ? energyBefore : null}
