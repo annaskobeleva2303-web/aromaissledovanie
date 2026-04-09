@@ -158,6 +158,7 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           {latestInsight?.content && (
             <InsightShareCard
               insightText={latestInsight.content}
+              shareQuote={(latestInsight as any).share_quote}
               moodBefore={viewingEntry.mood || null}
               moodAfter={null}
               energyBefore={(viewingEntry as any).energy_before ?? null}
