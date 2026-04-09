@@ -661,6 +661,11 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
         </div>
       )}
 
+      {/* Somatic Heatmap */}
+      {stats.totalEntries >= 2 && (
+        <SomaticMap entries={allEntries as Array<{ oil_body_location: string | null }>} />
+      )}
+
       {/* Weekly Personal Summary */}
       {canGenerate && (
         <div
