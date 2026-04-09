@@ -24,6 +24,7 @@ const ENERGY_LABELS: Record<string, { label: string; emoji: string }> = {
   silence: { label: "Тишина", emoji: "🌙" },
 };
 import { toast } from "sonner";
+import { SomaticMap } from "@/components/SomaticMap";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -225,7 +226,7 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("mood, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, date")
+        .select("mood, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, date, oil_body_location")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
@@ -658,6 +659,11 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
             На основе {stats.deltaCount} {stats.deltaCount === 1 ? "полной сессии" : stats.deltaCount < 5 ? "полных сессий" : "полных сессий"}
           </p>
         </div>
+      )}
+
+      {/* Somatic Heatmap */}
+      {stats.totalEntries >= 2 && (
+        <SomaticMap entries={allEntries as Array<{ oil_body_location: string | null }>} />
       )}
 
       {/* Weekly Personal Summary */}
