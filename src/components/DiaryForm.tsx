@@ -403,6 +403,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [insightText, setInsightText] = useState<string | null>(null);
+  const [shareQuote, setShareQuote] = useState<string | null>(null);
 
   // Breath timer
   const [breathTimer, setBreathTimer] = useState(10);
@@ -483,6 +484,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setContent("");
     setIsPublic(false);
     setInsightText(null);
+    setShareQuote(null);
     queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
     queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
     queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
@@ -520,22 +522,25 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       if (error) throw error;
 
       let insight: string | null = null;
+      let quote: string | null = null;
       try {
         const { data, error: fnError } = await supabase.functions.invoke("generate-insight", {
           body: { oilId },
         });
         if (!fnError && data?.insight) {
           insight = data.insight;
+          quote = data.shareQuote || null;
         }
       } catch {
         // AI is optional
       }
-      return insight;
+      return { insight, quote };
     },
-    onSuccess: (insight) => {
+    onSuccess: (result) => {
       toast.success("Запись сохранена ✨");
-      if (insight) {
-        setInsightText(insight);
+      if (result?.insight) {
+        setInsightText(result.insight);
+        setShareQuote(result.quote);
         setPhase("insight");
       } else {
         finishSession();
@@ -846,6 +851,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
             <InsightShareCard
               insightText={insightText}
+              shareQuote={shareQuote}
               moodBefore={moodsBefore[0] || null}
               moodAfter={moodsAfter[0] || null}
               energyBefore={beforeDone ? energyBefore : null}

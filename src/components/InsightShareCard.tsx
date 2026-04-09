@@ -18,6 +18,7 @@ const MOODS: Record<string, { label: string; emoji: string }> = {
 
 interface InsightShareCardProps {
   insightText: string;
+  shareQuote?: string | null;
   oilTitle?: string;
   moodBefore?: string | null;
   moodAfter?: string | null;
@@ -29,6 +30,7 @@ interface InsightShareCardProps {
 
 export function InsightShareCard({
   insightText,
+  shareQuote,
   oilTitle = "Даваной",
   moodBefore,
   moodAfter,
@@ -45,8 +47,8 @@ export function InsightShareCard({
     (moodBefore && moodAfter) ||
     (energyBefore != null && energyAfter != null);
 
-  const truncatedInsight =
-    insightText.length > 280 ? insightText.slice(0, 277) + "..." : insightText;
+  // Use shareQuote for the card; fall back to truncated insight
+  const cardQuote = shareQuote || (insightText.length > 120 ? insightText.slice(0, 117) + "..." : insightText);
 
   const generateImage = async (): Promise<Blob | null> => {
     if (!cardRef.current) return null;
@@ -346,14 +348,15 @@ export function InsightShareCard({
                 </div>
                 <p
                   style={{
-                    fontSize: 19,
+                    fontSize: shareQuote ? 24 : 19,
                     lineHeight: 1.7,
-                    color: "hsla(0 0% 100% / 0.88)",
-                    fontWeight: 400,
+                    color: "hsla(0 0% 100% / 0.92)",
+                    fontWeight: shareQuote ? 500 : 400,
                     fontStyle: "italic",
+                    textAlign: "center",
                   }}
                 >
-                  {truncatedInsight}
+                  {cardQuote}
                 </p>
                 <div
                   style={{

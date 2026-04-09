@@ -57,7 +57,7 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from("ai_insights")
-        .select("content, created_at")
+        .select("content, share_quote, created_at")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
@@ -158,6 +158,7 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           {latestInsight?.content && (
             <InsightShareCard
               insightText={latestInsight.content}
+              shareQuote={(latestInsight as any).share_quote}
               moodBefore={viewingEntry.mood || null}
               moodAfter={null}
               energyBefore={(viewingEntry as any).energy_before ?? null}

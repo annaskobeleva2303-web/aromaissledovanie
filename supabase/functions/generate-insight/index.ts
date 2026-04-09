@@ -162,7 +162,16 @@ ${statsBlock}
 - Если используешь метафору — она должна быть одна, хирургически точная, объясняющая психический механизм. ЗАПРЕЩЕНЫ эзотерические клише: «коконы», «свет», «вибрации», «потоки энергии».
 - Заверши одним коротким вопросом для рефлексии, который вернёт клиенту ответственность.
 - Анализируй ТОЛЬКО сегодняшнюю запись. ЗАПРЕЩЕНО упоминать прошлые состояния, если клиент не говорит о них сейчас.
-- Обращайся на «ты». Тон: ясный, профессиональный, вызывающий мурашки правдивостью. Максимум 2-3 предложения + вопрос.`;
+- Обращайся на «ты». Тон: ясный, профессиональный, вызывающий мурашки правдивостью. Максимум 2-3 предложения + вопрос.
+
+ФОРМАТ ОТВЕТА (СТРОГО):
+Ответь РОВНО в таком формате, разделяя два блока маркером ---SHARE_QUOTE---:
+
+[Твой полный психоаналитический отклик: 2-3 предложения + вопрос]
+
+---SHARE_QUOTE---
+
+[ОДНА глубокая, терапевтичная, ясная и цепляющая цитата. Максимум 12-15 слов. Это эссенция инсайта — без лишних слов, без эзотерики. Тон: ясный, отрезвляющий, вызывающий мурашки. Обращайся на «ты».]`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -211,8 +220,18 @@ ${statsBlock}
     }
 
     const aiData = await aiResponse.json();
-    const insightText =
+    const rawText =
       aiData.choices?.[0]?.message?.content || "Не удалось сгенерировать инсайт";
+
+    // Parse dual output
+    let insightText = rawText;
+    let shareQuote: string | null = null;
+    const marker = "---SHARE_QUOTE---";
+    if (rawText.includes(marker)) {
+      const parts = rawText.split(marker);
+      insightText = parts[0].trim();
+      shareQuote = parts[1].trim();
+    }
 
     const { error: insertError } = await supabaseAdmin
       .from("ai_insights")
@@ -220,13 +239,14 @@ ${statsBlock}
         user_id: user.id,
         oil_id: oilId,
         content: insightText,
+        share_quote: shareQuote,
       });
 
     if (insertError) {
       console.error("Failed to save insight:", insertError);
     }
 
-    return new Response(JSON.stringify({ insight: insightText }), {
+    return new Response(JSON.stringify({ insight: insightText, shareQuote }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

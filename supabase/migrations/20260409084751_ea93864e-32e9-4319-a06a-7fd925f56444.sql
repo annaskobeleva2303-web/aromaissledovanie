@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_insights ADD COLUMN share_quote text;
