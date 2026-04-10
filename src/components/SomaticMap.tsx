@@ -38,12 +38,12 @@ const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; descrip
 
 // Glow positions as percentages of the image container (top%, left%)
 const ZONE_POSITIONS: Record<string, { top: number; left: number; size: number }> = {
-  head:    { top: 6,  left: 50, size: 60 },
-  throat:  { top: 16, left: 50, size: 45 },
-  chest:   { top: 28, left: 50, size: 80 },
-  stomach: { top: 42, left: 50, size: 70 },
-  pelvis:  { top: 52, left: 50, size: 60 },
-  limbs:   { top: 78, left: 50, size: 75 },
+  head:    { top: 8,  left: 50, size: 50 },
+  throat:  { top: 17, left: 50, size: 40 },
+  chest:   { top: 30, left: 50, size: 70 },
+  stomach: { top: 43, left: 50, size: 60 },
+  pelvis:  { top: 53, left: 50, size: 55 },
+  limbs:   { top: 80, left: 50, size: 65 },
 };
 
 interface SomaticMapProps {
