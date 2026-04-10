@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import somaticBody from "@/assets/somatic-body.png";
 
 // Body zone keywords dictionary
 const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; description: string }> = {
@@ -35,14 +36,14 @@ const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; descrip
   },
 };
 
-// Zone positions mapped to the new silhouette (viewBox 0 0 200 440)
-const ZONE_POSITIONS: Record<string, { cx: number; cy: number; r: number }> = {
-  head:    { cx: 100, cy: 32, r: 18 },
-  throat:  { cx: 100, cy: 62, r: 14 },
-  chest:   { cx: 100, cy: 110, r: 30 },
-  stomach: { cx: 100, cy: 170, r: 26 },
-  pelvis:  { cx: 100, cy: 220, r: 22 },
-  limbs:   { cx: 100, cy: 340, r: 28 },
+// Glow positions as percentages of the image container (top%, left%)
+const ZONE_POSITIONS: Record<string, { top: number; left: number; size: number }> = {
+  head:    { top: 6,  left: 50, size: 60 },
+  throat:  { top: 16, left: 50, size: 45 },
+  chest:   { top: 28, left: 50, size: 80 },
+  stomach: { top: 42, left: 50, size: 70 },
+  pelvis:  { top: 52, left: 50, size: 60 },
+  limbs:   { top: 78, left: 50, size: 75 },
 };
 
 interface SomaticMapProps {
@@ -106,6 +107,7 @@ export function SomaticMap({ entries }: SomaticMapProps) {
     >
       <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
 
+      {/* Header */}
       <div className="relative flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
           <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -121,189 +123,55 @@ export function SomaticMap({ entries }: SomaticMapProps) {
         </h3>
       </div>
 
-      {/* SVG Body */}
+      {/* Body image with glow overlays */}
       <div className="relative flex justify-center py-4">
-        <svg viewBox="0 0 200 440" className="w-48 h-auto" style={{ filter: "drop-shadow(0 0 30px hsla(263,60%,60%,0.15))" }}>
-          <defs>
-            {/* Body fill — translucent crystalline */}
-            <linearGradient id="body-fill" x1="0.5" y1="0" x2="0.5" y2="1">
-              <stop offset="0%" stopColor="hsla(263,45%,88%,0.6)" />
-              <stop offset="30%" stopColor="hsla(263,40%,82%,0.45)" />
-              <stop offset="60%" stopColor="hsla(280,35%,85%,0.35)" />
-              <stop offset="100%" stopColor="hsla(263,30%,90%,0.5)" />
-            </linearGradient>
-            {/* Inner light shimmer */}
-            <radialGradient id="body-shimmer" cx="50%" cy="35%" r="45%">
-              <stop offset="0%" stopColor="hsla(0,0%,100%,0.25)" />
-              <stop offset="100%" stopColor="hsla(0,0%,100%,0)" />
-            </radialGradient>
-            {/* Glow for active zones — amber core + purple halo */}
-            {Object.keys(ZONE_POSITIONS).map((zone) => (
-              <radialGradient key={zone} id={`glow-${zone}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="hsla(35,95%,65%,0.9)" />
-                <stop offset="30%" stopColor="hsla(35,80%,60%,0.5)" />
-                <stop offset="60%" stopColor="hsla(270,60%,60%,0.3)" />
-                <stop offset="100%" stopColor="hsla(270,50%,60%,0)" />
-              </radialGradient>
-            ))}
-            {/* Clip to body */}
-            <clipPath id="body-clip">
-              <use href="#body-shape" />
-            </clipPath>
-          </defs>
-
-          {/* 
-            Clean, anatomically smooth silhouette — sculpted, feminine, 
-            inspired by the reference crystal figure. Front-facing, arms at sides.
-          */}
-          <g id="body-shape">
-            {/* Head */}
-            <ellipse cx="100" cy="30" rx="16" ry="19" />
-            {/* Neck */}
-            <rect x="93" y="48" width="14" height="12" rx="4" />
-            {/* Torso — smooth tapered shape */}
-            <path d="
-              M 68 60
-              C 68 60, 60 62, 56 70
-              C 52 78, 54 82, 56 84
-              L 62 80
-              L 66 74
-              L 70 72
-              L 72 90
-              L 70 120
-              L 68 150
-              L 66 180
-              C 64 195, 66 210, 70 225
-              L 74 235
-              C 80 240, 90 242, 100 242
-              C 110 242, 120 240, 126 235
-              L 130 225
-              C 134 210, 136 195, 134 180
-              L 132 150
-              L 130 120
-              L 128 90
-              L 130 72
-              L 134 74
-              L 138 80
-              L 144 84
-              C 146 82, 148 78, 144 70
-              C 140 62, 132 60, 132 60
-              L 120 58
-              L 108 56
-              L 100 55
-              L 92 56
-              L 80 58
-              Z
-            " />
-            {/* Left arm */}
-            <path d="
-              M 66 74
-              C 60 80, 52 100, 48 130
-              C 44 160, 42 190, 42 210
-              C 42 220, 40 240, 38 260
-              C 36 275, 34 285, 36 290
-              C 38 295, 42 295, 44 290
-              C 46 285, 46 275, 48 260
-              C 50 240, 52 220, 54 200
-              C 56 180, 60 160, 64 140
-              L 70 120
-            " />
-            {/* Right arm */}
-            <path d="
-              M 134 74
-              C 140 80, 148 100, 152 130
-              C 156 160, 158 190, 158 210
-              C 158 220, 160 240, 162 260
-              C 164 275, 166 285, 164 290
-              C 162 295, 158 295, 156 290
-              C 154 285, 154 275, 152 260
-              C 150 240, 148 220, 146 200
-              C 144 180, 140 160, 136 140
-              L 130 120
-            " />
-            {/* Left leg */}
-            <path d="
-              M 82 238
-              C 80 255, 78 275, 76 295
-              C 74 315, 74 335, 74 355
-              C 74 370, 72 385, 70 400
-              C 68 410, 66 418, 68 422
-              C 70 428, 76 428, 80 424
-              C 82 420, 82 415, 82 405
-              C 82 395, 82 380, 84 360
-              C 86 340, 88 320, 90 300
-              L 94 260
-            " />
-            {/* Right leg */}
-            <path d="
-              M 118 238
-              C 120 255, 122 275, 124 295
-              C 126 315, 126 335, 126 355
-              C 126 370, 128 385, 130 400
-              C 132 410, 134 418, 132 422
-              C 130 428, 124 428, 120 424
-              C 118 420, 118 415, 118 405
-              C 118 395, 118 380, 116 360
-              C 114 340, 112 320, 110 300
-              L 106 260
-            " />
-          </g>
-
-          {/* Render the filled body */}
-          <use href="#body-shape" fill="url(#body-fill)" />
-          {/* Shimmer overlay */}
-          <use href="#body-shape" fill="url(#body-shimmer)" />
-          {/* Outline — subtle purple */}
-          <use
-            href="#body-shape"
-            fill="none"
-            stroke="hsla(263,50%,65%,0.5)"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
+        <div className="relative w-48">
+          <img
+            src={somaticBody}
+            alt="Силуэт тела"
+            className="w-full h-auto relative z-10 pointer-events-none"
+            style={{ filter: "drop-shadow(0 0 20px hsla(263,50%,70%,0.15))" }}
+            loading="lazy"
+            width={512}
+            height={1024}
           />
 
-          {/* Energy glow orbs, clipped inside body */}
-          <g clipPath="url(#body-clip)">
-            {Object.entries(ZONE_POSITIONS).map(([zone, pos]) => {
-              const count = zoneCounts[zone] || 0;
-              if (count === 0) return null;
-              const intensity = count / maxCount;
-              const opacity = 0.3 + intensity * 0.65;
-              const scale = 0.6 + intensity * 0.4;
+          {/* Glow orbs positioned over the body */}
+          {Object.entries(ZONE_POSITIONS).map(([zone, pos]) => {
+            const count = zoneCounts[zone] || 0;
+            if (count === 0) return null;
+            const intensity = count / maxCount;
+            const opacity = 0.3 + intensity * 0.6;
+            const scale = 0.6 + intensity * 0.4;
+            const size = pos.size * scale;
 
-              return (
-                <g key={zone} onClick={() => setSelectedZone(zone === selectedZone ? null : zone)} className="cursor-pointer">
-                  {/* Outer purple halo */}
-                  <motion.circle
-                    cx={pos.cx}
-                    cy={pos.cy}
-                    r={pos.r * scale * 1.6}
-                    fill={`url(#glow-${zone})`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: opacity * 0.3 }}
-                    transition={{ duration: 1.2, delay: 0.2 }}
-                  />
-                  {/* Main amber-core glow */}
-                  <motion.circle
-                    cx={pos.cx}
-                    cy={pos.cy}
-                    r={pos.r * scale}
-                    fill={`url(#glow-${zone})`}
-                    initial={{ opacity: 0, scale: 0.3 }}
-                    animate={{
-                      opacity,
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      opacity: { duration: 1, delay: 0.1 },
-                      scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-                    }}
-                  />
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+            return (
+              <motion.div
+                key={zone}
+                className="absolute z-20 cursor-pointer rounded-full"
+                style={{
+                  top: `${pos.top}%`,
+                  left: `${pos.left}%`,
+                  width: size,
+                  height: size,
+                  transform: "translate(-50%, -50%)",
+                  background: `radial-gradient(circle, hsla(35,95%,65%,0.85) 0%, hsla(270,60%,58%,0.35) 50%, transparent 100%)`,
+                  filter: `blur(${4 + (1 - intensity) * 6}px)`,
+                }}
+                initial={{ opacity: 0, scale: 0.3 }}
+                animate={{
+                  opacity,
+                  scale: [1, 1.08, 1],
+                }}
+                transition={{
+                  opacity: { duration: 1, delay: 0.1 },
+                  scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                }}
+                onClick={() => setSelectedZone(zone === selectedZone ? null : zone)}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {/* Selected zone info */}
