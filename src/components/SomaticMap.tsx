@@ -125,7 +125,7 @@ export function SomaticMap({ entries }: SomaticMapProps) {
 
       {/* Body image with glow overlays */}
       <div className="relative flex justify-center py-4">
-        <div className="relative w-48">
+        <div className="relative w-52">
           <img
             src={somaticBody}
             alt="Силуэт тела"
