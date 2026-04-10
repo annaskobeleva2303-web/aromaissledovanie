@@ -37,13 +37,36 @@ const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; descrip
 
 // SVG positions for glow orbs (relative to viewBox 0 0 200 500)
 const ZONE_POSITIONS: Record<string, { cx: number; cy: number; r: number }> = {
-  head:    { cx: 100, cy: 52, r: 30 },
-  throat:  { cx: 100, cy: 100, r: 22 },
-  chest:   { cx: 100, cy: 155, r: 35 },
-  stomach: { cx: 100, cy: 220, r: 30 },
-  pelvis:  { cx: 100, cy: 285, r: 28 },
-  limbs:   { cx: 100, cy: 370, r: 35 },
+  head:    { cx: 100, cy: 48, r: 24 },
+  throat:  { cx: 100, cy: 84, r: 18 },
+  chest:   { cx: 100, cy: 135, r: 32 },
+  stomach: { cx: 100, cy: 210, r: 28 },
+  pelvis:  { cx: 100, cy: 290, r: 25 },
+  limbs:   { cx: 100, cy: 380, r: 30 },
 };
+
+// Elegant, anatomically smooth body silhouette path
+const BODY_PATH = [
+  // Head — smooth oval
+  "M100 22 C114 22 124 34 124 48 C124 62 114 74 100 74 C86 74 76 62 76 48 C76 34 86 22 100 22 Z",
+  // Neck
+  "M93 74 L93 84 C93 88 94 90 96 92 L104 92 C106 90 107 88 107 84 L107 74",
+  // Shoulders and torso — flowing curves
+  "M96 92 C90 94 78 100 68 108 C58 116 50 120 44 130 C40 136 42 140 46 142 C50 144 54 142 58 138 L70 124 C74 120 78 118 80 122 L82 140",
+  "M104 92 C110 94 122 100 132 108 C142 116 150 120 156 130 C160 136 158 140 154 142 C150 144 146 142 142 138 L130 124 C126 120 122 118 120 122 L118 140",
+  // Torso body
+  "M82 140 L80 180 C78 200 78 215 80 230 L82 260 C82 270 80 280 80 290 L82 310",
+  "M118 140 L120 180 C122 200 122 215 120 230 L118 260 C118 270 120 280 120 290 L118 310",
+  // Hips — smooth curves
+  "M82 310 C78 315 76 322 78 330",
+  "M118 310 C122 315 124 322 122 330",
+  // Left leg
+  "M78 330 C76 345 74 360 74 375 L72 400 C70 415 68 430 70 442 C72 448 76 450 80 448 C84 446 84 442 82 436 L86 410 C88 395 90 380 92 365 L96 340",
+  // Right leg
+  "M122 330 C124 345 126 360 126 375 L128 400 C130 415 132 430 130 442 C128 448 124 450 120 448 C116 446 116 442 118 436 L114 410 C112 395 110 380 108 365 L104 340",
+  // Connect hips
+  "M96 340 C98 335 100 332 100 330 C100 332 102 335 104 340",
+].join(" ");
 
 interface SomaticMapProps {
   entries: Array<{ oil_body_location: string | null }>;
@@ -126,90 +149,101 @@ export function SomaticMap({ entries }: SomaticMapProps) {
       </div>
 
       {/* SVG Body + Glow */}
-      <div className="relative flex justify-center py-4">
-        <svg viewBox="0 0 200 460" className="w-40 h-auto" style={{ filter: "drop-shadow(0 0 10px hsla(263,72%,52%,0.1))" }}>
-          {/* Ethereal body silhouette */}
+      <div className="relative flex justify-center py-6">
+        <svg viewBox="0 0 200 460" className="w-44 h-auto" style={{ filter: "drop-shadow(0 0 20px hsla(263,72%,52%,0.08))" }}>
+          <defs>
+            {/* Glass body gradient */}
+            <linearGradient id="body-glass" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="hsla(263,40%,85%,0.35)" />
+              <stop offset="40%" stopColor="hsla(263,50%,78%,0.2)" />
+              <stop offset="70%" stopColor="hsla(20,60%,85%,0.15)" />
+              <stop offset="100%" stopColor="hsla(263,40%,90%,0.25)" />
+            </linearGradient>
+            {/* Inner luminance */}
+            <radialGradient id="body-inner-glow" cx="50%" cy="40%" r="50%">
+              <stop offset="0%" stopColor="hsla(0,0%,100%,0.15)" />
+              <stop offset="100%" stopColor="hsla(263,40%,80%,0)" />
+            </radialGradient>
+            {/* Subtle edge highlight */}
+            <linearGradient id="body-edge" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsla(0,0%,100%,0.5)" />
+              <stop offset="50%" stopColor="hsla(263,40%,80%,0.3)" />
+              <stop offset="100%" stopColor="hsla(20,60%,80%,0.2)" />
+            </linearGradient>
+            {/* Glow gradients for zones */}
+            {Object.keys(ZONE_POSITIONS).map((zone) => (
+              <radialGradient key={zone} id={`glow-${zone}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="hsla(35,90%,65%,0.85)" />
+                <stop offset="35%" stopColor="hsla(263,72%,60%,0.45)" />
+                <stop offset="100%" stopColor="hsla(263,72%,52%,0)" />
+              </radialGradient>
+            ))}
+            {/* Clip path for glow containment */}
+            <clipPath id="body-clip">
+              <path d={BODY_PATH} />
+            </clipPath>
+          </defs>
+
+          {/* Filled glass body */}
           <path
-            d="
-              M100 20
-              C112 20 120 30 120 42 C120 54 112 64 100 64 C88 64 80 54 80 42 C80 30 88 20 100 20 Z
-              M100 64
-              L100 70
-              C100 70 85 75 78 90
-              C72 105 65 100 55 115
-              L48 130
-              C48 130 42 135 48 140
-              C54 145 58 140 58 140
-              L75 120
-              C75 120 80 115 82 125
-              L85 190
-              L82 260
-              C80 280 78 300 80 320
-              L82 380
-              C82 390 78 405 75 420
-              L72 445
-              C72 450 78 455 82 450
-              L95 390
-              L100 370
-              L105 390
-              L118 450
-              C122 455 128 450 128 445
-              L125 420
-              C122 405 118 390 118 380
-              L120 320
-              C122 300 120 280 118 260
-              L115 190
-              L118 125
-              C120 115 125 120 125 120
-              L142 140
-              C142 140 146 145 152 140
-              C158 135 152 130 152 130
-              L145 115
-              C135 100 128 105 122 90
-              C115 75 100 70 100 70
-              Z
-            "
-            fill="none"
-            stroke="hsla(263,30%,70%,0.3)"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
+            d={BODY_PATH}
+            fill="url(#body-glass)"
+            stroke="url(#body-edge)"
+            strokeWidth="0.8"
+          />
+          {/* Inner luminance overlay */}
+          <path
+            d={BODY_PATH}
+            fill="url(#body-inner-glow)"
           />
 
-          {/* Glow orbs for each active zone */}
-          {Object.entries(ZONE_POSITIONS).map(([zone, pos]) => {
-            const count = zoneCounts[zone] || 0;
-            if (count === 0) return null;
-            const intensity = count / maxCount;
-            const opacity = 0.2 + intensity * 0.6;
-            const scale = 0.5 + intensity * 0.5;
+          {/* Energy meridian lines */}
+          <g opacity="0.12" stroke="hsla(263,50%,75%,1)" strokeWidth="0.4" fill="none">
+            <path d="M100 55 Q100 100 100 150 Q100 200 100 250 Q100 300 100 350" />
+            <path d="M88 120 Q95 150 100 180 Q105 150 112 120" />
+            <path d="M92 250 Q96 280 100 310 Q104 280 108 250" />
+          </g>
 
-            return (
-              <g key={zone} onClick={() => setSelectedZone(zone === selectedZone ? null : zone)} className="cursor-pointer">
-                <motion.circle
-                  cx={pos.cx}
-                  cy={pos.cy}
-                  r={pos.r * scale}
-                  fill={`url(#glow-${zone})`}
-                  initial={{ opacity: 0, scale: 0.3 }}
-                  animate={{
-                    opacity,
-                    scale: [1, 1.08, 1],
-                  }}
-                  transition={{
-                    opacity: { duration: 0.8, delay: 0.1 },
-                    scale: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-                  }}
-                />
-                <defs>
-                  <radialGradient id={`glow-${zone}`} cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="hsla(35,90%,65%,0.9)" />
-                    <stop offset="40%" stopColor="hsla(263,72%,60%,0.5)" />
-                    <stop offset="100%" stopColor="hsla(263,72%,52%,0)" />
-                  </radialGradient>
-                </defs>
-              </g>
-            );
-          })}
+          {/* Glow orbs clipped inside body */}
+          <g clipPath="url(#body-clip)">
+            {Object.entries(ZONE_POSITIONS).map(([zone, pos]) => {
+              const count = zoneCounts[zone] || 0;
+              if (count === 0) return null;
+              const intensity = count / maxCount;
+              const opacity = 0.25 + intensity * 0.6;
+              const scale = 0.6 + intensity * 0.4;
+
+              return (
+                <g key={zone} onClick={() => setSelectedZone(zone === selectedZone ? null : zone)} className="cursor-pointer">
+                  <motion.circle
+                    cx={pos.cx}
+                    cy={pos.cy}
+                    r={pos.r * scale}
+                    fill={`url(#glow-${zone})`}
+                    initial={{ opacity: 0, scale: 0.3 }}
+                    animate={{
+                      opacity,
+                      scale: [1, 1.06, 1],
+                    }}
+                    transition={{
+                      opacity: { duration: 1, delay: 0.15 },
+                      scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                  />
+                  {/* Secondary soft halo */}
+                  <motion.circle
+                    cx={pos.cx}
+                    cy={pos.cy}
+                    r={pos.r * scale * 1.5}
+                    fill={`url(#glow-${zone})`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: opacity * 0.25 }}
+                    transition={{ duration: 1.2, delay: 0.3 }}
+                  />
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
