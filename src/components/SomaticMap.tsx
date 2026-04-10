@@ -68,7 +68,7 @@ const BODY_PATH = [
   "M96 340 C98 335 100 332 100 330 C100 332 102 335 104 340",
 ].join(" ");
 
-
+interface SomaticMapProps {
   entries: Array<{ oil_body_location: string | null }>;
 }
 
