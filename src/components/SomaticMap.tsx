@@ -37,12 +37,12 @@ const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; descrip
 
 // SVG positions for glow orbs (relative to viewBox 0 0 200 500)
 const ZONE_POSITIONS: Record<string, { cx: number; cy: number; r: number }> = {
-  head:    { cx: 100, cy: 52, r: 30 },
-  throat:  { cx: 100, cy: 100, r: 22 },
-  chest:   { cx: 100, cy: 155, r: 35 },
-  stomach: { cx: 100, cy: 220, r: 30 },
-  pelvis:  { cx: 100, cy: 285, r: 28 },
-  limbs:   { cx: 100, cy: 370, r: 35 },
+  head:    { cx: 100, cy: 48, r: 24 },
+  throat:  { cx: 100, cy: 84, r: 18 },
+  chest:   { cx: 100, cy: 135, r: 32 },
+  stomach: { cx: 100, cy: 210, r: 28 },
+  pelvis:  { cx: 100, cy: 290, r: 25 },
+  limbs:   { cx: 100, cy: 380, r: 30 },
 };
 
 // Elegant, anatomically smooth body silhouette path
