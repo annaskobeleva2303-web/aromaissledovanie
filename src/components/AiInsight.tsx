@@ -37,7 +37,51 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface AiInsightProps {
+type PeriodKey = "7d" | "30d" | "all";
+const PERIODS: { key: PeriodKey; label: string }[] = [
+  { key: "7d", label: "7 дней" },
+  { key: "30d", label: "30 дней" },
+  { key: "all", label: "Всё время" },
+];
+
+function SomaticMapWithPeriod({ entries }: { entries: Array<{ oil_body_location: string | null; date: string }> }) {
+  const [period, setPeriod] = useState<PeriodKey>("7d");
+
+  const filtered = useMemo(() => {
+    if (period === "all") return entries;
+    const days = period === "7d" ? 7 : 30;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    return entries.filter(e => e.date >= cutoffStr);
+  }, [entries, period]);
+
+  const periodLabel = period === "all" ? "За всё время" : period === "7d" ? "За последние 7 дней" : "За последние 30 дней";
+
+  return (
+    <div className="space-y-3">
+      {/* Period selector */}
+      <div className="flex gap-2 justify-center">
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => setPeriod(p.key)}
+            className={`rounded-full px-4 py-1.5 text-xs backdrop-blur-sm transition-all duration-300 ${
+              period === p.key
+                ? "bg-primary/15 text-primary font-medium shadow-[0_0_12px_3px_rgba(139,92,246,0.15)]"
+                : "bg-white/30 text-muted-foreground border border-white/20 hover:bg-white/50"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <SomaticMap entries={filtered} periodLabel={periodLabel} />
+    </div>
+  );
+}
+
+
   oilId: string;
   oilTitle: string;
 }
