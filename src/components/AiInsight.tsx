@@ -661,10 +661,19 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
         </div>
       )}
 
-      {/* Somatic Heatmap */}
-      {stats.totalEntries >= 2 && (
-        <SomaticMap entries={allEntries as Array<{ oil_body_location: string | null }>} />
-      )}
+      {/* Somatic Heatmap — last 7 days */}
+      {stats.totalEntries >= 2 && (() => {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+        const recentEntries = allEntries.filter(e => e.date >= sevenDaysAgoStr);
+        return (
+          <SomaticMap
+            entries={recentEntries as Array<{ oil_body_location: string | null }>}
+            periodLabel="Аналитика за последние 7 дней"
+          />
+        );
+      })()}
 
       {/* Weekly Personal Summary */}
       {canGenerate && (
