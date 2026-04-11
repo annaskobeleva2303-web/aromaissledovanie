@@ -2,49 +2,39 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "lucide-react";
 import somaticBody from "@/assets/somatic-body.png";
+import { BODY_ZONES } from "@/components/BodyZoneChips";
 
-// Body zone keywords dictionary
-const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; description: string }> = {
-  head: {
-    keywords: ["голова", "виски", "лоб", "мозг", "затылок", "макушка", "темя", "череп"],
-    label: "Голова",
-    description: "Зона ясности, мыслей и связи с высшим",
-  },
-  throat: {
-    keywords: ["горло", "шея", "голос", "кадык", "связки", "гортань"],
-    label: "Горло и шея",
-    description: "Зона самовыражения и правды",
-  },
-  chest: {
-    keywords: ["грудь", "сердце", "дыхание", "рёбра", "ребра", "лопатки", "лёгкие", "легкие", "грудная"],
-    label: "Грудь и сердце",
-    description: "Зона чувств, любви и принятия",
-  },
-  stomach: {
-    keywords: ["живот", "солнечное сплетение", "желудок", "пресс", "диафрагма", "пупок"],
-    label: "Живот",
-    description: "Зона силы, интуиции и внутреннего огня",
-  },
-  pelvis: {
-    keywords: ["таз", "матка", "низ живота", "крестец", "копчик", "бёдра", "бедра", "пах"],
-    label: "Таз и основание",
-    description: "Зона заземления, корней и витальной энергии",
-  },
-  limbs: {
-    keywords: ["руки", "ноги", "ладони", "стопы", "плечи", "колени", "пальцы", "запястья", "локти", "кисти"],
-    label: "Конечности",
-    description: "Зона действия, движения и контакта с миром",
-  },
+// Zone metadata for display
+const ZONE_META: Record<string, { label: string; description: string }> = {
+  head: { label: "Голова", description: "Зона ясности, мыслей и связи с высшим" },
+  throat: { label: "Горло и шея", description: "Зона самовыражения и правды" },
+  chest: { label: "Грудь и сердце", description: "Зона чувств, любви и принятия" },
+  stomach: { label: "Живот", description: "Зона силы, интуиции и внутреннего огня" },
+  pelvis: { label: "Таз и основание", description: "Зона заземления, корней и витальной энергии" },
+  arms: { label: "Руки", description: "Зона действия, контакта и творчества" },
+  legs: { label: "Ноги", description: "Зона движения, опоры и заземления" },
 };
 
-// Glow positions as percentages of the image (top%, left%) — centered on body
+// Legacy keyword mapping for old text-based entries
+const ZONE_KEYWORDS: Record<string, string[]> = {
+  head: ["голова", "виски", "лоб", "мозг", "затылок", "макушка", "темя", "череп"],
+  throat: ["горло", "шея", "голос", "кадык", "связки", "гортань"],
+  chest: ["грудь", "сердце", "дыхание", "рёбра", "ребра", "лопатки", "лёгкие", "легкие", "грудная"],
+  stomach: ["живот", "солнечное сплетение", "желудок", "пресс", "диафрагма", "пупок"],
+  pelvis: ["таз", "матка", "низ живота", "крестец", "копчик", "бёдра", "бедра", "пах"],
+  arms: ["руки", "ладони", "плечи", "пальцы", "запястья", "локти", "кисти"],
+  legs: ["ноги", "стопы", "колени", "голени", "ступни"],
+};
+
+// Glow positions as percentages of image container
 const ZONE_POSITIONS: Record<string, { top: number; left: number; size: number }> = {
   head:    { top: 8,  left: 50, size: 50 },
   throat:  { top: 17, left: 50, size: 40 },
   chest:   { top: 30, left: 50, size: 60 },
   stomach: { top: 43, left: 50, size: 55 },
   pelvis:  { top: 53, left: 50, size: 50 },
-  limbs:   { top: 78, left: 50, size: 55 },
+  arms:    { top: 38, left: 50, size: 70 },
+  legs:    { top: 78, left: 50, size: 55 },
 };
 
 interface SomaticMapProps {
@@ -56,9 +46,27 @@ function parseZoneFrequencies(entries: Array<{ oil_body_location: string | null 
   const counts: Record<string, number> = {};
   for (const entry of entries) {
     if (!entry.oil_body_location) continue;
-    const text = entry.oil_body_location.toLowerCase();
-    for (const [zone, config] of Object.entries(ZONE_KEYWORDS)) {
-      for (const keyword of config.keywords) {
+    const raw = entry.oil_body_location;
+
+    // Try JSON array first (new format)
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        for (const zoneId of parsed) {
+          if (typeof zoneId === "string" && ZONE_POSITIONS[zoneId]) {
+            counts[zoneId] = (counts[zoneId] || 0) + 1;
+          }
+        }
+        continue;
+      }
+    } catch {
+      // Not JSON, fall through to keyword matching
+    }
+
+    // Legacy: keyword-based text matching
+    const text = raw.toLowerCase();
+    for (const [zone, keywords] of Object.entries(ZONE_KEYWORDS)) {
+      for (const keyword of keywords) {
         if (text.includes(keyword)) {
           counts[zone] = (counts[zone] || 0) + 1;
           break;
@@ -125,9 +133,9 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
         </div>
       </div>
 
-      {/* Body image with glow overlays — strict relative container */}
+      {/* Body image with glow overlays */}
       <div className="relative flex justify-center py-4">
-        <div className="relative w-52 overflow-hidden">
+        <div className="relative w-52" style={{ overflow: "hidden" }}>
           <img
             src={somaticBody}
             alt="Силуэт тела"
@@ -138,7 +146,7 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
             height={1024}
           />
 
-          {/* Glow orbs — absolutely positioned inside the same container, clipped by overflow:hidden */}
+          {/* Glow orbs — strictly inside the container */}
           {Object.entries(ZONE_POSITIONS).map(([zone, pos]) => {
             const count = zoneCounts[zone] || 0;
             if (count === 0) return null;
@@ -178,7 +186,7 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
 
       {/* Selected zone info */}
       <AnimatePresence mode="wait">
-        {selectedZone && ZONE_KEYWORDS[selectedZone] && (
+        {selectedZone && ZONE_META[selectedZone] && (
           <motion.div
             key={selectedZone}
             initial={{ opacity: 0, y: 8 }}
@@ -187,10 +195,10 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
             className="rounded-2xl border border-white/30 bg-white/40 backdrop-blur-sm p-4 space-y-1 text-center"
           >
             <p className="text-sm font-serif font-semibold text-foreground">
-              Главный фокус: {ZONE_KEYWORDS[selectedZone].label}
+              Главный фокус: {ZONE_META[selectedZone].label}
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {ZONE_KEYWORDS[selectedZone].description}
+              {ZONE_META[selectedZone].description}
             </p>
             <p className="text-[10px] text-primary font-medium">
               Упоминаний: {zoneCounts[selectedZone] || 0}
@@ -203,7 +211,7 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
       {!selectedZone && topZone && (
         <div className="text-center space-y-1">
           <p className="text-xs text-muted-foreground">
-            Главный фокус: <span className="font-semibold text-foreground/80">{ZONE_KEYWORDS[topZone[0]]?.label}</span>
+            Главный фокус: <span className="font-semibold text-foreground/80">{ZONE_META[topZone[0]]?.label}</span>
           </p>
           <p className="text-[10px] text-muted-foreground/60">
             Нажмите на светящуюся зону для подробностей

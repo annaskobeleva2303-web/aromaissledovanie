@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { BodyZoneChips } from "@/components/BodyZoneChips";
 import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff } from "lucide-react";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
@@ -390,7 +391,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [moodsBefore, setMoodsBefore] = useState<string[]>([]);
 
   // Oil contact (sensory)
-  const [oilBodyLocation, setOilBodyLocation] = useState("");
+  const [oilBodyZones, setOilBodyZones] = useState<string[]>([]);
   const [oilSensation, setOilSensation] = useState("");
   const [oilVisualImage, setOilVisualImage] = useState("");
 
@@ -475,7 +476,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setEnergyBefore(5);
     setMoodScoreBefore(0);
     setMoodsBefore([]);
-    setOilBodyLocation("");
+    setOilBodyZones([]);
     setOilSensation("");
     setOilVisualImage("");
     setEnergyAfter(5);
@@ -505,7 +506,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         energy_tags: [],
         sensation: null,
         record_type: recordType,
-        oil_body_location: oilBodyLocation.trim() || null,
+        oil_body_location: oilBodyZones.length > 0 ? JSON.stringify(oilBodyZones) : null,
         oil_sensation: oilSensation.trim() || null,
         oil_visual_image: oilVisualImage.trim() || null,
         ...(date ? { date } : {}),
@@ -735,10 +736,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             completeLabel="Завершить этап"
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/80">🫶 Где в теле ощущается масло?</label>
-                <Input value={oilBodyLocation} onChange={(e) => setOilBodyLocation(e.target.value)} placeholder="Грудь, горло, живот..." className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30" />
-              </div>
+              <BodyZoneChips selected={oilBodyZones} onChange={setOilBodyZones} />
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground/80">✋ Как оно ощущается?</label>
                 <Input value={oilSensation} onChange={(e) => setOilSensation(e.target.value)} placeholder="Тепло, покалывание, давление..." className="rounded-2xl border-white/20 bg-white/30 backdrop-blur-sm focus-visible:ring-primary/30" />
