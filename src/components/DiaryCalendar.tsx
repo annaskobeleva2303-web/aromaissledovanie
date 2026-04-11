@@ -42,7 +42,7 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type")
+        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
@@ -153,6 +153,14 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
             <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
               {viewingEntry.content}
             </p>
+
+            {/* Somatic Map for this single entry */}
+            {(viewingEntry as any).oil_body_location && (
+              <SomaticMap
+                entries={[{ oil_body_location: (viewingEntry as any).oil_body_location }]}
+                periodLabel={`Отклик за ${format(parseISO(viewingEntry.date), "d MMMM", { locale: ru })}`}
+              />
+            )}
           </div>
 
           {/* Share insight card for this entry */}
