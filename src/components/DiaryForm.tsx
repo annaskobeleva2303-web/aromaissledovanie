@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { BodyZoneChips } from "@/components/BodyZoneChips";
 import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff } from "lucide-react";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
