@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { User } from "lucide-react";
 import somaticBody from "@/assets/somatic-body.png";
 
 // Body zone keywords dictionary
@@ -36,18 +37,19 @@ const ZONE_KEYWORDS: Record<string, { keywords: string[]; label: string; descrip
   },
 };
 
-// Glow positions as percentages of the image container (top%, left%)
+// Glow positions as percentages of the image (top%, left%) — centered on body
 const ZONE_POSITIONS: Record<string, { top: number; left: number; size: number }> = {
-  head:    { top: 8,  left: 50, size: 45 },
-  throat:  { top: 17, left: 50, size: 35 },
-  chest:   { top: 30, left: 50, size: 55 },
-  stomach: { top: 43, left: 50, size: 50 },
-  pelvis:  { top: 53, left: 50, size: 45 },
-  limbs:   { top: 80, left: 50, size: 50 },
+  head:    { top: 8,  left: 50, size: 50 },
+  throat:  { top: 17, left: 50, size: 40 },
+  chest:   { top: 30, left: 50, size: 60 },
+  stomach: { top: 43, left: 50, size: 55 },
+  pelvis:  { top: 53, left: 50, size: 50 },
+  limbs:   { top: 78, left: 50, size: 55 },
 };
 
 interface SomaticMapProps {
   entries: Array<{ oil_body_location: string | null }>;
+  periodLabel?: string;
 }
 
 function parseZoneFrequencies(entries: Array<{ oil_body_location: string | null }>) {
@@ -67,7 +69,7 @@ function parseZoneFrequencies(entries: Array<{ oil_body_location: string | null 
   return counts;
 }
 
-export function SomaticMap({ entries }: SomaticMapProps) {
+export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
   const { zoneCounts, maxCount, hasData } = useMemo(() => {
@@ -95,6 +97,7 @@ export function SomaticMap({ entries }: SomaticMapProps) {
   }
 
   const topZone = Object.entries(zoneCounts).sort((a, b) => b[1] - a[1])[0];
+  const totalWithLocation = entries.filter(e => e.oil_body_location).length;
 
   return (
     <div
@@ -110,22 +113,21 @@ export function SomaticMap({ entries }: SomaticMapProps) {
       {/* Header */}
       <div className="relative flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-          <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="5" r="3" />
-            <line x1="12" y1="8" x2="12" y2="16" />
-            <line x1="8" y1="12" x2="16" y2="12" />
-            <line x1="12" y1="16" x2="9" y2="22" />
-            <line x1="12" y1="16" x2="15" y2="22" />
-          </svg>
+          <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
         </div>
-        <h3 className="font-serif text-base font-semibold tracking-wide text-foreground">
-          Карта телесного отклика
-        </h3>
+        <div>
+          <h3 className="font-serif text-base font-semibold tracking-wide text-foreground">
+            Карта телесного отклика
+          </h3>
+          {periodLabel && (
+            <p className="text-[10px] text-muted-foreground/60">{periodLabel}</p>
+          )}
+        </div>
       </div>
 
-      {/* Body image with glow overlays */}
+      {/* Body image with glow overlays — strict relative container */}
       <div className="relative flex justify-center py-4">
-        <div className="relative w-52">
+        <div className="relative w-52 overflow-hidden">
           <img
             src={somaticBody}
             alt="Силуэт тела"
@@ -136,13 +138,13 @@ export function SomaticMap({ entries }: SomaticMapProps) {
             height={1024}
           />
 
-          {/* Glow orbs positioned over the body */}
+          {/* Glow orbs — absolutely positioned inside the same container, clipped by overflow:hidden */}
           {Object.entries(ZONE_POSITIONS).map(([zone, pos]) => {
             const count = zoneCounts[zone] || 0;
             if (count === 0) return null;
             const intensity = count / maxCount;
-            const opacity = 0.3 + intensity * 0.6;
-            const scale = 0.6 + intensity * 0.4;
+            const opacity = 0.25 + intensity * 0.55;
+            const scale = 0.7 + intensity * 0.3;
             const size = pos.size * scale;
 
             return (
@@ -155,17 +157,17 @@ export function SomaticMap({ entries }: SomaticMapProps) {
                   width: size,
                   height: size,
                   transform: "translate(-50%, -50%)",
-                  background: `radial-gradient(circle, hsla(35,95%,65%,0.85) 0%, hsla(270,60%,58%,0.35) 50%, transparent 100%)`,
-                  filter: `blur(${4 + (1 - intensity) * 6}px)`,
+                  background: `radial-gradient(circle, hsla(35,95%,65%,0.7) 0%, hsla(270,60%,58%,0.3) 45%, transparent 100%)`,
+                  filter: `blur(${6 + (1 - intensity) * 8}px)`,
                 }}
                 initial={{ opacity: 0, scale: 0.3 }}
                 animate={{
                   opacity,
-                  scale: [1, 1.08, 1],
+                  scale: [1, 1.06, 1],
                 }}
                 transition={{
                   opacity: { duration: 1, delay: 0.1 },
-                  scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                  scale: { duration: 5, repeat: Infinity, ease: "easeInOut" },
                 }}
                 onClick={() => setSelectedZone(zone === selectedZone ? null : zone)}
               />
@@ -210,7 +212,7 @@ export function SomaticMap({ entries }: SomaticMapProps) {
       )}
 
       <p className="text-[10px] text-muted-foreground/50">
-        На основе {entries.filter(e => e.oil_body_location).length} записей с указанием зон
+        На основе {totalWithLocation} записей с указанием зон
       </p>
     </div>
   );

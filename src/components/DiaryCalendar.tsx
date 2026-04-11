@@ -9,6 +9,7 @@ import { DiaryForm } from "@/components/DiaryForm";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InsightShareCard } from "@/components/InsightShareCard";
+import { SomaticMap } from "@/components/SomaticMap";
 import type { DayContentProps } from "react-day-picker";
 
 const MOODS: Record<string, { label: string; emoji: string }> = {
