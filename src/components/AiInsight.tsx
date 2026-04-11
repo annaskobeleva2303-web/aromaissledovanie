@@ -81,7 +81,7 @@ function SomaticMapWithPeriod({ entries }: { entries: Array<{ oil_body_location:
   );
 }
 
-
+interface AiInsightProps {
   oilId: string;
   oilTitle: string;
 }
