@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Calendar } from "@/components/ui/calendar";
-import { format, isToday, parseISO } from "date-fns";
+import { format, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 import { DiaryForm } from "@/components/DiaryForm";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InsightShareCard } from "@/components/InsightShareCard";
-import { SomaticMap } from "@/components/SomaticMap";
+import { SessionDetailModal } from "@/components/SessionDetailModal";
+import { AnimatePresence } from "framer-motion";
 import type { DayContentProps } from "react-day-picker";
 
 const MOODS: Record<string, { label: string; emoji: string }> = {
@@ -30,19 +30,14 @@ interface DiaryCalendarProps {
 export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [viewingEntry, setViewingEntry] = useState<{
-    content: string;
-    mood: string | null;
-    date: string;
-    created_at: string;
-  } | null>(null);
+  const [viewingEntry, setViewingEntry] = useState<any | null>(null);
 
   const { data: entries = [] } = useQuery({
     queryKey: ["entries", oilId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location")
+        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location, oil_sensation, oil_visual_image")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
@@ -52,24 +47,28 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     enabled: !!user,
   });
 
-  // Fetch latest AI insight for this oil
-  const { data: latestInsight } = useQuery({
-    queryKey: ["ai-insight-latest", oilId],
+  // Fetch AI insights keyed by created_at date
+  const { data: insightsByDate = {} } = useQuery({
+    queryKey: ["ai-insights-by-date", oilId],
     queryFn: async () => {
       const { data } = await supabase
         .from("ai_insights")
         .select("content, share_quote, created_at")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data;
+        .order("created_at", { ascending: false });
+      if (!data) return {};
+      // Map by date (yyyy-MM-dd)
+      const map: Record<string, { content: string; share_quote: string | null }> = {};
+      for (const row of data) {
+        const d = row.created_at.slice(0, 10);
+        if (!map[d]) map[d] = { content: row.content, share_quote: row.share_quote };
+      }
+      return map;
     },
     enabled: !!user,
   });
 
-  // Dates that have entries
   const entryDates = new Set(entries.map((e) => e.date));
   const entryByDate = new Map(entries.map((e) => [e.date, e]));
 
@@ -89,6 +88,9 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
   const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
   const isTodaySelected = selectedDate ? isToday(selectedDate) : false;
   const hasEntryToday = entryDates.has(format(new Date(), "yyyy-MM-dd"));
+
+  // Find insight for viewed entry
+  const entryInsight = viewingEntry ? insightsByDate[viewingEntry.date] || null : null;
 
   return (
     <div className="space-y-6">
@@ -140,56 +142,30 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
         </p>
       )}
 
-      {/* Read-only entry view */}
-      {viewingEntry && (
-        <div className="space-y-4">
-          <div className="glass-card p-6 space-y-4">
-            {viewingEntry.mood && MOODS[viewingEntry.mood] && (
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm">
-                <span>{MOODS[viewingEntry.mood].emoji}</span>
-                <span className="text-foreground/80">{MOODS[viewingEntry.mood].label}</span>
-              </div>
-            )}
-            <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-              {viewingEntry.content}
-            </p>
+      {/* Session detail view */}
+      <AnimatePresence mode="wait">
+        {viewingEntry && (
+          <SessionDetailModal
+            entry={viewingEntry}
+            insight={entryInsight}
+            onClose={() => setViewingEntry(null)}
+          />
+        )}
+      </AnimatePresence>
 
-            {/* Somatic Map for this single entry */}
-            {(viewingEntry as any).oil_body_location && (
-              <SomaticMap
-                entries={[{ oil_body_location: (viewingEntry as any).oil_body_location }]}
-                periodLabel={`Отклик за ${format(parseISO(viewingEntry.date), "d MMMM", { locale: ru })}`}
-              />
-            )}
-          </div>
-
-          {/* Share insight card for this entry */}
-          {latestInsight?.content && (
-            <InsightShareCard
-              insightText={latestInsight.content}
-              shareQuote={(latestInsight as any).share_quote}
-              moodBefore={viewingEntry.mood || null}
-              moodAfter={null}
-              energyBefore={(viewingEntry as any).energy_before ?? null}
-              energyAfter={(viewingEntry as any).energy_after ?? null}
-            />
-          )}
-
-          {/* Back to form button — only if today doesn't have an entry yet */}
-          {isTodaySelected ? null : !hasEntryToday ? (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setSelectedDate(new Date());
-                setViewingEntry(null);
-              }}
-              className="w-full rounded-full gap-2 text-sm text-muted-foreground"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              Вернуться к сегодня
-            </Button>
-          ) : null}
-        </div>
+      {/* Back to today button */}
+      {viewingEntry && !isTodaySelected && !hasEntryToday && (
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setSelectedDate(new Date());
+            setViewingEntry(null);
+          }}
+          className="w-full rounded-full gap-2 text-sm text-muted-foreground"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Вернуться к сегодня
+        </Button>
       )}
 
       {/* New entry form */}
@@ -198,11 +174,10 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           oilId={oilId}
           date={selectedDateStr}
           onSaved={() => {
-            // After saving, switch to viewing the new entry
             const refetch = async () => {
               const { data } = await supabase
                 .from("entries")
-                .select("id, date, mood, content, created_at")
+                .select("id, date, mood, content, created_at, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location, oil_sensation, oil_visual_image")
                 .eq("oil_id", oilId)
                 .eq("user_id", user!.id)
                 .eq("date", selectedDateStr)
