@@ -521,20 +521,27 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       }
 
       const { error } = await supabase.from("entries").insert(entryData as any);
-      if (error) throw error;
+      if (error) {
+        console.error("Entry save error:", error);
+        throw error;
+      }
 
+      // Entry saved successfully, now try to get insight
       let insight: string | null = null;
       let quote: string | null = null;
       try {
         const { data, error: fnError } = await supabase.functions.invoke("generate-insight", {
           body: { oilId },
         });
-        if (!fnError && data?.insight) {
+        if (fnError) {
+          console.error("Insight function error:", fnError);
+        }
+        if (data?.insight) {
           insight = data.insight;
           quote = data.shareQuote || null;
         }
-      } catch {
-        // AI is optional
+      } catch (e) {
+        console.error("Insight generation failed:", e);
       }
       return { insight, quote };
     },
@@ -545,11 +552,14 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         setShareQuote(result.quote);
         setPhase("insight");
       } else {
-        finishSession();
+        // No insight generated, still show success and go to insight with fallback
+        setInsightText("Запись сохранена. Инсайт будет доступен позже.");
+        setPhase("insight");
       }
     },
-    onError: () => {
-      toast.error("Не удалось сохранить запись");
+    onError: (error: any) => {
+      console.error("Session save failed:", error);
+      toast.error(`Не удалось сохранить: ${error?.message || "Неизвестная ошибка"}`);
     },
   });
 
