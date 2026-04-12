@@ -467,6 +467,11 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const canFinishSession = contactDone && writingDone;
 
   const finishSession = () => {
+    queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["ai-insights-by-date", oilId] });
+    queryClient.invalidateQueries({ queryKey: ["entries-count", oilId] });
     setPhase("hub");
     setBeforeDone(false);
     setContactDone(false);
@@ -486,10 +491,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setIsPublic(false);
     setInsightText(null);
     setShareQuote(null);
-    queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
-    queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
-    queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
-    queryClient.invalidateQueries({ queryKey: ["entries-count", oilId] });
     onSaved?.();
   };
 
