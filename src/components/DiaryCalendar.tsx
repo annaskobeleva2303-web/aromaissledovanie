@@ -84,8 +84,8 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     }
   };
 
-  const showForm = !viewingEntry && selectedDate;
   const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+  const showForm = !viewingEntry && selectedDate && !entryDates.has(selectedDateStr);
   const isTodaySelected = selectedDate ? isToday(selectedDate) : false;
   const hasEntryToday = entryDates.has(format(new Date(), "yyyy-MM-dd"));
 
@@ -174,19 +174,8 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
           oilId={oilId}
           date={selectedDateStr}
           onSaved={() => {
-            const refetch = async () => {
-              const { data } = await supabase
-                .from("entries")
-                .select("id, date, mood, content, created_at, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location, oil_sensation, oil_visual_image")
-                .eq("oil_id", oilId)
-                .eq("user_id", user!.id)
-                .eq("date", selectedDateStr)
-                .single();
-              if (data) {
-                setViewingEntry(data);
-              }
-            };
-            refetch();
+            // Don't set viewingEntry immediately — let user navigate via calendar
+            // Just refetch entries so the calendar shows the new entry marker
           }}
         />
       )}
