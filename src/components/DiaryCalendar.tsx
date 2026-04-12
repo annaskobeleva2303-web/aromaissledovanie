@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,8 +72,27 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
   const entryDates = new Set(entries.map((e) => e.date));
   const entryByDate = new Map(entries.map((e) => [e.date, e]));
 
+  // Auto-show entry when entries load and selected date has one
+  useEffect(() => {
+    if (selectedDate && entries.length > 0) {
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const entry = entryByDate.get(dateStr);
+      if (entry && !viewingEntry) {
+        setViewingEntry(entry);
+      }
+    }
+  }, [entries, selectedDate]);
+
   const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
+    if (!date) {
+      // Re-clicking same date in single mode deselects — re-select it instead
+      if (selectedDate) {
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+        const entry = entryByDate.get(dateStr);
+        if (entry) setViewingEntry(entry);
+      }
+      return;
+    }
     setSelectedDate(date);
     const dateStr = format(date, "yyyy-MM-dd");
     const entry = entryByDate.get(dateStr);
