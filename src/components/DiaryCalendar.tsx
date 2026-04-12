@@ -84,8 +84,8 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
     }
   };
 
-  const showForm = !viewingEntry && selectedDate && !entryDates.has(selectedDateStr);
   const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+  const showForm = !viewingEntry && selectedDate && !entryDates.has(selectedDateStr);
   const isTodaySelected = selectedDate ? isToday(selectedDate) : false;
   const hasEntryToday = entryDates.has(format(new Date(), "yyyy-MM-dd"));
 
