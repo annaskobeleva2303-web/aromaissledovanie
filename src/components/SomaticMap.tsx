@@ -132,7 +132,7 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
       </div>
 
       {/* 3D Model + Glow Orbs */}
-      <div className="relative w-full max-w-[250px] mx-auto aspect-[1/2]">
+      <div className="relative w-full max-w-[280px] mx-auto aspect-square">
         <img
           src={somaticBody}
           alt="Силуэт тела"
