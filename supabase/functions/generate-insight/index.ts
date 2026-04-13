@@ -63,7 +63,16 @@ serve(async (req) => {
       });
     }
 
-    const { oilId } = await req.json();
+    let oilId: string;
+    try {
+      const body = await req.json();
+      oilId = body.oilId;
+    } catch {
+      return new Response(JSON.stringify({ error: "Некорректное тело запроса" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!oilId) {
       return new Response(JSON.stringify({ error: "oilId обязателен" }), {
         status: 400,
