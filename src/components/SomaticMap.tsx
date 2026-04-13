@@ -31,7 +31,7 @@ const ZONE_POSITIONS: Record<string, Array<{ top: string; left: string }>> = {
   chest:   [{ top: "30%", left: "50%" }],
   stomach: [{ top: "40%", left: "50%" }],
   pelvis:  [{ top: "48%", left: "50%" }],
-  arms:    [{ top: "40%", left: "34%" }, { top: "40%", left: "66%" }],
+  arms:    [{ top: "40%", left: "36%" }, { top: "40%", left: "64%" }],
   legs:    [{ top: "68%", left: "45%" }, { top: "68%", left: "55%" }],
 };
 
