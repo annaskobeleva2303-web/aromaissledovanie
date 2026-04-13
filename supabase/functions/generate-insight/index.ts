@@ -219,9 +219,19 @@ ${statsBlock}
       );
     }
 
-    const aiData = await aiResponse.json();
+    const aiRawText = await aiResponse.text();
+    let aiData: Record<string, unknown>;
+    try {
+      aiData = JSON.parse(aiRawText);
+    } catch {
+      console.error("AI response not valid JSON:", aiRawText.slice(0, 500));
+      return new Response(
+        JSON.stringify({ error: "AI вернул некорректный ответ" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const rawText =
-      aiData.choices?.[0]?.message?.content || "Не удалось сгенерировать инсайт";
+      (aiData as any).choices?.[0]?.message?.content || "Не удалось сгенерировать инсайт";
 
     // Parse dual output
     let insightText = rawText;
