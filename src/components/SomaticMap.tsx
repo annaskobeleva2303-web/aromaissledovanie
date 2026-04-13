@@ -31,8 +31,8 @@ const ZONE_POSITIONS: Record<string, Array<{ top: string; left: string }>> = {
   chest:   [{ top: "30%", left: "50%" }],
   stomach: [{ top: "40%", left: "50%" }],
   pelvis:  [{ top: "48%", left: "50%" }],
-  arms:    [{ top: "38%", left: "30%" }, { top: "38%", left: "70%" }],
-  legs:    [{ top: "65%", left: "44%" }, { top: "65%", left: "56%" }],
+  arms:    [{ top: "40%", left: "34%" }, { top: "40%", left: "66%" }],
+  legs:    [{ top: "68%", left: "45%" }, { top: "68%", left: "55%" }],
 };
 
 interface SomaticMapProps {
