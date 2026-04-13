@@ -26,13 +26,13 @@ const ZONE_KEYWORDS: Record<string, string[]> = {
 
 // Strict percentage coordinates for glow orbs over the 3D model image
 const ZONE_POSITIONS: Record<string, Array<{ top: string; left: string }>> = {
-  head:    [{ top: "14%", left: "50%" }],
-  throat:  [{ top: "23%", left: "50%" }],
-  chest:   [{ top: "34%", left: "50%" }],
-  stomach: [{ top: "43%", left: "50%" }],
-  pelvis:  [{ top: "51%", left: "50%" }],
-  arms:    [{ top: "52%", left: "23%" }, { top: "52%", left: "77%" }],
-  legs:    [{ top: "72%", left: "42%" }, { top: "72%", left: "58%" }],
+  head:    [{ top: "10%", left: "50%" }],
+  throat:  [{ top: "20%", left: "50%" }],
+  chest:   [{ top: "30%", left: "50%" }],
+  stomach: [{ top: "40%", left: "50%" }],
+  pelvis:  [{ top: "48%", left: "50%" }],
+  arms:    [{ top: "38%", left: "30%" }, { top: "38%", left: "70%" }],
+  legs:    [{ top: "65%", left: "44%" }, { top: "65%", left: "56%" }],
 };
 
 interface SomaticMapProps {
