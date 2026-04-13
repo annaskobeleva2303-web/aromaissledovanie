@@ -38,6 +38,7 @@ const ZONE_POSITIONS: Record<string, Array<{ top: string; left: string }>> = {
 interface SomaticMapProps {
   entries: Array<{ oil_body_location: string | null }>;
   periodLabel?: string;
+  singleDay?: boolean;
 }
 
 function parseZoneFrequencies(entries: Array<{ oil_body_location: string | null }>) {
@@ -71,7 +72,7 @@ function parseZoneFrequencies(entries: Array<{ oil_body_location: string | null 
   return counts;
 }
 
-export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
+export function SomaticMap({ entries, periodLabel, singleDay }: SomaticMapProps) {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
   const { zoneCounts, hasData } = useMemo(() => {
@@ -201,12 +202,23 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
 
       {!selectedZone && topZone && (
         <div className="text-center space-y-1">
-          <p className="text-xs text-muted-foreground">
-            Главный фокус: <span className="font-semibold text-foreground/80">{ZONE_META[topZone[0]]?.label}</span>
-          </p>
-          <p className="text-[10px] text-muted-foreground/60">
-            Нажмите на светящуюся зону для подробностей
-          </p>
+          {singleDay ? (
+            <p className="text-xs text-muted-foreground">
+              Отмеченные зоны:{" "}
+              <span className="font-semibold text-foreground/80">
+                {Object.keys(zoneCounts).map(z => ZONE_META[z]?.label).filter(Boolean).join(", ")}
+              </span>
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Главный фокус: <span className="font-semibold text-foreground/80">{ZONE_META[topZone[0]]?.label}</span>
+              </p>
+              <p className="text-[10px] text-muted-foreground/60">
+                Нажмите на светящуюся зону для подробностей
+              </p>
+            </>
+          )}
         </div>
       )}
 

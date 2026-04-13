@@ -130,6 +130,7 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
         <SomaticMap
           entries={[{ oil_body_location: entry.oil_body_location }]}
           periodLabel={`Отклик за ${format(parseISO(entry.date), "d MMMM", { locale: ru })}`}
+          singleDay
         />
       )}
 
