@@ -26,13 +26,13 @@ const ZONE_KEYWORDS: Record<string, string[]> = {
 
 // Strict percentage coordinates for glow orbs over the 3D model image
 const ZONE_POSITIONS: Record<string, Array<{ top: string; left: string }>> = {
-  head:    [{ top: "12%", left: "50%" }],
-  throat:  [{ top: "22%", left: "50%" }],
-  chest:   [{ top: "32%", left: "50%" }],
-  stomach: [{ top: "46%", left: "50%" }],
-  pelvis:  [{ top: "56%", left: "50%" }],
-  arms:    [{ top: "45%", left: "25%" }, { top: "45%", left: "75%" }],
-  legs:    [{ top: "75%", left: "40%" }, { top: "75%", left: "60%" }],
+  head:    [{ top: "10%", left: "50%" }],
+  throat:  [{ top: "20%", left: "50%" }],
+  chest:   [{ top: "30%", left: "50%" }],
+  stomach: [{ top: "40%", left: "50%" }],
+  pelvis:  [{ top: "48%", left: "50%" }],
+  arms:    [{ top: "40%", left: "36%" }, { top: "40%", left: "64%" }],
+  legs:    [{ top: "68%", left: "45%" }, { top: "68%", left: "55%" }],
 };
 
 interface SomaticMapProps {
@@ -132,7 +132,7 @@ export function SomaticMap({ entries, periodLabel }: SomaticMapProps) {
       </div>
 
       {/* 3D Model + Glow Orbs */}
-      <div className="relative w-full max-w-[250px] mx-auto aspect-[1/2]">
+      <div className="relative w-full max-w-[280px] mx-auto aspect-square">
         <img
           src={somaticBody}
           alt="Силуэт тела"
