@@ -379,6 +379,28 @@ export function AdminCodePanel() {
     }
   };
 
+  const clearEntries = async (userId: string, nickname: string) => {
+    setClearingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      // Delete entries, insights, and personal summaries
+      const { error: e1 } = await supabase.from("entries").delete().eq("user_id", userId);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase.from("ai_insights").delete().eq("user_id", userId);
+      if (e2) throw e2;
+      const { error: e3 } = await supabase.from("personal_summaries").delete().eq("user_id", userId);
+      if (e3) throw e3;
+      toast.success(`Записи ${nickname} очищены`);
+      queryClient.invalidateQueries({ queryKey: ["entries"] });
+      queryClient.invalidateQueries({ queryKey: ["ai_insights"] });
+      setConfirmClear(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setClearingId(null);
+    }
+  };
+
   const unusedCodes = codes.filter((c: any) => !c.is_used);
   const usedCodes = codes.filter((c: any) => c.is_used);
 
