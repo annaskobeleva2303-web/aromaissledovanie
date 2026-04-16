@@ -573,9 +573,24 @@ export function AdminCodePanel() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="gap-1 text-xs rounded-full text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                        disabled={clearingId === p.id}
+                        onClick={() => setConfirmClear({ id: p.id, nickname: p.nickname })}
+                        title="Очистить записи"
+                      >
+                        {clearingId === p.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Eraser className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="gap-1 text-xs rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                        disabled={deletingId === p.id}
+                        disabled={deletingId === p.id || p.id === user?.id}
                         onClick={() => setConfirmDelete({ id: p.id, nickname: p.nickname })}
+                        title={p.id === user?.id ? "Нельзя удалить себя" : "Удалить пользователя"}
                       >
                         {deletingId === p.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
