@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2 } from "lucide-react";
+import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2, Eraser } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -262,6 +263,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
 }
 
 export function AdminCodePanel() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { myOils, newOils } = useOils();
   const allOils = [...myOils, ...newOils];
@@ -271,7 +273,9 @@ export function AdminCodePanel() {
   const [tempNickname, setTempNickname] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clearingId, setClearingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nickname: string } | null>(null);
+  const [confirmClear, setConfirmClear] = useState<{ id: string; nickname: string } | null>(null);
 
   const { data: codes = [], isLoading } = useQuery({
     queryKey: ["activation_codes", selectedOil],
@@ -372,6 +376,28 @@ export function AdminCodePanel() {
       toast.error(e.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const clearEntries = async (userId: string, nickname: string) => {
+    setClearingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      // Delete entries, insights, and personal summaries
+      const { error: e1 } = await supabase.from("entries").delete().eq("user_id", userId);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase.from("ai_insights").delete().eq("user_id", userId);
+      if (e2) throw e2;
+      const { error: e3 } = await supabase.from("personal_summaries").delete().eq("user_id", userId);
+      if (e3) throw e3;
+      toast.success(`Записи ${nickname} очищены`);
+      queryClient.invalidateQueries({ queryKey: ["entries"] });
+      queryClient.invalidateQueries({ queryKey: ["ai_insights"] });
+      setConfirmClear(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setClearingId(null);
     }
   };
 
@@ -547,9 +573,24 @@ export function AdminCodePanel() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="gap-1 text-xs rounded-full text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                        disabled={clearingId === p.id}
+                        onClick={() => setConfirmClear({ id: p.id, nickname: p.nickname })}
+                        title="Очистить записи"
+                      >
+                        {clearingId === p.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Eraser className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="gap-1 text-xs rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                        disabled={deletingId === p.id}
+                        disabled={deletingId === p.id || p.id === user?.id}
                         onClick={() => setConfirmDelete({ id: p.id, nickname: p.nickname })}
+                        title={p.id === user?.id ? "Нельзя удалить себя" : "Удалить пользователя"}
                       >
                         {deletingId === p.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -627,6 +668,31 @@ export function AdminCodePanel() {
             >
               {deletingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
               Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmClear} onOpenChange={(open) => !open && setConfirmClear(null)}>
+        <AlertDialogContent className="glass-card border-white/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Очистить записи</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ты уверена, что хочешь удалить все записи, инсайты и итоги пользователя <strong>{confirmClear?.nickname}</strong>? Профиль и доступ сохранятся.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!clearingId}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-500 text-white hover:bg-amber-600"
+              disabled={!!clearingId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmClear) clearEntries(confirmClear.id, confirmClear.nickname);
+              }}
+            >
+              {clearingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Eraser className="h-4 w-4 mr-2" />}
+              Очистить
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
