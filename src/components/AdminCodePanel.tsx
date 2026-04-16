@@ -270,6 +270,8 @@ export function AdminCodePanel() {
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [tempNickname, setTempNickname] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nickname: string } | null>(null);
 
   const { data: codes = [], isLoading } = useQuery({
     queryKey: ["activation_codes", selectedOil],
