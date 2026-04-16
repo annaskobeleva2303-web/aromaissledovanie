@@ -606,6 +606,31 @@ export function AdminCodePanel() {
           </div>
         )}
       </DialogContent>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent className="glass-card border-white/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Удаление пользователя</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ты уверена, что хочешь полностью удалить пользователя <strong>{confirmDelete?.nickname}</strong> и все его записи? Это действие необратимо.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingId}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!!deletingId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) deleteUser(confirmDelete.id, confirmDelete.nickname);
+              }}
+            >
+              {deletingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
