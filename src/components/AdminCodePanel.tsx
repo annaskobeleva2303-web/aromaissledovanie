@@ -348,6 +348,33 @@ export function AdminCodePanel() {
     }
   };
 
+  const deleteUser = async (userId: string, nickname: string) => {
+    setDeletingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ target_user_id: userId }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Ошибка удаления");
+      toast.success(`Пользователь ${nickname} удалён`);
+      queryClient.invalidateQueries({ queryKey: ["admin_profiles"] });
+      setConfirmDelete(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const unusedCodes = codes.filter((c: any) => !c.is_used);
   const usedCodes = codes.filter((c: any) => c.is_used);
 
