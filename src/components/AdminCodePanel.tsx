@@ -672,6 +672,31 @@ export function AdminCodePanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!confirmClear} onOpenChange={(open) => !open && setConfirmClear(null)}>
+        <AlertDialogContent className="glass-card border-white/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Очистить записи</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ты уверена, что хочешь удалить все записи, инсайты и итоги пользователя <strong>{confirmClear?.nickname}</strong>? Профиль и доступ сохранятся.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!clearingId}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-500 text-white hover:bg-amber-600"
+              disabled={!!clearingId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmClear) clearEntries(confirmClear.id, confirmClear.nickname);
+              }}
+            >
+              {clearingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Eraser className="h-4 w-4 mr-2" />}
+              Очистить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
