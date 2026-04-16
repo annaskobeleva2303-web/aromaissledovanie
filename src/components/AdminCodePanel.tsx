@@ -263,6 +263,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
 }
 
 export function AdminCodePanel() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { myOils, newOils } = useOils();
   const allOils = [...myOils, ...newOils];
@@ -272,7 +273,9 @@ export function AdminCodePanel() {
   const [tempNickname, setTempNickname] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clearingId, setClearingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; nickname: string } | null>(null);
+  const [confirmClear, setConfirmClear] = useState<{ id: string; nickname: string } | null>(null);
 
   const { data: codes = [], isLoading } = useQuery({
     queryKey: ["activation_codes", selectedOil],
