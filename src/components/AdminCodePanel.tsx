@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus } from "lucide-react";
+import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -15,6 +15,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -260,6 +270,8 @@ export function AdminCodePanel() {
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [tempNickname, setTempNickname] = useState<string>("");
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; nickname: string } | null>(null);
 
   const { data: codes = [], isLoading } = useQuery({
     queryKey: ["activation_codes", selectedOil],
@@ -333,6 +345,33 @@ export function AdminCodePanel() {
       toast.error(e.message);
     } finally {
       setResettingId(null);
+    }
+  };
+
+  const deleteUser = async (userId: string, nickname: string) => {
+    setDeletingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ target_user_id: userId }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Ошибка удаления");
+      toast.success(`Пользователь ${nickname} удалён`);
+      queryClient.invalidateQueries({ queryKey: ["admin_profiles"] });
+      setConfirmDelete(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -491,20 +530,34 @@ export function AdminCodePanel() {
                         {new Date(p.created_at).toLocaleDateString("ru-RU")}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1.5 text-xs rounded-full text-muted-foreground hover:text-foreground shrink-0"
-                      disabled={resettingId === p.id}
-                      onClick={() => resetPassword(p.id, p.nickname)}
-                    >
-                      {resettingId === p.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <RotateCcw className="h-3.5 w-3.5" />
-                      )}
-                      Сбросить
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1.5 text-xs rounded-full text-muted-foreground hover:text-foreground"
+                        disabled={resettingId === p.id}
+                        onClick={() => resetPassword(p.id, p.nickname)}
+                      >
+                        {resettingId === p.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1 text-xs rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={deletingId === p.id}
+                        onClick={() => setConfirmDelete({ id: p.id, nickname: p.nickname })}
+                      >
+                        {deletingId === p.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -553,6 +606,31 @@ export function AdminCodePanel() {
           </div>
         )}
       </DialogContent>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent className="glass-card border-white/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Удаление пользователя</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ты уверена, что хочешь полностью удалить пользователя <strong>{confirmDelete?.nickname}</strong> и все его записи? Это действие необратимо.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingId}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!!deletingId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) deleteUser(confirmDelete.id, confirmDelete.nickname);
+              }}
+            >
+              {deletingId ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
