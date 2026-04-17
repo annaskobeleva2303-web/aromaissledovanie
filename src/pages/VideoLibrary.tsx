@@ -14,6 +14,8 @@ interface Meeting {
   meeting_date: string;
   video_url: string;
   description: string | null;
+  oil_id: string | null;
+  oils?: { id: string; title: string } | null;
 }
 
 const VideoLibrary = () => {
@@ -25,7 +27,7 @@ const VideoLibrary = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meeting_archive" as any)
-        .select("*")
+        .select("*, oils(id, title)")
         .order("meeting_date", { ascending: false });
       if (error) throw error;
       return data as unknown as Meeting[];

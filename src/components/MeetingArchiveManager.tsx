@@ -44,7 +44,7 @@ export function MeetingArchiveManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meeting_archive" as any)
-        .select("*")
+        .select("*, oils(id, title)")
         .order("meeting_date", { ascending: false });
       if (error) throw error;
       return data as any[];
@@ -198,13 +198,22 @@ export function MeetingArchiveManager() {
                     <Video className="h-3.5 w-3.5 text-primary shrink-0" />
                     {m.title}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {new Date(m.meeting_date).toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(m.meeting_date).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    {m.oils ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 text-primary text-[10px] px-1.5 py-0.5">
+                        <Droplet className="h-2.5 w-2.5" /> {m.oils.title}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground/60">общий</span>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
