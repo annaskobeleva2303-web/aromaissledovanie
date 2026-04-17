@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Video, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, Video, Save, Droplet } from "lucide-react";
 import { toast } from "sonner";
+import { useOils } from "@/hooks/useOils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,12 +26,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const NO_OIL = "__none__";
+
 export function MeetingArchiveManager() {
   const queryClient = useQueryClient();
+  const { myOils, newOils } = useOils();
+  const allOils = [...myOils, ...newOils];
   const [title, setTitle] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [oilId, setOilId] = useState<string>(NO_OIL);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
 
   const { data: meetings = [], isLoading } = useQuery({
