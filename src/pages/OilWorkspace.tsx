@@ -103,8 +103,9 @@ const OilWorkspace = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="diary" className="mt-8">
+          <TabsContent value="diary" className="mt-8 space-y-6">
             <DiaryCalendar oilId={oil.id} />
+            <OilMeetings oilId={oil.id} />
           </TabsContent>
 
           <TabsContent value="ai" className="mt-8">
