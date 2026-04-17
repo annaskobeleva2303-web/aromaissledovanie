@@ -61,16 +61,20 @@ export function MeetingArchiveManager() {
         meeting_date: meetingDate,
         video_url: videoUrl.trim(),
         description: description.trim() || null,
+        oil_id: oilId === NO_OIL ? null : oilId,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meeting_archive"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_oil"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_public"] });
       toast.success("Мастер-класс добавлен!");
       setTitle("");
       setMeetingDate("");
       setVideoUrl("");
       setDescription("");
+      setOilId(NO_OIL);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -82,6 +86,8 @@ export function MeetingArchiveManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meeting_archive"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_oil"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_public"] });
       toast.success("Мастер-класс удалён");
       setConfirmDelete(null);
     },
@@ -123,6 +129,25 @@ export function MeetingArchiveManager() {
           <p className="text-[10px] text-muted-foreground/70 mt-1">
             Для VK: используйте код вставки (Поделиться → Экспорт → src). Для YouTube: формат
             https://www.youtube.com/embed/...
+          </p>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Привязать к маслу</Label>
+          <Select value={oilId} onValueChange={setOilId}>
+            <SelectTrigger className="mt-1 bg-white/40 border-white/30 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_OIL}>Общий (для всех)</SelectItem>
+              {allOils.map((oil) => (
+                <SelectItem key={oil.id} value={oil.id}>
+                  {oil.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground/70 mt-1">
+            Если выбрано масло — видео появится внутри его карточки и в Медиатеке только у тех, у кого есть доступ.
           </p>
         </div>
         <div>
