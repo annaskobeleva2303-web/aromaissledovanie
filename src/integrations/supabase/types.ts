@@ -211,6 +211,36 @@ export type Database = {
           },
         ]
       }
+      meeting_archive: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          meeting_date: string
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          meeting_date: string
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          meeting_date?: string
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

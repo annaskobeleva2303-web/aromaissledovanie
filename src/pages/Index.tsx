@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOils } from "@/hooks/useOils";
 import { OilCard } from "@/components/OilCard";
 import { Button } from "@/components/ui/button";
-import { LogOut, Loader2, Settings, Eye, EyeOff } from "lucide-react";
+import { LogOut, Loader2, Settings, Eye, EyeOff, Video } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -100,6 +100,15 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-1">
             {isAdmin && <AdminCodePanel />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/library")}
+              className="rounded-full text-muted-foreground hover:text-foreground transition-all duration-300"
+              title="Мастер-классы"
+            >
+              <Video className="h-4 w-4" />
+            </Button>
             <NotificationCenter />
             <Popover>
               <PopoverTrigger asChild>
