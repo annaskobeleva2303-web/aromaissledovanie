@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Video, Save } from "lucide-react";
+import { Loader2, Plus, Trash2, Video, Save, Droplet } from "lucide-react";
 import { toast } from "sonner";
+import { useOils } from "@/hooks/useOils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,12 +26,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const NO_OIL = "__none__";
+
 export function MeetingArchiveManager() {
   const queryClient = useQueryClient();
+  const { myOils, newOils } = useOils();
+  const allOils = [...myOils, ...newOils];
   const [title, setTitle] = useState("");
   const [meetingDate, setMeetingDate] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [description, setDescription] = useState("");
+  const [oilId, setOilId] = useState<string>(NO_OIL);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
 
   const { data: meetings = [], isLoading } = useQuery({
@@ -31,7 +44,7 @@ export function MeetingArchiveManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meeting_archive" as any)
-        .select("*")
+        .select("*, oils(id, title)")
         .order("meeting_date", { ascending: false });
       if (error) throw error;
       return data as any[];
@@ -48,16 +61,20 @@ export function MeetingArchiveManager() {
         meeting_date: meetingDate,
         video_url: videoUrl.trim(),
         description: description.trim() || null,
+        oil_id: oilId === NO_OIL ? null : oilId,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meeting_archive"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_oil"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_public"] });
       toast.success("Мастер-класс добавлен!");
       setTitle("");
       setMeetingDate("");
       setVideoUrl("");
       setDescription("");
+      setOilId(NO_OIL);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -69,6 +86,8 @@ export function MeetingArchiveManager() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meeting_archive"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_oil"] });
+      queryClient.invalidateQueries({ queryKey: ["meeting_archive_public"] });
       toast.success("Мастер-класс удалён");
       setConfirmDelete(null);
     },
@@ -110,6 +129,25 @@ export function MeetingArchiveManager() {
           <p className="text-[10px] text-muted-foreground/70 mt-1">
             Для VK: используйте код вставки (Поделиться → Экспорт → src). Для YouTube: формат
             https://www.youtube.com/embed/...
+          </p>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Привязать к маслу</Label>
+          <Select value={oilId} onValueChange={setOilId}>
+            <SelectTrigger className="mt-1 bg-white/40 border-white/30 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_OIL}>Общий (для всех)</SelectItem>
+              {allOils.map((oil) => (
+                <SelectItem key={oil.id} value={oil.id}>
+                  {oil.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground/70 mt-1">
+            Если выбрано масло — видео появится внутри его карточки и в Медиатеке только у тех, у кого есть доступ.
           </p>
         </div>
         <div>
@@ -160,13 +198,22 @@ export function MeetingArchiveManager() {
                     <Video className="h-3.5 w-3.5 text-primary shrink-0" />
                     {m.title}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {new Date(m.meeting_date).toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(m.meeting_date).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    {m.oils ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 text-primary text-[10px] px-1.5 py-0.5">
+                        <Droplet className="h-2.5 w-2.5" /> {m.oils.title}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground/60">общий</span>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"

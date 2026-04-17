@@ -217,6 +217,7 @@ export type Database = {
           description: string | null
           id: string
           meeting_date: string
+          oil_id: string | null
           title: string
           updated_at: string
           video_url: string
@@ -226,6 +227,7 @@ export type Database = {
           description?: string | null
           id?: string
           meeting_date: string
+          oil_id?: string | null
           title: string
           updated_at?: string
           video_url: string
@@ -235,11 +237,20 @@ export type Database = {
           description?: string | null
           id?: string
           meeting_date?: string
+          oil_id?: string | null
           title?: string
           updated_at?: string
           video_url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meeting_archive_oil_id_fkey"
+            columns: ["oil_id"]
+            isOneToOne: false
+            referencedRelation: "oils"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {

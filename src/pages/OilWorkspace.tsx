@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, BookOpen, Users, Sparkles } from "lucide-react";
 import { DiaryCalendar } from "@/components/DiaryCalendar";
 import { AiInsight } from "@/components/AiInsight";
 import { GroupField } from "@/components/GroupField";
+import { OilMeetings } from "@/components/OilMeetings";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { OilInfoSheet } from "@/components/OilInfoSheet";
 import { SparkleBackground } from "@/components/SparkleBackground";
@@ -102,8 +103,9 @@ const OilWorkspace = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="diary" className="mt-8">
+          <TabsContent value="diary" className="mt-8 space-y-6">
             <DiaryCalendar oilId={oil.id} />
+            <OilMeetings oilId={oil.id} />
           </TabsContent>
 
           <TabsContent value="ai" className="mt-8">
