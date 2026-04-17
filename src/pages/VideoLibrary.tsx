@@ -102,6 +102,11 @@ const VideoLibrary = () => {
                 </div>
 
                 <div className="p-4">
+                  {m.oils && (
+                    <span className="inline-flex items-center rounded-full bg-primary/15 text-primary text-[10px] px-2 py-0.5 mb-2">
+                      {m.oils.title}
+                    </span>
+                  )}
                   <p className="font-serif text-base font-semibold text-foreground line-clamp-2 leading-snug">
                     {m.title}
                   </p>
