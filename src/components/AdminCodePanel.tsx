@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2, Eraser } from "lucide-react";
+import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2, Eraser, Video } from "lucide-react";
+import { MeetingArchiveManager } from "@/components/MeetingArchiveManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
@@ -423,15 +424,18 @@ export function AdminCodePanel() {
         </DialogHeader>
 
         <Tabs defaultValue="codes" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 bg-white/30">
-            <TabsTrigger value="codes" className="gap-1 text-[11px]">
-              <KeyRound className="h-3.5 w-3.5" /> Коды
+          <TabsList className="grid w-full grid-cols-4 bg-white/30">
+            <TabsTrigger value="codes" className="gap-1 text-[10px]">
+              <KeyRound className="h-3 w-3" /> Коды
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-1 text-[11px]">
-              <Users className="h-3.5 w-3.5" /> Участники
+            <TabsTrigger value="users" className="gap-1 text-[10px]">
+              <Users className="h-3 w-3" /> Люди
             </TabsTrigger>
-            <TabsTrigger value="oils" className="gap-1 text-[11px]">
-              <BookOpen className="h-3.5 w-3.5" /> Масла
+            <TabsTrigger value="oils" className="gap-1 text-[10px]">
+              <BookOpen className="h-3 w-3" /> Масла
+            </TabsTrigger>
+            <TabsTrigger value="archive" className="gap-1 text-[10px]">
+              <Video className="h-3 w-3" /> Видео
             </TabsTrigger>
           </TabsList>
 
@@ -608,6 +612,11 @@ export function AdminCodePanel() {
           {/* Oils Editor Tab */}
           <TabsContent value="oils" className="overflow-y-auto flex-1 pr-1 mt-4">
             <OilEditor allOils={allOils} />
+          </TabsContent>
+
+          {/* Meeting Archive Tab */}
+          <TabsContent value="archive" className="overflow-y-auto flex-1 pr-1 mt-4">
+            <MeetingArchiveManager />
           </TabsContent>
         </Tabs>
 
