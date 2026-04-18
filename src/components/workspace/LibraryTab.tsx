@@ -3,10 +3,20 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, Video, X, BookOpen } from "lucide-react";
-import type { Oil } from "@/hooks/useOils";
+interface OilFull {
+  id: string;
+  title: string;
+  description: string | null;
+  focus: string | null;
+  image_url: string | null;
+  properties?: string | null;
+  usage?: string | null;
+  cautions?: string | null;
+  additional_info?: string | null;
+}
 
 interface LibraryTabProps {
-  oil: Oil;
+  oil: OilFull;
 }
 
 interface Meeting {
