@@ -25,9 +25,10 @@ const MOODS: Record<string, { label: string; emoji: string }> = {
 
 interface DiaryCalendarProps {
   oilId: string;
+  viewOnly?: boolean;
 }
 
-export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
+export function DiaryCalendar({ oilId, viewOnly = false }: DiaryCalendarProps) {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [viewingEntry, setViewingEntry] = useState<any | null>(null);
@@ -188,7 +189,7 @@ export function DiaryCalendar({ oilId }: DiaryCalendarProps) {
       )}
 
       {/* New entry form */}
-      {showForm && (
+      {showForm && !viewOnly && (
         <DiaryForm
           oilId={oilId}
           date={selectedDateStr}
