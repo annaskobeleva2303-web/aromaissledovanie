@@ -1,22 +1,24 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, BookOpen, Users, Sparkles } from "lucide-react";
-import { DiaryCalendar } from "@/components/DiaryCalendar";
-import { AiInsight } from "@/components/AiInsight";
-import { GroupField } from "@/components/GroupField";
-import { OilMeetings } from "@/components/OilMeetings";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { OilInfoSheet } from "@/components/OilInfoSheet";
 import { SparkleBackground } from "@/components/SparkleBackground";
+import { BottomTabBar, type WorkspaceTab } from "@/components/workspace/BottomTabBar";
+import { PracticeTab } from "@/components/workspace/PracticeTab";
+import { DiaryTab } from "@/components/workspace/DiaryTab";
+import { FieldTab } from "@/components/workspace/FieldTab";
+import { LibraryTab } from "@/components/workspace/LibraryTab";
+import { AnalyticsTab } from "@/components/workspace/AnalyticsTab";
 
 const OilWorkspace = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [tab, setTab] = useState<WorkspaceTab>("practice");
 
   const { data: oil, isLoading } = useQuery({
     queryKey: ["oil", id],
@@ -52,7 +54,7 @@ const OilWorkspace = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative pb-28">
       <SparkleBackground />
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/20 bg-white/30 backdrop-blur-2xl">
@@ -71,52 +73,20 @@ const OilWorkspace = () => {
               <p className="truncate text-xs tracking-wide text-muted-foreground">{oil.focus}</p>
             )}
           </div>
-          <OilInfoSheet oil={oil} />
           <NotificationCenter />
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Tab content */}
       <main className="mx-auto max-w-2xl px-5 py-8">
-        <Tabs defaultValue="diary">
-          <TabsList className="w-full rounded-full bg-white/30 backdrop-blur-xl border border-white/20 p-1">
-            <TabsTrigger
-              value="diary"
-              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Мой Дневник
-            </TabsTrigger>
-            <TabsTrigger
-              value="ai"
-              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Анализ ИИ
-            </TabsTrigger>
-            <TabsTrigger
-              value="group"
-              className="flex-1 gap-1.5 rounded-full text-sm transition-all duration-300 data-[state=active]:bg-white/60 data-[state=active]:shadow-sm data-[state=active]:backdrop-blur-md"
-            >
-              <Users className="h-3.5 w-3.5" />
-              Групповое поле
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="diary" className="mt-8 space-y-6">
-            <DiaryCalendar oilId={oil.id} />
-            <OilMeetings oilId={oil.id} />
-          </TabsContent>
-
-          <TabsContent value="ai" className="mt-8">
-            <AiInsight oilId={oil.id} oilTitle={oil.title} />
-          </TabsContent>
-
-          <TabsContent value="group" className="mt-8">
-            <GroupField oilId={oil.id} />
-          </TabsContent>
-        </Tabs>
+        {tab === "practice" && <PracticeTab oil={oil} />}
+        {tab === "diary" && <DiaryTab oil={oil} />}
+        {tab === "field" && <FieldTab oil={oil} />}
+        {tab === "library" && <LibraryTab oil={oil} />}
+        {tab === "analytics" && <AnalyticsTab oil={oil} />}
       </main>
+
+      <BottomTabBar active={tab} onChange={setTab} />
     </div>
   );
 };
