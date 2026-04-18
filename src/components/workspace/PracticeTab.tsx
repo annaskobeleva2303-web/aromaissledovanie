@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { OilCard } from "@/components/OilCard";
+import { Progress } from "@/components/ui/progress";
 import { DiaryForm } from "@/components/DiaryForm";
 import type { Oil } from "@/hooks/useOils";
+
+const RESEARCH_DAYS = 21;
 
 interface PracticeTabProps {
   oil: Oil;
@@ -28,13 +31,20 @@ export function PracticeTab({ oil }: PracticeTabProps) {
     enabled: !!user,
   });
 
+  const progress = Math.min((counts.days / RESEARCH_DAYS) * 100, 100);
+  const streakLabel = counts.days === 1 ? "день" : counts.days < 5 ? "дня" : "дней";
+
   return (
     <div className="space-y-6">
-      <section>
-        <h2 className="mb-4 font-serif text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Текущее исследование
-        </h2>
-        <OilCard oil={oil} daysCompleted={counts.days} />
+      <section className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <Flame className="h-3.5 w-3.5 text-secondary" strokeWidth={1.8} />
+            {counts.days} {streakLabel} из {RESEARCH_DAYS}
+          </span>
+          <span className="font-medium text-primary">{Math.round(progress)}%</span>
+        </div>
+        <Progress value={progress} className="h-1 bg-muted" />
       </section>
 
       {!counts.hasToday && (
