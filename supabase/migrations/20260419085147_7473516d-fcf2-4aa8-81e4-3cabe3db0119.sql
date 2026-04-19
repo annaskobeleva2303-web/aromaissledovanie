@@ -1,0 +1,1 @@
+ALTER TABLE public.oils ADD COLUMN IF NOT EXISTS intro_meditation_url text;

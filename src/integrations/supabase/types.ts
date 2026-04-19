@@ -317,6 +317,7 @@ export type Database = {
           focus: string | null
           id: string
           image_url: string | null
+          intro_meditation_url: string | null
           is_active: boolean
           properties: string | null
           title: string
@@ -330,6 +331,7 @@ export type Database = {
           focus?: string | null
           id?: string
           image_url?: string | null
+          intro_meditation_url?: string | null
           is_active?: boolean
           properties?: string | null
           title: string
@@ -343,6 +345,7 @@ export type Database = {
           focus?: string | null
           id?: string
           image_url?: string | null
+          intro_meditation_url?: string | null
           is_active?: boolean
           properties?: string | null
           title?: string

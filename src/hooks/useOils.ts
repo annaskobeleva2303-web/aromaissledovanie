@@ -9,6 +9,7 @@ export interface Oil {
   focus: string | null;
   is_active: boolean;
   image_url: string | null;
+  intro_meditation_url: string | null;
 }
 
 export function useOils() {
