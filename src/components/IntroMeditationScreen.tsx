@@ -36,6 +36,7 @@ export function IntroMeditationScreen({ oilId, videoUrl, onBack, onCompleted }: 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["intro_meditation_done"] });
+      queryClient.invalidateQueries({ queryKey: ["intro-meditation-entry"] });
       queryClient.invalidateQueries({ queryKey: ["entries"] });
       queryClient.invalidateQueries({ queryKey: ["practice-progress"] });
       toast.success("Запись сохранена. Путь начат ✨");
