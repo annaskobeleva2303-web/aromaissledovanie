@@ -38,25 +38,16 @@ export function PracticeTab({ oil }: PracticeTabProps) {
     enabled: !!user,
   });
 
-  const { data: introUrl } = useQuery({
-    queryKey: ["intro_meditation"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("app_settings")
-        .select("value")
-        .eq("key", "intro_meditation_url")
-        .maybeSingle();
-      return (data?.value as string | null) ?? null;
-    },
-  });
+  const introUrl = oil.intro_meditation_url ?? null;
 
   const { data: introDone } = useQuery({
-    queryKey: ["intro_meditation_done", user?.id],
+    queryKey: ["intro_meditation_done", oil.id, user?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("entries")
         .select("id")
         .eq("user_id", user!.id)
+        .eq("oil_id", oil.id)
         .eq("record_type", "meditation_intro")
         .limit(1);
       return (data ?? []).length > 0;
