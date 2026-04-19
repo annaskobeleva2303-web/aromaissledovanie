@@ -15,7 +15,11 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        serif: ["Cormorant Garamond", "Georgia", "serif"],
+        serif: ['"Playfair Display"', "Georgia", "serif"],
+        display: ['"Playfair Display"', "Georgia", "serif"],
+      },
+      fontSize: {
+        base: ["1rem", { lineHeight: "1.65rem" }],
       },
       colors: {
         border: "hsl(var(--border))",
