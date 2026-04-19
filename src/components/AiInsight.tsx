@@ -123,7 +123,7 @@ function InsightCard({
           </div>
           <div>
             <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-              Глубокий инсайт
+              Глубокий <span className="accent-italic font-normal">инсайт</span>
             </h3>
             {total > 1 && (
               <p className="text-xs text-muted-foreground/60">
@@ -157,16 +157,24 @@ function InsightCard({
         )}
       </div>
 
-      <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        {content.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-          part.startsWith("**") && part.endsWith("**") ? (
-            <strong key={i} className="font-semibold text-foreground">
-              {part.slice(2, -2)}
-            </strong>
-          ) : (
-            <span key={i}>{part}</span>
-          )
-        )}
+      <div className="insight-prose relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+        {content.split(/(\*\*.*?\*\*|_[^_]+_)/g).map((part, i) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return (
+              <strong key={i} className="font-semibold text-foreground">
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
+            return (
+              <span key={i} className="accent-italic text-primary">
+                {part.slice(1, -1)}
+              </span>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        })}
       </div>
 
       <div className="relative flex items-center justify-between">
@@ -429,7 +437,7 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
           <Sparkles className="h-6 w-6 text-primary" strokeWidth={1.5} />
         </div>
         <p className="font-serif text-lg font-medium tracking-wide text-foreground">
-          Почти готово к анализу
+          Почти <span className="accent-italic">готово</span> к анализу
         </p>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Для глубокого анализа нужно собрать чуть больше наблюдений.
@@ -453,7 +461,7 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
         </div>
         <div className="space-y-2">
           <p className="font-serif text-lg font-medium tracking-wide text-foreground">
-            Синтезируем ваши смыслы…
+            Синтезируем ваши <span className="accent-italic">смыслы</span>…
           </p>
           <p className="text-sm text-muted-foreground animate-pulse">
             ИИ анализирует {entryCount} {entryCount >= 5 ? "записей" : "записи"} по «{oilTitle}»

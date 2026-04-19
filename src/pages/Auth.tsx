@@ -62,7 +62,7 @@ export default function Auth() {
         <div className="mb-10 flex flex-col items-center gap-4">
           <BrandIcon className="h-16 w-16" withBackground strokeWidth={1.8} />
           <h1 className="font-serif text-[2rem] font-semibold tracking-normal text-violet-deep whitespace-nowrap">
-            Живые Смыслы
+            Живые <span className="accent-italic font-normal">Смыслы</span>
           </h1>
           <p className="text-sm text-violet-deep font-normal">
             {isRegister ? "Создать аккаунт" : "Войти в аккаунт"}
