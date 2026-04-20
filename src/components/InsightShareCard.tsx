@@ -50,6 +50,59 @@ export function InsightShareCard({
   // Use shareQuote for the card; fall back to truncated insight
   const cardQuote = shareQuote || (insightText.length > 120 ? insightText.slice(0, 117) + "..." : insightText);
 
+  const formatInsightText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(_[^_]+_|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('_') && part.endsWith('_') && part.length > 2) {
+        return (
+          <span
+            key={i}
+            style={{
+              fontFamily: "'Playfair Display', 'Cormorant Garamond', serif",
+              fontStyle: "italic",
+              color: "hsl(20 90% 74%)",
+              fontSize: "1.1em",
+            }}
+          >
+            {part.slice(1, -1)}
+          </span>
+        );
+      }
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        return (
+          <span
+            key={i}
+            style={{
+              fontFamily: "'Playfair Display', 'Cormorant Garamond', serif",
+              fontStyle: "italic",
+              color: "hsl(20 90% 74%)",
+              fontSize: "1.1em",
+            }}
+          >
+            {part.slice(2, -2)}
+          </span>
+        );
+      }
+      if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+        return (
+          <span
+            key={i}
+            style={{
+              fontFamily: "'Playfair Display', 'Cormorant Garamond', serif",
+              fontStyle: "italic",
+              color: "hsl(20 90% 74%)",
+              fontSize: "1.1em",
+            }}
+          >
+            {part.slice(1, -1)}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   const generateImage = async (): Promise<Blob | null> => {
     if (!cardRef.current) return null;
     try {
@@ -352,11 +405,12 @@ export function InsightShareCard({
                     lineHeight: 1.7,
                     color: "hsla(0 0% 100% / 0.92)",
                     fontWeight: shareQuote ? 500 : 400,
-                    fontStyle: "italic",
+                    fontStyle: "normal",
+                    fontFamily: "'Inter', sans-serif",
                     textAlign: "center",
                   }}
                 >
-                  {cardQuote}
+                  {formatInsightText(cardQuote)}
                 </p>
                 <div
                   style={{
