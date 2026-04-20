@@ -405,11 +405,12 @@ export function InsightShareCard({
                     lineHeight: 1.7,
                     color: "hsla(0 0% 100% / 0.92)",
                     fontWeight: shareQuote ? 500 : 400,
-                    fontStyle: "italic",
+                    fontStyle: "normal",
+                    fontFamily: "'Inter', sans-serif",
                     textAlign: "center",
                   }}
                 >
-                  {cardQuote}
+                  {formatInsightText(cardQuote)}
                 </p>
                 <div
                   style={{
