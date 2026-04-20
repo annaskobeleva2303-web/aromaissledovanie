@@ -86,6 +86,36 @@ interface AiInsightProps {
   oilTitle: string;
 }
 
+const formatInsightText = (text: string) => {
+  if (!text) return null;
+  const parts = text.split(/(_[^_]+_|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return (
+        <span key={i} className="font-serif italic text-primary text-[1.1em]">
+          {part.slice(2, -2)}
+        </span>
+      );
+    }
+    if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
+      return (
+        <span key={i} className="font-serif italic text-primary text-[1.1em]">
+          {part.slice(1, -1)}
+        </span>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return (
+        <span key={i} className="font-serif italic text-primary text-[1.1em]">
+          {part.slice(1, -1)}
+        </span>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
+
 function InsightCard({
   content,
   createdAt,
@@ -158,31 +188,7 @@ function InsightCard({
       </div>
 
       <div className="relative font-sans not-italic text-[16px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        {content.split(/(\*\*[^*]+\*\*|_[^_\n]+_|\*[^*\n]+\*)/g).map((part, i) => {
-          if (!part) return null;
-          if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-            return (
-              <strong key={i} className="font-semibold not-italic text-foreground">
-                {part.slice(2, -2)}
-              </strong>
-            );
-          }
-          if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
-            return (
-              <span key={i} className="font-serif italic text-primary text-lg">
-                {part.slice(1, -1)}
-              </span>
-            );
-          }
-          if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-            return (
-              <span key={i} className="font-serif italic text-primary text-lg">
-                {part.slice(1, -1)}
-              </span>
-            );
-          }
-          return <span key={i} className="not-italic">{part}</span>;
-        })}
+        {formatInsightText(content)}
       </div>
 
       <div className="relative flex items-center justify-between">
@@ -780,16 +786,8 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
 
           {summaries.length > 0 ? (
             <>
-              <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                {summaries[summaryIndex].summary_text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-                  part.startsWith("**") && part.endsWith("**") ? (
-                    <strong key={i} className="font-semibold text-foreground">
-                      {part.slice(2, -2)}
-                    </strong>
-                  ) : (
-                    <span key={i}>{part}</span>
-                  )
-                )}
+              <div className="relative font-sans not-italic text-[15px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                {formatInsightText(summaries[summaryIndex].summary_text)}
               </div>
               <div className="relative flex items-center justify-between">
                 <p className="text-xs text-muted-foreground/60">
