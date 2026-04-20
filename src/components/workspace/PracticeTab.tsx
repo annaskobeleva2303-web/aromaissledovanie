@@ -112,9 +112,6 @@ export function PracticeTab({ oil }: PracticeTabProps) {
 
       {!counts.hasToday && (
         <section>
-          <h2 className="mb-4 font-serif text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Сегодняшняя практика
-          </h2>
           <DiaryForm oilId={oil.id} date={today} onSaved={() => {}} />
         </section>
       )}

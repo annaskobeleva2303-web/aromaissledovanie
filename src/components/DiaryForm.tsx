@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { BodyZoneChips } from "@/components/BodyZoneChips";
-import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff } from "lucide-react";
+import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff, Compass, Flower2, Sprout } from "lucide-react";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -308,66 +308,87 @@ function GlassSlider({
   );
 }
 
-// --- Session Hub Card ---
-function SessionCard({
+// --- Session Stage Panel (vertical luxury path) ---
+function SessionStagePanel({
   number,
   title,
   subtitle,
-  emoji,
+  Icon,
   completed,
   locked,
+  active,
   onClick,
 }: {
   number: number;
   title: string;
   subtitle: string;
-  emoji: string;
+  Icon: typeof Compass;
   completed: boolean;
   locked: boolean;
+  active: boolean;
   onClick: () => void;
 }) {
+  const numberStr = String(number).padStart(2, "0");
+
   return (
     <motion.button
-      whileHover={locked ? {} : { scale: 1.01 }}
-      whileTap={locked ? {} : { scale: 0.98 }}
+      whileHover={locked ? {} : { scale: 1.005 }}
+      whileTap={locked ? {} : { scale: 0.99 }}
       onClick={locked ? undefined : onClick}
       disabled={locked}
-      className={`relative w-full text-left rounded-[1.75rem] p-5 backdrop-blur-2xl border transition-all duration-300 ${
+      className={`relative w-full text-left rounded-[1.75rem] px-5 py-5 backdrop-blur-2xl border transition-all duration-500 ${
         locked
-          ? "opacity-40 cursor-not-allowed border-white/10 bg-white/10"
+          ? "opacity-40 cursor-not-allowed border-white/15 bg-white/10"
           : completed
-            ? "border-transparent bg-white/40 shadow-[0_0_20px_6px_rgba(255,180,80,0.20)]"
-            : "border-white/20 bg-white/25 hover:bg-white/35 hover:shadow-lg hover:shadow-primary/10"
+            ? "border-white/40 bg-white/30 shadow-[0_0_24px_4px_rgba(255,180,80,0.18)]"
+            : active
+              ? "border-white/50 bg-white/35 shadow-[0_0_28px_6px_rgba(212,160,90,0.28),0_0_40px_10px_rgba(168,139,250,0.18)]"
+              : "opacity-50 border-white/20 bg-white/15"
       }`}
     >
       <div className="flex items-center gap-4">
-        <div className="relative flex-shrink-0">
-          <span className="text-2xl">{emoji}</span>
-          {completed && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary/80 flex items-center justify-center shadow-md"
-            >
-              <Check className="h-3 w-3 text-white" strokeWidth={3} />
-            </motion.div>
-          )}
-          {locked && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-foreground/20 flex items-center justify-center">
-              <Lock className="h-3 w-3 text-foreground/40" strokeWidth={2} />
-            </div>
-          )}
-        </div>
+        <Icon
+          className={`h-7 w-7 shrink-0 transition-colors duration-500 ${
+            active ? "text-violet-deep" : completed ? "text-primary/80" : "text-muted-foreground/70"
+          }`}
+          strokeWidth={1.4}
+        />
+        <span
+          className={`font-serif text-3xl leading-none tracking-tight transition-colors duration-500 ${
+            active ? "text-violet-deep" : completed ? "text-foreground/80" : "text-muted-foreground/60"
+          }`}
+        >
+          {numberStr}
+        </span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-primary/50 font-medium">
-              Этап {number}
-            </span>
-          </div>
-          <p className="font-medium text-foreground/90 text-sm mt-0.5">{title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+          <p
+            className={`font-serif text-[15px] tracking-wide transition-colors duration-500 ${
+              active ? "text-foreground" : completed ? "text-foreground/85" : "text-muted-foreground/80"
+            }`}
+          >
+            {title}
+          </p>
+          <p
+            className={`mt-1 italic text-[12px] leading-snug transition-colors duration-500 ${
+              active ? "text-primary/80" : "text-muted-foreground/60"
+            }`}
+          >
+            {subtitle}
+          </p>
         </div>
+        {completed && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary/80 flex items-center justify-center shadow-md"
+          >
+            <Check className="h-3 w-3 text-white" strokeWidth={3} />
+          </motion.div>
+        )}
+        {locked && (
+          <Lock className="absolute top-4 right-4 h-3.5 w-3.5 text-foreground/30" strokeWidth={1.6} />
+        )}
       </div>
     </motion.button>
   );
