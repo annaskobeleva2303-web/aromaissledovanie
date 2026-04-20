@@ -622,41 +622,41 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="space-y-4"
           >
-            <div className="text-center mb-2">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">
-                Сессия
-              </p>
-              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">
-                Твоё пространство исследования
+            <div className="text-center mb-4">
+              <h3 className="font-serif text-[26px] sm:text-[28px] leading-tight tracking-tight text-foreground">
+                Твоё пространство <span className="accent-italic text-primary">исследования</span>
               </h3>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <SessionCard
+            <div className="flex flex-col gap-3.5">
+              <SessionStagePanel
                 number={1}
                 title="Точка входа"
                 subtitle="Замерь энергию и настроение до масла"
-                emoji="📊"
+                Icon={Compass}
                 completed={beforeDone}
                 locked={false}
+                active={!beforeDone}
                 onClick={() => setPhase("before")}
               />
-              <SessionCard
+              <SessionStagePanel
                 number={2}
                 title="Контакт с Даваной"
                 subtitle="Дыхание, сенсорика и образы"
-                emoji="🌿"
+                Icon={Flower2}
                 completed={contactDone}
                 locked={false}
+                active={beforeDone && !contactDone}
                 onClick={enterContact}
               />
-              <SessionCard
+              <SessionStagePanel
                 number={3}
                 title="Интеграция"
                 subtitle="Замер После и свободный дневник"
-                emoji="✨"
+                Icon={Sprout}
                 completed={afterDone && writingDone}
                 locked={!contactDone}
+                active={contactDone && !(afterDone && writingDone)}
                 onClick={() => {
                   if (beforeDone && !afterDone) {
                     setPhase("after");
@@ -671,15 +671,16 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
+              className="pt-2"
             >
-              <Button
+              <button
+                type="button"
                 onClick={() => saveEntry()}
                 disabled={!canFinishSession || !content.trim()}
-                className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20 mt-2"
+                className="w-full rounded-full px-6 py-3.5 text-[13px] tracking-wide text-primary bg-white/10 backdrop-blur-xl border border-primary/30 shadow-[0_0_18px_2px_rgba(168,139,250,0.18)] transition-all duration-300 hover:bg-white/20 hover:shadow-[0_0_24px_4px_rgba(168,139,250,0.28)] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                <Sparkles className="h-4 w-4" />
-                Завершить сессию и получить Инсайт
-              </Button>
+                Завершить сессию и получить инсайт
+              </button>
               {!canFinishSession && (
                 <p className="text-center text-[10px] text-muted-foreground/60 mt-2 tracking-wide">
                   Пройди Контакт с Даваной и напиши в дневник
