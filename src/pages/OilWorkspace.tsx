@@ -68,9 +68,13 @@ const OilWorkspace = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate font-serif text-xl font-medium tracking-wide">{oil.title}</h1>
+            <h1 className="font-serif text-[15px] sm:text-base font-medium leading-tight tracking-wide text-foreground">
+              {oil.title}
+            </h1>
             {oil.focus && (
-              <p className="truncate text-xs tracking-wide text-muted-foreground">{oil.focus}</p>
+              <p className="mt-0.5 text-[11px] leading-snug tracking-wide text-muted-foreground">
+                {oil.focus}
+              </p>
             )}
           </div>
           <NotificationCenter />
