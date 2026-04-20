@@ -157,23 +157,31 @@ function InsightCard({
         )}
       </div>
 
-      <div className="insight-prose relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        {content.split(/(\*\*.*?\*\*|_[^_]+_)/g).map((part, i) => {
-          if (part.startsWith("**") && part.endsWith("**")) {
+      <div className="relative font-sans not-italic text-[16px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+        {content.split(/(\*\*[^*]+\*\*|_[^_\n]+_|\*[^*\n]+\*)/g).map((part, i) => {
+          if (!part) return null;
+          if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
             return (
-              <strong key={i} className="font-semibold text-foreground">
+              <strong key={i} className="font-semibold not-italic text-foreground">
                 {part.slice(2, -2)}
               </strong>
             );
           }
           if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
             return (
-              <span key={i} className="accent-italic text-primary">
+              <span key={i} className="font-serif italic text-primary text-lg">
                 {part.slice(1, -1)}
               </span>
             );
           }
-          return <span key={i}>{part}</span>;
+          if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+            return (
+              <span key={i} className="font-serif italic text-primary text-lg">
+                {part.slice(1, -1)}
+              </span>
+            );
+          }
+          return <span key={i} className="not-italic">{part}</span>;
         })}
       </div>
 
