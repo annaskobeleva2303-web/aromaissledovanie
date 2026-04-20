@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { BodyZoneChips } from "@/components/BodyZoneChips";
-import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff } from "lucide-react";
+import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff, Compass, Flower2, Sprout } from "lucide-react";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -308,66 +308,87 @@ function GlassSlider({
   );
 }
 
-// --- Session Hub Card ---
-function SessionCard({
+// --- Session Stage Panel (vertical luxury path) ---
+function SessionStagePanel({
   number,
   title,
   subtitle,
-  emoji,
+  Icon,
   completed,
   locked,
+  active,
   onClick,
 }: {
   number: number;
   title: string;
   subtitle: string;
-  emoji: string;
+  Icon: typeof Compass;
   completed: boolean;
   locked: boolean;
+  active: boolean;
   onClick: () => void;
 }) {
+  const numberStr = String(number).padStart(2, "0");
+
   return (
     <motion.button
-      whileHover={locked ? {} : { scale: 1.01 }}
-      whileTap={locked ? {} : { scale: 0.98 }}
+      whileHover={locked ? {} : { scale: 1.005 }}
+      whileTap={locked ? {} : { scale: 0.99 }}
       onClick={locked ? undefined : onClick}
       disabled={locked}
-      className={`relative w-full text-left rounded-[1.75rem] p-5 backdrop-blur-2xl border transition-all duration-300 ${
+      className={`relative w-full text-left rounded-[1.75rem] px-5 py-5 backdrop-blur-2xl border transition-all duration-500 ${
         locked
-          ? "opacity-40 cursor-not-allowed border-white/10 bg-white/10"
+          ? "opacity-40 cursor-not-allowed border-white/15 bg-white/10"
           : completed
-            ? "border-transparent bg-white/40 shadow-[0_0_20px_6px_rgba(255,180,80,0.20)]"
-            : "border-white/20 bg-white/25 hover:bg-white/35 hover:shadow-lg hover:shadow-primary/10"
+            ? "border-white/40 bg-white/30 shadow-[0_0_24px_4px_rgba(255,180,80,0.18)]"
+            : active
+              ? "border-white/50 bg-white/35 shadow-[0_0_28px_6px_rgba(212,160,90,0.28),0_0_40px_10px_rgba(168,139,250,0.18)]"
+              : "opacity-50 border-white/20 bg-white/15"
       }`}
     >
       <div className="flex items-center gap-4">
-        <div className="relative flex-shrink-0">
-          <span className="text-2xl">{emoji}</span>
-          {completed && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary/80 flex items-center justify-center shadow-md"
-            >
-              <Check className="h-3 w-3 text-white" strokeWidth={3} />
-            </motion.div>
-          )}
-          {locked && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-foreground/20 flex items-center justify-center">
-              <Lock className="h-3 w-3 text-foreground/40" strokeWidth={2} />
-            </div>
-          )}
-        </div>
+        <Icon
+          className={`h-7 w-7 shrink-0 transition-colors duration-500 ${
+            active ? "text-violet-deep" : completed ? "text-primary/80" : "text-muted-foreground/70"
+          }`}
+          strokeWidth={1.4}
+        />
+        <span
+          className={`font-serif text-3xl leading-none tracking-tight transition-colors duration-500 ${
+            active ? "text-violet-deep" : completed ? "text-foreground/80" : "text-muted-foreground/60"
+          }`}
+        >
+          {numberStr}
+        </span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-primary/50 font-medium">
-              Этап {number}
-            </span>
-          </div>
-          <p className="font-medium text-foreground/90 text-sm mt-0.5">{title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+          <p
+            className={`font-serif text-[15px] tracking-wide transition-colors duration-500 ${
+              active ? "text-foreground" : completed ? "text-foreground/85" : "text-muted-foreground/80"
+            }`}
+          >
+            {title}
+          </p>
+          <p
+            className={`mt-1 italic text-[12px] leading-snug transition-colors duration-500 ${
+              active ? "text-primary/80" : "text-muted-foreground/60"
+            }`}
+          >
+            {subtitle}
+          </p>
         </div>
+        {completed && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary/80 flex items-center justify-center shadow-md"
+          >
+            <Check className="h-3 w-3 text-white" strokeWidth={3} />
+          </motion.div>
+        )}
+        {locked && (
+          <Lock className="absolute top-4 right-4 h-3.5 w-3.5 text-foreground/30" strokeWidth={1.6} />
+        )}
       </div>
     </motion.button>
   );
@@ -601,41 +622,41 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="space-y-4"
           >
-            <div className="text-center mb-2">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">
-                Сессия
-              </p>
-              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">
-                Твоё пространство исследования
+            <div className="text-center mb-4">
+              <h3 className="font-serif text-[26px] sm:text-[28px] leading-tight tracking-tight text-foreground">
+                Твоё пространство <span className="accent-italic text-primary">исследования</span>
               </h3>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <SessionCard
+            <div className="flex flex-col gap-3.5">
+              <SessionStagePanel
                 number={1}
                 title="Точка входа"
                 subtitle="Замерь энергию и настроение до масла"
-                emoji="📊"
+                Icon={Compass}
                 completed={beforeDone}
                 locked={false}
+                active={!beforeDone}
                 onClick={() => setPhase("before")}
               />
-              <SessionCard
+              <SessionStagePanel
                 number={2}
                 title="Контакт с Даваной"
                 subtitle="Дыхание, сенсорика и образы"
-                emoji="🌿"
+                Icon={Flower2}
                 completed={contactDone}
                 locked={false}
+                active={beforeDone && !contactDone}
                 onClick={enterContact}
               />
-              <SessionCard
+              <SessionStagePanel
                 number={3}
                 title="Интеграция"
                 subtitle="Замер После и свободный дневник"
-                emoji="✨"
+                Icon={Sprout}
                 completed={afterDone && writingDone}
                 locked={!contactDone}
+                active={contactDone && !(afterDone && writingDone)}
                 onClick={() => {
                   if (beforeDone && !afterDone) {
                     setPhase("after");
@@ -650,15 +671,16 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
+              className="pt-2"
             >
-              <Button
+              <button
+                type="button"
                 onClick={() => saveEntry()}
                 disabled={!canFinishSession || !content.trim()}
-                className="w-full rounded-full gap-2 py-5 text-sm tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/20 mt-2"
+                className="w-full rounded-full px-6 py-3.5 text-[13px] tracking-wide text-primary bg-white/10 backdrop-blur-xl border border-primary/30 shadow-[0_0_18px_2px_rgba(168,139,250,0.18)] transition-all duration-300 hover:bg-white/20 hover:shadow-[0_0_24px_4px_rgba(168,139,250,0.28)] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                <Sparkles className="h-4 w-4" />
-                Завершить сессию и получить Инсайт
-              </Button>
+                Завершить сессию и получить инсайт
+              </button>
               {!canFinishSession && (
                 <p className="text-center text-[10px] text-muted-foreground/60 mt-2 tracking-wide">
                   Пройди Контакт с Даваной и напиши в дневник
