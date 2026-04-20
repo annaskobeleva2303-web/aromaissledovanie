@@ -188,31 +188,7 @@ function InsightCard({
       </div>
 
       <div className="relative font-sans not-italic text-[16px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        {content.split(/(\*\*[^*]+\*\*|_[^_\n]+_|\*[^*\n]+\*)/g).map((part, i) => {
-          if (!part) return null;
-          if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-            return (
-              <strong key={i} className="font-semibold not-italic text-foreground">
-                {part.slice(2, -2)}
-              </strong>
-            );
-          }
-          if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
-            return (
-              <span key={i} className="font-serif italic text-primary text-lg">
-                {part.slice(1, -1)}
-              </span>
-            );
-          }
-          if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-            return (
-              <span key={i} className="font-serif italic text-primary text-lg">
-                {part.slice(1, -1)}
-              </span>
-            );
-          }
-          return <span key={i} className="not-italic">{part}</span>;
-        })}
+        {formatInsightText(content)}
       </div>
 
       <div className="relative flex items-center justify-between">
