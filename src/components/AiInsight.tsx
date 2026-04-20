@@ -786,16 +786,8 @@ export function AiInsight({ oilId, oilTitle }: AiInsightProps) {
 
           {summaries.length > 0 ? (
             <>
-              <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                {summaries[summaryIndex].summary_text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-                  part.startsWith("**") && part.endsWith("**") ? (
-                    <strong key={i} className="font-semibold text-foreground">
-                      {part.slice(2, -2)}
-                    </strong>
-                  ) : (
-                    <span key={i}>{part}</span>
-                  )
-                )}
+              <div className="relative font-sans not-italic text-[15px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                {formatInsightText(summaries[summaryIndex].summary_text)}
               </div>
               <div className="relative flex items-center justify-between">
                 <p className="text-xs text-muted-foreground/60">
