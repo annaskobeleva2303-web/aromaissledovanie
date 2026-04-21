@@ -822,16 +822,17 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             }}
             completeLabel={writingDone ? "Завершить этап" : "Далее — Дневник"}
           >
-            <div className="glass-card p-6 rounded-[1.75rem] space-y-6">
+            <div className="glass-card p-6 rounded-[1.75rem] space-y-7">
               <GlassSlider label="Энергия" icon={Zap} value={energyAfter} onChange={setEnergyAfter} min={0} max={10} minLabel="Обесточена" maxLabel="Вибрирую на максимум" />
-              <GlassSlider label="Настроение" icon={Smile} value={moodScoreAfter} onChange={setMoodScoreAfter} min={-5} max={5} minLabel="Подавленность" maxLabel="Эйфория" />
-              <div>
-                <p className="mb-3 text-xs text-muted-foreground tracking-wide">Выбери 1–2 состояния</p>
-                <div className="flex flex-wrap gap-2.5">
-                  {MOODS.map((m) => (
-                    <ChipButton key={m.value} selected={moodsAfter.includes(m.value)} onClick={() => toggleMood(moodsAfter, setMoodsAfter, m.value)} emoji={m.emoji} label={m.label} />
-                  ))}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Smile className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
+                  <span className="text-sm font-medium text-foreground/80">Эмоция после</span>
                 </div>
+                <p className="text-[11px] text-muted-foreground/70 tracking-wide">
+                  Что откликается теперь? Коснись лепестка
+                </p>
+                <PlutchikWheel value={emotionAfter} onChange={setEmotionAfter} />
               </div>
             </div>
           </PhaseWrapper>
