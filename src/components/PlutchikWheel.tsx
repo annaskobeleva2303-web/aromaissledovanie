@@ -182,12 +182,12 @@ export function PlutchikWheel({ value, onChange }: PlutchikWheelProps) {
           {SECTORS.map((sector) => (
             <text
               key={`text-${sector.key}`}
-              fontSize={11}
+              fontSize={9.5}
               fontFamily="'Playfair Display', 'Cormorant Garamond', serif"
               fontStyle="italic"
-              fill="hsl(270 40% 18%)"
-              opacity={0.92}
-              style={{ pointerEvents: "none", letterSpacing: "0.02em" }}
+              fill="hsl(270 45% 16%)"
+              opacity={0.82}
+              style={{ pointerEvents: "none", letterSpacing: "0.06em" }}
             >
               <textPath
                 href={`#label-arc-${sector.key}`}
