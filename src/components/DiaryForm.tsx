@@ -590,14 +590,14 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setEnergyBefore(5);
     setMoodScoreBefore(0);
     setMoodsBefore([]);
-    setEmotionBefore(null);
+    
     setOilBodyZones([]);
     setOilSensation("");
     setOilVisualImage("");
     setEnergyAfter(5);
     setMoodScoreAfter(0);
     setMoodsAfter([]);
-    setEmotionAfter(null);
+    
     setContent("");
     setIsPublic(false);
     setInsightText(null);
@@ -609,11 +609,10 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const chosenEmotion = emotionAfter ?? emotionBefore;
       const entryData: Record<string, unknown> = {
         user_id: user.id,
         oil_id: oilId,
-        mood: chosenEmotion?.name || moodsAfter[0] || moodsBefore[0] || null,
+        mood: [...moodsAfter, ...moodsBefore][0] || null,
         content: content.trim(),
         is_public: isPublic,
         energy_tags: [],
@@ -627,9 +626,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
       if (recordType === "full") {
         entryData.energy_before = energyBefore;
-        entryData.mood_score_before = emotionBefore?.intensity ?? moodScoreBefore;
+        entryData.mood_score_before = moodScoreBefore;
         entryData.energy_after = energyAfter;
-        entryData.mood_score_after = emotionAfter?.intensity ?? moodScoreAfter;
+        entryData.mood_score_after = moodScoreAfter;
       }
 
       const { error } = await supabase.from("entries").insert(entryData as any);
