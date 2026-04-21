@@ -523,12 +523,14 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setEnergyBefore(5);
     setMoodScoreBefore(0);
     setMoodsBefore([]);
+    setEmotionBefore(null);
     setOilBodyZones([]);
     setOilSensation("");
     setOilVisualImage("");
     setEnergyAfter(5);
     setMoodScoreAfter(0);
     setMoodsAfter([]);
+    setEmotionAfter(null);
     setContent("");
     setIsPublic(false);
     setInsightText(null);
