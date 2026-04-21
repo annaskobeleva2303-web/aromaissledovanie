@@ -13,7 +13,78 @@ import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
-import { PlutchikWheel, type PlutchikEmotion } from "@/components/PlutchikWheel";
+const EMOTIONAL_STATES: { category: string; states: string[] }[] = [
+  {
+    category: "Дефицит / Низкая энергия",
+    states: ["Усталость", "Апатия", "Тревожность", "Раздражение", "Грусть", "Опустошенность"],
+  },
+  {
+    category: "Баланс / Нейтральный спектр",
+    states: ["Спокойствие", "Умиротворение", "Присутствие в теле", "Расслабленность", "Любопытство"],
+  },
+  {
+    category: "Ресурс / Высокая энергия",
+    states: ["Бодрость", "Вдохновение", "Радость", "Уверенность", "Чувственность", "Ясность", "Открытость"],
+  },
+];
+
+function EmotionalStateChips({
+  selected,
+  onChange,
+}: {
+  selected: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const toggle = (state: string) => {
+    if (navigator.vibrate) navigator.vibrate(8);
+    if (selected.includes(state)) {
+      onChange(selected.filter((s) => s !== state));
+    } else if (selected.length < 3) {
+      onChange([...selected, state]);
+    } else {
+      // replace oldest
+      onChange([...selected.slice(1), state]);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {EMOTIONAL_STATES.map((group) => (
+        <div key={group.category}>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/50 mb-2">
+            {group.category}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {group.states.map((state) => {
+              const isSelected = selected.includes(state);
+              return (
+                <motion.button
+                  key={state}
+                  type="button"
+                  onClick={() => toggle(state)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className={`rounded-full px-4 py-2 text-sm backdrop-blur-md transition-all duration-300 focus:outline-none ${
+                    isSelected
+                      ? "bg-primary/20 text-primary border border-primary/60 shadow-[0_0_12px_rgba(168,139,250,0.35)]"
+                      : "bg-white/5 text-foreground/75 border border-white/10 hover:bg-white/10"
+                  }`}
+                  style={{ WebkitTapHighlightColor: "transparent" }}
+                >
+                  {state}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <p className="text-[10px] text-muted-foreground/60 tracking-wide pt-1">
+        Можно выбрать до 3 состояний
+      </p>
+    </div>
+  );
+}
 
 // --- Markdown accent parser for AI insights ---
 const formatInsightText = (text: string) => {
