@@ -500,7 +500,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [energyBefore, setEnergyBefore] = useState(5);
   const [moodScoreBefore, setMoodScoreBefore] = useState(0);
   const [moodsBefore, setMoodsBefore] = useState<string[]>([]);
-  const [emotionBefore, setEmotionBefore] = useState<PlutchikEmotion | null>(null);
+  const [moodsBefore, setMoodsBefore] = useState<string[]>([]);
 
   // Oil contact (sensory)
   const [oilBodyZones, setOilBodyZones] = useState<string[]>([]);
@@ -511,7 +511,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [energyAfter, setEnergyAfter] = useState(5);
   const [moodScoreAfter, setMoodScoreAfter] = useState(0);
   const [moodsAfter, setMoodsAfter] = useState<string[]>([]);
-  const [emotionAfter, setEmotionAfter] = useState<PlutchikEmotion | null>(null);
+  const [moodsAfter, setMoodsAfter] = useState<string[]>([]);
 
   // Free writing
   const [content, setContent] = useState("");
