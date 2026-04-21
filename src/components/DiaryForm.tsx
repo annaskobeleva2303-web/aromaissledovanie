@@ -13,6 +13,7 @@ import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
+import { PlutchikWheel, type PlutchikEmotion } from "@/components/PlutchikWheel";
 
 // --- Markdown accent parser for AI insights ---
 const formatInsightText = (text: string) => {
