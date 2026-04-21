@@ -189,8 +189,8 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
               Послание Даваны
             </p>
-            <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
-              {insight.content}
+            <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap font-sans not-italic">
+              {formatInsightText(insight.content)}
             </p>
           </div>
           <InsightShareCard

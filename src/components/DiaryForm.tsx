@@ -14,6 +14,24 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
 
+// --- Markdown accent parser for AI insights ---
+const formatInsightText = (text: string) => {
+  if (!text) return null;
+  const parts = text.split(/(_[^_]+_|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <span key={i} className="font-serif italic text-primary text-[1.1em]">{part.slice(2, -2)}</span>;
+    }
+    if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
+      return <span key={i} className="font-serif italic text-primary text-[1.1em]">{part.slice(1, -1)}</span>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return <span key={i} className="font-serif italic text-primary text-[1.1em]">{part.slice(1, -1)}</span>;
+    }
+    return part;
+  });
+};
+
 // --- Voice Input Button ---
 function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => void }) {
   const [isListening, setIsListening] = useState(false);
@@ -875,7 +893,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }} className="relative">
                 <Sparkles className="mx-auto mb-4 h-6 w-6 text-primary/60" />
                 <div className="max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
-                  <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/85 font-light">{insightText}</p>
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/85 font-light font-sans not-italic">{formatInsightText(insightText)}</p>
                 </div>
               </motion.div>
             </div>
