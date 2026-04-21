@@ -542,10 +542,11 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
+      const chosenEmotion = emotionAfter ?? emotionBefore;
       const entryData: Record<string, unknown> = {
         user_id: user.id,
         oil_id: oilId,
-        mood: moodsAfter[0] || moodsBefore[0] || null,
+        mood: chosenEmotion?.name || moodsAfter[0] || moodsBefore[0] || null,
         content: content.trim(),
         is_public: isPublic,
         energy_tags: [],
@@ -559,9 +560,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
 
       if (recordType === "full") {
         entryData.energy_before = energyBefore;
-        entryData.mood_score_before = moodScoreBefore;
+        entryData.mood_score_before = emotionBefore?.intensity ?? moodScoreBefore;
         entryData.energy_after = energyAfter;
-        entryData.mood_score_after = moodScoreAfter;
+        entryData.mood_score_after = emotionAfter?.intensity ?? moodScoreAfter;
       }
 
       const { error } = await supabase.from("entries").insert(entryData as any);
