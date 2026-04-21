@@ -6,6 +6,23 @@ import { SomaticMap } from "@/components/SomaticMap";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { Button } from "@/components/ui/button";
 
+const formatInsightText = (text: string) => {
+  if (!text) return null;
+  const parts = text.split(/(_[^_]+_|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <span key={i} className="font-serif italic text-primary text-[1.1em]">{part.slice(2, -2)}</span>;
+    }
+    if (part.startsWith("_") && part.endsWith("_") && part.length > 2) {
+      return <span key={i} className="font-serif italic text-primary text-[1.1em]">{part.slice(1, -1)}</span>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return <span key={i} className="font-serif italic text-primary text-[1.1em]">{part.slice(1, -1)}</span>;
+    }
+    return part;
+  });
+};
+
 const MOODS: Record<string, { label: string; emoji: string }> = {
   calm: { label: "Спокойствие", emoji: "😌" },
   anxious: { label: "Тревога", emoji: "😟" },
