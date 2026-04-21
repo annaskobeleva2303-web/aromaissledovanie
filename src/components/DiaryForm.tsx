@@ -795,12 +795,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Smile className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
-                  <span className="text-sm font-medium text-foreground/80">Эмоция сейчас</span>
+                  <span className="text-sm font-medium text-foreground/80">Состояние сейчас</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground/70 tracking-wide">
-                  Внутри — сильно, ближе к краю — едва уловимо
-                </p>
-                <PlutchikWheel value={emotionBefore} onChange={setEmotionBefore} />
+                <EmotionalStateChips selected={moodsBefore} onChange={setMoodsBefore} />
               </div>
             </div>
           </PhaseWrapper>
@@ -893,12 +890,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Smile className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
-                  <span className="text-sm font-medium text-foreground/80">Эмоция после</span>
+                  <span className="text-sm font-medium text-foreground/80">Состояние после</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground/70 tracking-wide">
-                  Что откликается теперь? Коснись лепестка
-                </p>
-                <PlutchikWheel value={emotionAfter} onChange={setEmotionAfter} />
+                <EmotionalStateChips selected={moodsAfter} onChange={setMoodsAfter} />
               </div>
             </div>
           </PhaseWrapper>
