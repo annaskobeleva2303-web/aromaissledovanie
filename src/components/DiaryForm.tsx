@@ -497,7 +497,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [skipBefore, setSkipBefore] = useState(false);
 
   // Before state
-  const [energyBefore, setEnergyBefore] = useState(5);
   const [moodScoreBefore, setMoodScoreBefore] = useState(0);
   const [moodsBefore, setMoodsBefore] = useState<string[]>([]);
   // Oil contact (sensory)
