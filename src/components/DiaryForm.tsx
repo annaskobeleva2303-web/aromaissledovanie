@@ -13,18 +13,23 @@ import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
-const EMOTIONAL_STATES: { category: string; states: string[] }[] = [
+import { EMOTIONAL_STATE_MAP, getEmojiForStateName } from "@/utils/stateUtils";
+
+const EMOTIONAL_STATES: { category: string; label: string; states: string[] }[] = [
   {
-    category: "Дефицит / Низкая энергия",
-    states: ["Усталость", "Апатия", "Тревожность", "Раздражение", "Грусть", "Опустошенность"],
+    category: "Дефицит",
+    label: "Дефицит / Низкая энергия",
+    states: EMOTIONAL_STATE_MAP.filter((s) => s.category === "Дефицит").map((s) => s.name),
   },
   {
-    category: "Баланс / Нейтральный спектр",
-    states: ["Спокойствие", "Умиротворение", "Присутствие в теле", "Расслабленность", "Любопытство"],
+    category: "Баланс",
+    label: "Баланс / Нейтральный спектр",
+    states: EMOTIONAL_STATE_MAP.filter((s) => s.category === "Баланс").map((s) => s.name),
   },
   {
-    category: "Ресурс / Высокая энергия",
-    states: ["Бодрость", "Вдохновение", "Радость", "Уверенность", "Чувственность", "Ясность", "Открытость"],
+    category: "Ресурс",
+    label: "Ресурс / Высокая энергия",
+    states: EMOTIONAL_STATE_MAP.filter((s) => s.category === "Ресурс").map((s) => s.name),
   },
 ];
 
@@ -52,7 +57,7 @@ function EmotionalStateChips({
       {EMOTIONAL_STATES.map((group) => (
         <div key={group.category}>
           <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/50 mb-2">
-            {group.category}
+            {group.label}
           </p>
           <div className="flex flex-wrap gap-2">
             {group.states.map((state) => {
@@ -65,14 +70,15 @@ function EmotionalStateChips({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className={`rounded-full px-4 py-2 text-sm backdrop-blur-md transition-all duration-300 focus:outline-none ${
+                  className={`rounded-full px-4 py-2 text-sm backdrop-blur-md transition-all duration-300 focus:outline-none inline-flex items-center gap-1.5 ${
                     isSelected
                       ? "bg-primary/20 text-primary border border-primary/60 shadow-[0_0_12px_rgba(168,139,250,0.35)]"
                       : "bg-white/5 text-foreground/75 border border-white/10 hover:bg-white/10"
                   }`}
                   style={{ WebkitTapHighlightColor: "transparent" }}
                 >
-                  {state}
+                  <span className="opacity-90 text-base leading-none">{getEmojiForStateName(state)}</span>
+                  <span>{state}</span>
                 </motion.button>
               );
             })}

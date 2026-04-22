@@ -1,11 +1,11 @@
 import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { X, Smile } from "lucide-react";
+import { X } from "lucide-react";
 import { SomaticMap } from "@/components/SomaticMap";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { Button } from "@/components/ui/button";
-import { getEmojiForState } from "@/lib/stateEmojis";
+import { parseMoodField, getEmojiForStateName } from "@/utils/stateUtils";
 
 const formatInsightText = (text: string) => {
   if (!text) return null;
@@ -48,10 +48,8 @@ interface SessionDetailModalProps {
 export function SessionDetailModal({ entry, insight, onClose }: SessionDetailModalProps) {
   const dateFormatted = format(parseISO(entry.date), "d MMMM yyyy", { locale: ru });
   const isFull = entry.record_type === "full";
-  // Show transformation block if we have any mood data (energy sliders are removed).
-  const hasTransformation = isFull && !!entry.mood;
-  const moodEmoji = getEmojiForState(entry.mood);
-  const moodLabel = entry.mood ? entry.mood.split(",")[0].replace(/[\[\]"']/g, "").trim() : "";
+  const moodStates = parseMoodField(entry.mood);
+  const hasTransformation = isFull && moodStates.length > 0;
 
   // Parse body zones
   let bodyZones: string[] = [];
@@ -88,40 +86,21 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
       {/* Transformation block */}
       {hasTransformation && (
         <div
-          className="rounded-[1.75rem] border border-white/25 p-5 backdrop-blur-2xl space-y-3"
+          className="rounded-[1.75rem] border border-white/25 p-5 backdrop-blur-2xl space-y-4"
           style={{
             background: "linear-gradient(135deg, hsla(160,50%,92%,0.5) 0%, hsla(0,0%,100%,0.4) 50%, hsla(35,90%,90%,0.4) 100%)",
           }}
         >
           <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
-            Трансформация
+            Состояние после практики
           </p>
-          <div className="flex items-center justify-center gap-6">
-            {/* State */}
-            <div className="text-center space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">Состояние</p>
-              <span className="text-3xl block">{moodEmoji}</span>
-              {moodLabel && (
-                <p className="text-xs font-serif italic text-foreground/80">{moodLabel}</p>
-              )}
-            </div>
-
-            {(entry.mood_score_before != null || entry.mood_score_after != null) && (
-              <>
-                <span className="text-2xl text-muted-foreground/30">→</span>
-                <div className="text-center space-y-1">
-                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">Сдвиг</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <Smile className="h-3 w-3 text-primary" />
-                    <span className="text-xs font-medium">
-                      {entry.mood_score_before! > 0 ? "+" : ""}{entry.mood_score_before ?? 0}
-                      {" → "}
-                      {entry.mood_score_after! > 0 ? "+" : ""}{entry.mood_score_after ?? 0}
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
+          <div className="flex flex-wrap items-center justify-center gap-5">
+            {moodStates.map((state, idx) => (
+              <div key={`${state}-${idx}`} className="flex flex-col items-center gap-1.5">
+                <span className="text-3xl leading-none">{getEmojiForStateName(state)}</span>
+                <p className="text-xs font-serif italic text-foreground/85">{state}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
