@@ -497,7 +497,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [skipBefore, setSkipBefore] = useState(false);
 
   // Before state
-  const [energyBefore, setEnergyBefore] = useState(5);
   const [moodScoreBefore, setMoodScoreBefore] = useState(0);
   const [moodsBefore, setMoodsBefore] = useState<string[]>([]);
   // Oil contact (sensory)
@@ -506,7 +505,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [oilVisualImage, setOilVisualImage] = useState("");
 
   // After state
-  const [energyAfter, setEnergyAfter] = useState(5);
   const [moodScoreAfter, setMoodScoreAfter] = useState(0);
   const [moodsAfter, setMoodsAfter] = useState<string[]>([]);
   // Free writing
@@ -587,14 +585,12 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setAfterDone(false);
     setWritingDone(false);
     setSkipBefore(false);
-    setEnergyBefore(5);
     setMoodScoreBefore(0);
     setMoodsBefore([]);
     
     setOilBodyZones([]);
     setOilSensation("");
     setOilVisualImage("");
-    setEnergyAfter(5);
     setMoodScoreAfter(0);
     setMoodsAfter([]);
     
@@ -625,9 +621,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       };
 
       if (recordType === "full") {
-        entryData.energy_before = energyBefore;
+        entryData.energy_before = null;
         entryData.mood_score_before = moodScoreBefore;
-        entryData.energy_after = energyAfter;
+        entryData.energy_after = null;
         entryData.mood_score_after = moodScoreAfter;
       }
 
@@ -791,7 +787,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             completeLabel="Завершить этап"
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-7">
-              <GlassSlider label="Энергия" icon={Zap} value={energyBefore} onChange={setEnergyBefore} min={0} max={10} minLabel="Обесточена" maxLabel="Вибрирую на максимум" />
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Smile className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
@@ -886,7 +881,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             completeLabel={writingDone ? "Завершить этап" : "Далее — Дневник"}
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-7">
-              <GlassSlider label="Энергия" icon={Zap} value={energyAfter} onChange={setEnergyAfter} min={0} max={10} minLabel="Обесточена" maxLabel="Вибрирую на максимум" />
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Smile className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
@@ -971,8 +965,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               shareQuote={shareQuote}
               moodBefore={moodsBefore[0] || null}
               moodAfter={moodsAfter[0] || null}
-              energyBefore={beforeDone ? energyBefore : null}
-              energyAfter={afterDone ? energyAfter : null}
+              energyBefore={null}
+              energyAfter={null}
               moodScoreBefore={beforeDone ? moodScoreBefore : null}
               moodScoreAfter={afterDone ? moodScoreAfter : null}
             />
