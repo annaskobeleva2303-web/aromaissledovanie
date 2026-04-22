@@ -1,10 +1,11 @@
 import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { X, Zap, Smile } from "lucide-react";
+import { X, Smile } from "lucide-react";
 import { SomaticMap } from "@/components/SomaticMap";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { Button } from "@/components/ui/button";
+import { getEmojiForState } from "@/lib/stateEmojis";
 
 const formatInsightText = (text: string) => {
   if (!text) return null;
@@ -21,17 +22,6 @@ const formatInsightText = (text: string) => {
     }
     return part;
   });
-};
-
-const MOODS: Record<string, { label: string; emoji: string }> = {
-  calm: { label: "Спокойствие", emoji: "😌" },
-  anxious: { label: "Тревога", emoji: "😟" },
-  joyful: { label: "Радость", emoji: "😊" },
-  sad: { label: "Грусть", emoji: "😢" },
-  energetic: { label: "Энергия", emoji: "⚡" },
-  irritated: { label: "Раздражение", emoji: "😤" },
-  reflective: { label: "Задумчивость", emoji: "🤔" },
-  grateful: { label: "Благодарность", emoji: "🙏" },
 };
 
 interface SessionEntry {
@@ -55,15 +45,13 @@ interface SessionDetailModalProps {
   onClose: () => void;
 }
 
-function getMoodEmoji(mood: string | null) {
-  if (!mood) return "—";
-  return MOODS[mood]?.emoji || "•";
-}
-
 export function SessionDetailModal({ entry, insight, onClose }: SessionDetailModalProps) {
   const dateFormatted = format(parseISO(entry.date), "d MMMM yyyy", { locale: ru });
   const isFull = entry.record_type === "full";
-  const hasTransformation = isFull && entry.energy_before != null && entry.energy_after != null;
+  // Show transformation block if we have any mood data (energy sliders are removed).
+  const hasTransformation = isFull && !!entry.mood;
+  const moodEmoji = getEmojiForState(entry.mood);
+  const moodLabel = entry.mood ? entry.mood.split(",")[0].replace(/[\[\]"']/g, "").trim() : "";
 
   // Parse body zones
   let bodyZones: string[] = [];
