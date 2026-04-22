@@ -621,9 +621,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       };
 
       if (recordType === "full") {
-        entryData.energy_before = energyBefore;
+        entryData.energy_before = null;
         entryData.mood_score_before = moodScoreBefore;
-        entryData.energy_after = energyAfter;
+        entryData.energy_after = null;
         entryData.mood_score_after = moodScoreAfter;
       }
 
