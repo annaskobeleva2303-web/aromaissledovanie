@@ -97,35 +97,31 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
             Трансформация
           </p>
           <div className="flex items-center justify-center gap-6">
-            {/* Before */}
+            {/* State */}
             <div className="text-center space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">До</p>
-              <span className="text-3xl">{getMoodEmoji(entry.mood)}</span>
-              <div className="flex items-center gap-1 justify-center">
-                <Zap className="h-3 w-3 text-amber-500" />
-                <span className="text-xs font-medium">{entry.energy_before}</span>
-              </div>
-              <div className="flex items-center gap-1 justify-center">
-                <Smile className="h-3 w-3 text-primary" />
-                <span className="text-xs font-medium">{entry.mood_score_before! > 0 ? "+" : ""}{entry.mood_score_before}</span>
-              </div>
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">Состояние</p>
+              <span className="text-3xl block">{moodEmoji}</span>
+              {moodLabel && (
+                <p className="text-xs font-serif italic text-foreground/80">{moodLabel}</p>
+              )}
             </div>
 
-            <span className="text-2xl text-muted-foreground/30">→</span>
-
-            {/* After */}
-            <div className="text-center space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">После</p>
-              <span className="text-3xl">{getMoodEmoji(entry.mood)}</span>
-              <div className="flex items-center gap-1 justify-center">
-                <Zap className="h-3 w-3 text-amber-500" />
-                <span className="text-xs font-medium">{entry.energy_after}</span>
-              </div>
-              <div className="flex items-center gap-1 justify-center">
-                <Smile className="h-3 w-3 text-primary" />
-                <span className="text-xs font-medium">{entry.mood_score_after! > 0 ? "+" : ""}{entry.mood_score_after}</span>
-              </div>
-            </div>
+            {(entry.mood_score_before != null || entry.mood_score_after != null) && (
+              <>
+                <span className="text-2xl text-muted-foreground/30">→</span>
+                <div className="text-center space-y-1">
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">Сдвиг</p>
+                  <div className="flex items-center gap-2 justify-center">
+                    <Smile className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium">
+                      {entry.mood_score_before! > 0 ? "+" : ""}{entry.mood_score_before ?? 0}
+                      {" → "}
+                      {entry.mood_score_after! > 0 ? "+" : ""}{entry.mood_score_after ?? 0}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
