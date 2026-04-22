@@ -11,17 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SessionDetailModal } from "@/components/SessionDetailModal";
 import { AnimatePresence } from "framer-motion";
 import type { DayContentProps } from "react-day-picker";
-
-const MOODS: Record<string, { label: string; emoji: string }> = {
-  calm: { label: "Спокойно", emoji: "😌" },
-  anxious: { label: "Тревожно", emoji: "😟" },
-  joyful: { label: "Радостно", emoji: "😊" },
-  sad: { label: "Грустно", emoji: "😢" },
-  energetic: { label: "Энергично", emoji: "⚡" },
-  irritated: { label: "Раздражённо", emoji: "😤" },
-  reflective: { label: "Задумчиво", emoji: "🤔" },
-  grateful: { label: "Благодарно", emoji: "🙏" },
-};
+import { getEmojiForState } from "@/lib/stateEmojis";
 
 interface DiaryCalendarProps {
   oilId: string;
@@ -133,7 +123,7 @@ export function DiaryCalendar({ oilId, viewOnly = false }: DiaryCalendarProps) {
             DayContent: (props: DayContentProps) => {
               const dateStr = format(props.date, "yyyy-MM-dd");
               const entry = entryByDate.get(dateStr);
-              const moodEmoji = entry?.mood && MOODS[entry.mood]?.emoji;
+              const moodEmoji = entry?.mood ? getEmojiForState(entry.mood) : null;
               const hasEnergy = entry?.energy_tags && Array.isArray(entry.energy_tags) && (entry.energy_tags as string[]).length > 0;
 
               return (

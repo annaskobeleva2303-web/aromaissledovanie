@@ -1,10 +1,11 @@
 import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { X, Zap, Smile } from "lucide-react";
+import { X, Smile } from "lucide-react";
 import { SomaticMap } from "@/components/SomaticMap";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { Button } from "@/components/ui/button";
+import { getEmojiForState } from "@/lib/stateEmojis";
 
 const formatInsightText = (text: string) => {
   if (!text) return null;
@@ -21,17 +22,6 @@ const formatInsightText = (text: string) => {
     }
     return part;
   });
-};
-
-const MOODS: Record<string, { label: string; emoji: string }> = {
-  calm: { label: "Спокойствие", emoji: "😌" },
-  anxious: { label: "Тревога", emoji: "😟" },
-  joyful: { label: "Радость", emoji: "😊" },
-  sad: { label: "Грусть", emoji: "😢" },
-  energetic: { label: "Энергия", emoji: "⚡" },
-  irritated: { label: "Раздражение", emoji: "😤" },
-  reflective: { label: "Задумчивость", emoji: "🤔" },
-  grateful: { label: "Благодарность", emoji: "🙏" },
 };
 
 interface SessionEntry {
@@ -55,15 +45,13 @@ interface SessionDetailModalProps {
   onClose: () => void;
 }
 
-function getMoodEmoji(mood: string | null) {
-  if (!mood) return "—";
-  return MOODS[mood]?.emoji || "•";
-}
-
 export function SessionDetailModal({ entry, insight, onClose }: SessionDetailModalProps) {
   const dateFormatted = format(parseISO(entry.date), "d MMMM yyyy", { locale: ru });
   const isFull = entry.record_type === "full";
-  const hasTransformation = isFull && entry.energy_before != null && entry.energy_after != null;
+  // Show transformation block if we have any mood data (energy sliders are removed).
+  const hasTransformation = isFull && !!entry.mood;
+  const moodEmoji = getEmojiForState(entry.mood);
+  const moodLabel = entry.mood ? entry.mood.split(",")[0].replace(/[\[\]"']/g, "").trim() : "";
 
   // Parse body zones
   let bodyZones: string[] = [];
@@ -109,35 +97,31 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
             Трансформация
           </p>
           <div className="flex items-center justify-center gap-6">
-            {/* Before */}
+            {/* State */}
             <div className="text-center space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">До</p>
-              <span className="text-3xl">{getMoodEmoji(entry.mood)}</span>
-              <div className="flex items-center gap-1 justify-center">
-                <Zap className="h-3 w-3 text-amber-500" />
-                <span className="text-xs font-medium">{entry.energy_before}</span>
-              </div>
-              <div className="flex items-center gap-1 justify-center">
-                <Smile className="h-3 w-3 text-primary" />
-                <span className="text-xs font-medium">{entry.mood_score_before! > 0 ? "+" : ""}{entry.mood_score_before}</span>
-              </div>
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">Состояние</p>
+              <span className="text-3xl block">{moodEmoji}</span>
+              {moodLabel && (
+                <p className="text-xs font-serif italic text-foreground/80">{moodLabel}</p>
+              )}
             </div>
 
-            <span className="text-2xl text-muted-foreground/30">→</span>
-
-            {/* After */}
-            <div className="text-center space-y-1">
-              <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">После</p>
-              <span className="text-3xl">{getMoodEmoji(entry.mood)}</span>
-              <div className="flex items-center gap-1 justify-center">
-                <Zap className="h-3 w-3 text-amber-500" />
-                <span className="text-xs font-medium">{entry.energy_after}</span>
-              </div>
-              <div className="flex items-center gap-1 justify-center">
-                <Smile className="h-3 w-3 text-primary" />
-                <span className="text-xs font-medium">{entry.mood_score_after! > 0 ? "+" : ""}{entry.mood_score_after}</span>
-              </div>
-            </div>
+            {(entry.mood_score_before != null || entry.mood_score_after != null) && (
+              <>
+                <span className="text-2xl text-muted-foreground/30">→</span>
+                <div className="text-center space-y-1">
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/60">Сдвиг</p>
+                  <div className="flex items-center gap-2 justify-center">
+                    <Smile className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium">
+                      {entry.mood_score_before! > 0 ? "+" : ""}{entry.mood_score_before ?? 0}
+                      {" → "}
+                      {entry.mood_score_after! > 0 ? "+" : ""}{entry.mood_score_after ?? 0}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -214,9 +198,9 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
             insightText={insight.content}
             shareQuote={insight.share_quote}
             moodBefore={entry.mood}
-            moodAfter={null}
-            energyBefore={entry.energy_before}
-            energyAfter={entry.energy_after}
+            moodAfter={entry.mood}
+            energyBefore={null}
+            energyAfter={null}
           />
         </div>
       )}
