@@ -4,17 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Download, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-const MOODS: Record<string, { label: string; emoji: string }> = {
-  calm: { label: "Спокойствие", emoji: "😌" },
-  anxious: { label: "Тревога", emoji: "😟" },
-  joyful: { label: "Радость", emoji: "😊" },
-  sad: { label: "Грусть", emoji: "😢" },
-  energetic: { label: "Энергия", emoji: "⚡" },
-  irritated: { label: "Раздражение", emoji: "😤" },
-  reflective: { label: "Задумчивость", emoji: "🤔" },
-  grateful: { label: "Благодарность", emoji: "🙏" },
-};
+import { getEmojiForState } from "@/lib/stateEmojis";
 
 interface InsightShareCardProps {
   insightText: string;
@@ -278,7 +268,7 @@ export function InsightShareCard({
                   <>
                     <div style={{ textAlign: "center" }}>
                       <span style={{ fontSize: 36 }}>
-                        {MOODS[moodBefore]?.emoji || "•"}
+                        {getEmojiForState(moodBefore)}
                       </span>
                       <p
                         style={{
@@ -303,7 +293,7 @@ export function InsightShareCard({
                     </span>
                     <div style={{ textAlign: "center" }}>
                       <span style={{ fontSize: 36 }}>
-                        {MOODS[moodAfter]?.emoji || "•"}
+                        {getEmojiForState(moodAfter)}
                       </span>
                       <p
                         style={{
