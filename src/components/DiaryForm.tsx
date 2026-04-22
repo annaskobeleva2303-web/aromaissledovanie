@@ -505,7 +505,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const [oilVisualImage, setOilVisualImage] = useState("");
 
   // After state
-  const [energyAfter, setEnergyAfter] = useState(5);
   const [moodScoreAfter, setMoodScoreAfter] = useState(0);
   const [moodsAfter, setMoodsAfter] = useState<string[]>([]);
   // Free writing
