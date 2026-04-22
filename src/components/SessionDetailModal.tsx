@@ -198,9 +198,9 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
             insightText={insight.content}
             shareQuote={insight.share_quote}
             moodBefore={entry.mood}
-            moodAfter={null}
-            energyBefore={entry.energy_before}
-            energyAfter={entry.energy_after}
+            moodAfter={entry.mood}
+            energyBefore={null}
+            energyAfter={null}
           />
         </div>
       )}
