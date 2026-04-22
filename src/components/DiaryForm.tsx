@@ -787,7 +787,6 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             completeLabel="Завершить этап"
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-7">
-              <GlassSlider label="Энергия" icon={Zap} value={energyBefore} onChange={setEnergyBefore} min={0} max={10} minLabel="Обесточена" maxLabel="Вибрирую на максимум" />
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Smile className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
