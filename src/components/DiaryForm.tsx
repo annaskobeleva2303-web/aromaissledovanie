@@ -617,13 +617,13 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         oil_body_location: oilBodyZones.length > 0 ? JSON.stringify(oilBodyZones) : null,
         oil_sensation: oilSensation.trim() || null,
         oil_visual_image: oilVisualImage.trim() || null,
+        energy_before: null,
+        energy_after: null,
         ...(date ? { date } : {}),
       };
 
       if (recordType === "full") {
-        entryData.energy_before = null;
         entryData.mood_score_before = moodScoreBefore;
-        entryData.energy_after = null;
         entryData.mood_score_after = moodScoreAfter;
       }
 
