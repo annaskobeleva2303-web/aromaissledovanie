@@ -958,8 +958,17 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             title="Свободный поток"
             subtitle="Свободный полёт"
             onBack={() => setPhase("hub")}
-            onComplete={() => completePhase("writing")}
-            completeLabel="Завершить этап"
+            onComplete={() => {
+              setWritingDone(true);
+              if (!contactDone) {
+                setPhase("sensory");
+              } else if (beforeDone && !afterDone) {
+                setPhase("after");
+              } else {
+                setPhase("hub");
+              }
+            }}
+            completeLabel={!contactDone ? "Далее — Сенсорика" : beforeDone && !afterDone ? "Далее — финальный замер" : "Завершить этап"}
             disableComplete={!content.trim()}
           >
             <div className="space-y-5">
