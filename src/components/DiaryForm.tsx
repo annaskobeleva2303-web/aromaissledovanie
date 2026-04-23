@@ -795,17 +795,17 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               <SessionStagePanel
                 number={3}
                 title="Интеграция"
-                subtitle="Замер После и свободный дневник"
+                subtitle="Свободный поток, сенсорика и финальный замер"
                 Icon={Sprout}
                 completed={afterDone && writingDone}
                 locked={!contactDone}
                 active={contactDone && !(afterDone && writingDone)}
                 onClick={() => {
-                  if (beforeDone && !afterDone) {
-                    setPhase("after");
-                  } else {
-                    setPhase("writing");
-                  }
+                  // New flow: writing → sensory → after
+                  if (!writingDone) setPhase("writing");
+                  else if (!contactDone) setPhase("sensory");
+                  else if (beforeDone && !afterDone) setPhase("after");
+                  else setPhase("writing");
                 }}
               />
             </div>
