@@ -1018,8 +1018,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             <InsightShareCard
               insightText={insightText}
               shareQuote={shareQuote}
-              moodBefore={moodsBefore[0] || null}
-              moodAfter={moodsAfter[0] || null}
+              moodBefore={JSON.stringify({ before: moodsBefore, after: moodsAfter })}
+              moodAfter={JSON.stringify({ before: moodsBefore, after: moodsAfter })}
               energyBefore={null}
               energyAfter={null}
               moodScoreBefore={beforeDone ? moodScoreBefore : null}
