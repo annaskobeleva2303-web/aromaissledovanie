@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Download, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getEmojiForState } from "@/lib/stateEmojis";
+import { getEmojiForState, parseMoodPair, getEmojiForStateName } from "@/utils/stateUtils";
 
 interface InsightShareCardProps {
   insightText: string;
@@ -33,9 +33,24 @@ export function InsightShareCard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [done, setDone] = useState(false);
 
+  // Resolve before/after labels: support both legacy single strings and the
+  // new combined JSON ({before:[], after:[]}) which may arrive in either prop.
+  const pairFromBefore = parseMoodPair(moodBefore);
+  const pairFromAfter = parseMoodPair(moodAfter);
+  const beforeName =
+    pairFromBefore.before[0] ||
+    pairFromAfter.before[0] ||
+    (moodBefore && !moodBefore.trim().startsWith("{") ? moodBefore : "") ||
+    "";
+  const afterName =
+    pairFromAfter.after[0] ||
+    pairFromBefore.after[0] ||
+    (moodAfter && !moodAfter.trim().startsWith("{") ? moodAfter : "") ||
+    "";
+
+  const hasMoodPair = !!(beforeName && afterName);
   const hasTransformation =
-    (moodBefore && moodAfter) ||
-    (energyBefore != null && energyAfter != null);
+    hasMoodPair || (energyBefore != null && energyAfter != null);
 
   // Use shareQuote for the card; fall back to truncated insight
   const cardQuote = shareQuote || (insightText.length > 120 ? insightText.slice(0, 117) + "..." : insightText);
