@@ -610,7 +610,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   };
 
   const finishBreath = () => {
-    setPhase("sensory");
+    // New flow: after breath go straight into free writing,
+    // then sensory, then final "after" measurement.
+    setPhase("writing");
   };
 
   const completePhase = (p: SessionPhase) => {
