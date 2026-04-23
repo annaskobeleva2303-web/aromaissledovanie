@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { SomaticMap } from "@/components/SomaticMap";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { Button } from "@/components/ui/button";
-import { parseMoodField, getEmojiForStateName } from "@/utils/stateUtils";
+import { parseMoodField, parseMoodPair, getEmojiForStateName } from "@/utils/stateUtils";
 
 const formatInsightText = (text: string) => {
   if (!text) return null;
@@ -48,8 +48,14 @@ interface SessionDetailModalProps {
 export function SessionDetailModal({ entry, insight, onClose }: SessionDetailModalProps) {
   const dateFormatted = format(parseISO(entry.date), "d MMMM yyyy", { locale: ru });
   const isFull = entry.record_type === "full";
-  const moodStates = parseMoodField(entry.mood);
-  const hasTransformation = isFull && moodStates.length > 0;
+  const moodPair = parseMoodPair(entry.mood);
+  const legacyStates = parseMoodField(entry.mood);
+  const beforeStates = moodPair.before;
+  const afterStates =
+    moodPair.after.length > 0 ? moodPair.after : legacyStates;
+  const hasTransformation =
+    beforeStates.length > 0 && afterStates.length > 0;
+  const hasAfterOnly = !hasTransformation && afterStates.length > 0;
 
   // Parse body zones
   let bodyZones: string[] = [];
