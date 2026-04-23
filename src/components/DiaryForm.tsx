@@ -905,8 +905,15 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             title="Контакт с Даваной"
             subtitle="Сенсорика и образы"
             onBack={() => setPhase("hub")}
-            onComplete={() => completePhase("sensory")}
-            completeLabel="Завершить этап"
+            onComplete={() => {
+              setContactDone(true);
+              if (beforeDone && !afterDone) {
+                setPhase("after");
+              } else {
+                setPhase("hub");
+              }
+            }}
+            completeLabel={beforeDone && !afterDone ? "Далее — финальный замер" : "Завершить этап"}
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-5">
               <BodyZoneChips selected={oilBodyZones} onChange={setOilBodyZones} />
@@ -929,13 +936,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             title="Сверь своё состояние"
             subtitle="Замер ПОСЛЕ"
             onBack={() => setPhase("hub")}
-            onComplete={() => {
-              completePhase("after");
-              if (!writingDone) {
-                setPhase("writing");
-              }
-            }}
-            completeLabel={writingDone ? "Завершить этап" : "Далее — Дневник"}
+            onComplete={() => completePhase("after")}
+            completeLabel="Завершить этап"
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-7">
               <div className="space-y-3">
