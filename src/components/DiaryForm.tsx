@@ -559,6 +559,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   // After state
   const [moodScoreAfter, setMoodScoreAfter] = useState(0);
   const [moodsAfter, setMoodsAfter] = useState<string[]>([]);
+  const [aromaMatch, setAromaMatch] = useState<string | null>(null);
   // Free writing
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(false);
@@ -647,7 +648,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setOilVisualImage("");
     setMoodScoreAfter(0);
     setMoodsAfter([]);
-    
+    setAromaMatch(null);
     setContent("");
     setIsPublic(false);
     setInsightText(null);
@@ -676,6 +677,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         oil_visual_image: oilVisualImage.trim() || null,
         energy_before: null,
         energy_after: null,
+        aroma_match: aromaMatch,
         ...(date ? { date } : {}),
       };
 
@@ -946,6 +948,49 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
                   <span className="text-sm font-medium text-foreground/80">Состояние после</span>
                 </div>
                 <EmotionalStateChips selected={moodsAfter} onChange={setMoodsAfter} />
+              </div>
+
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary/60" strokeWidth={1.5} />
+                    <span className="text-sm font-medium text-foreground/80">Отклик на аромат</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/70 tracking-wide pl-6">
+                    Насколько этот аромат совпадает с твоим текущим состоянием?
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "not_mine", emoji: "🥀", label: "Не откликается" },
+                    { value: "neutral", emoji: "🌿", label: "Нейтрально" },
+                    { value: "perfect_match", emoji: "✨", label: "Абсолютно моё" },
+                  ].map((opt) => {
+                    const isSelected = aromaMatch === opt.value;
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          if (navigator.vibrate) navigator.vibrate(8);
+                          setAromaMatch(isSelected ? null : opt.value);
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        className={`rounded-xl px-2 py-3 text-xs text-center backdrop-blur-md transition-all duration-300 flex flex-col items-center gap-1 focus:outline-none ${
+                          isSelected
+                            ? "bg-primary/20 text-primary border border-primary/60 shadow-[0_0_12px_rgba(168,139,250,0.3)]"
+                            : "bg-white/5 text-foreground/70 border border-white/10 hover:bg-white/10"
+                        }`}
+                        style={{ WebkitTapHighlightColor: "transparent" }}
+                      >
+                        <span className="text-lg leading-none">{opt.emoji}</span>
+                        <span className="leading-tight">{opt.label}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </PhaseWrapper>
