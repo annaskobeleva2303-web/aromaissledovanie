@@ -677,6 +677,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         oil_visual_image: oilVisualImage.trim() || null,
         energy_before: null,
         energy_after: null,
+        aroma_match: aromaMatch,
         ...(date ? { date } : {}),
       };
 
