@@ -121,6 +121,7 @@ export type Database = {
       }
       entries: {
         Row: {
+          aroma_match: string | null
           content: string
           created_at: string
           date: string
@@ -142,6 +143,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aroma_match?: string | null
           content: string
           created_at?: string
           date?: string
@@ -163,6 +165,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aroma_match?: string | null
           content?: string
           created_at?: string
           date?: string

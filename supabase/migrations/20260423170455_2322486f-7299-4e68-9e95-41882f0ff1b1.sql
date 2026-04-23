@@ -1,0 +1,1 @@
+ALTER TABLE public.entries ADD COLUMN aroma_match text;
