@@ -648,7 +648,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     setOilVisualImage("");
     setMoodScoreAfter(0);
     setMoodsAfter([]);
-    
+    setAromaMatch(null);
     setContent("");
     setIsPublic(false);
     setInsightText(null);
