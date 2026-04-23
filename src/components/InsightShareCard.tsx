@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Download, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getEmojiForState } from "@/lib/stateEmojis";
+import { getEmojiForState, parseMoodPair, getEmojiForStateName } from "@/utils/stateUtils";
 
 interface InsightShareCardProps {
   insightText: string;
@@ -33,9 +33,24 @@ export function InsightShareCard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [done, setDone] = useState(false);
 
+  // Resolve before/after labels: support both legacy single strings and the
+  // new combined JSON ({before:[], after:[]}) which may arrive in either prop.
+  const pairFromBefore = parseMoodPair(moodBefore);
+  const pairFromAfter = parseMoodPair(moodAfter);
+  const beforeName =
+    pairFromBefore.before[0] ||
+    pairFromAfter.before[0] ||
+    (moodBefore && !moodBefore.trim().startsWith("{") ? moodBefore : "") ||
+    "";
+  const afterName =
+    pairFromAfter.after[0] ||
+    pairFromBefore.after[0] ||
+    (moodAfter && !moodAfter.trim().startsWith("{") ? moodAfter : "") ||
+    "";
+
+  const hasMoodPair = !!(beforeName && afterName);
   const hasTransformation =
-    (moodBefore && moodAfter) ||
-    (energyBefore != null && energyAfter != null);
+    hasMoodPair || (energyBefore != null && energyAfter != null);
 
   // Use shareQuote for the card; fall back to truncated insight
   const cardQuote = shareQuote || (insightText.length > 120 ? insightText.slice(0, 117) + "..." : insightText);
@@ -264,19 +279,30 @@ export function InsightShareCard({
                   border: "1px solid hsla(0 0% 100% / 0.1)",
                 }}
               >
-                {moodBefore && moodAfter && (
+                {hasMoodPair && (
                   <>
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", maxWidth: 130 }}>
                       <span style={{ fontSize: 36 }}>
-                        {getEmojiForState(moodBefore)}
+                        {getEmojiForStateName(beforeName)}
                       </span>
                       <p
                         style={{
-                          fontSize: 10,
-                          color: "hsla(0 0% 100% / 0.5)",
+                          fontSize: 13,
+                          color: "hsla(0 0% 100% / 0.85)",
                           marginTop: 4,
+                          fontFamily: "'Cormorant Garamond', 'Georgia', serif",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {beforeName}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 9,
+                          color: "hsla(0 0% 100% / 0.45)",
+                          marginTop: 2,
                           fontFamily: "'Inter', sans-serif",
-                          letterSpacing: "0.1em",
+                          letterSpacing: "0.18em",
                           textTransform: "uppercase",
                         }}
                       >
@@ -285,23 +311,34 @@ export function InsightShareCard({
                     </div>
                     <span
                       style={{
-                        fontSize: 20,
+                        fontSize: 22,
                         color: "hsla(20 90% 74% / 0.7)",
                       }}
                     >
                       ➔
                     </span>
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", maxWidth: 130 }}>
                       <span style={{ fontSize: 36 }}>
-                        {getEmojiForState(moodAfter)}
+                        {getEmojiForStateName(afterName)}
                       </span>
                       <p
                         style={{
-                          fontSize: 10,
-                          color: "hsla(0 0% 100% / 0.5)",
+                          fontSize: 13,
+                          color: "hsla(0 0% 100% / 0.85)",
                           marginTop: 4,
+                          fontFamily: "'Cormorant Garamond', 'Georgia', serif",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {afterName}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 9,
+                          color: "hsla(0 0% 100% / 0.45)",
+                          marginTop: 2,
                           fontFamily: "'Inter', sans-serif",
-                          letterSpacing: "0.1em",
+                          letterSpacing: "0.18em",
                           textTransform: "uppercase",
                         }}
                       >
@@ -310,7 +347,7 @@ export function InsightShareCard({
                     </div>
                   </>
                 )}
-                {energyBefore != null && energyAfter != null && !moodBefore && (
+                {energyBefore != null && energyAfter != null && !hasMoodPair && (
                   <>
                     <div style={{ textAlign: "center" }}>
                       <span

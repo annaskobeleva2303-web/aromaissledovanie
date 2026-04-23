@@ -92,3 +92,35 @@ export const getEmojiForState = (
   const moods = parseMoodField(data);
   return getEmojiForMoods(moods);
 };
+
+// New format: mood column may store JSON like {"before": [...], "after": [...]}.
+// Returns parsed before/after arrays with backwards-compat fallback.
+export type MoodPair = { before: string[]; after: string[] };
+
+export const parseMoodPair = (
+  data: string | string[] | null | undefined,
+): MoodPair => {
+  if (!data) return { before: [], after: [] };
+  if (typeof data === "string") {
+    const trimmed = data.trim();
+    if (trimmed.startsWith("{")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const before = Array.isArray(parsed.before)
+            ? parsed.before.filter(Boolean).map(String)
+            : [];
+          const after = Array.isArray(parsed.after)
+            ? parsed.after.filter(Boolean).map(String)
+            : [];
+          return { before, after };
+        }
+      } catch {
+        // fall through to legacy parsing
+      }
+    }
+  }
+  // Legacy: a single list — treat as "after" (current snapshot).
+  const list = parseMoodField(data);
+  return { before: [], after: list };
+};

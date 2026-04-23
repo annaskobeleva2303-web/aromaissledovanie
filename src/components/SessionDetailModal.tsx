@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { SomaticMap } from "@/components/SomaticMap";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { Button } from "@/components/ui/button";
-import { parseMoodField, getEmojiForStateName } from "@/utils/stateUtils";
+import { parseMoodField, parseMoodPair, getEmojiForStateName } from "@/utils/stateUtils";
 
 const formatInsightText = (text: string) => {
   if (!text) return null;
@@ -48,8 +48,14 @@ interface SessionDetailModalProps {
 export function SessionDetailModal({ entry, insight, onClose }: SessionDetailModalProps) {
   const dateFormatted = format(parseISO(entry.date), "d MMMM yyyy", { locale: ru });
   const isFull = entry.record_type === "full";
-  const moodStates = parseMoodField(entry.mood);
-  const hasTransformation = isFull && moodStates.length > 0;
+  const moodPair = parseMoodPair(entry.mood);
+  const legacyStates = parseMoodField(entry.mood);
+  const beforeStates = moodPair.before;
+  const afterStates =
+    moodPair.after.length > 0 ? moodPair.after : legacyStates;
+  const hasTransformation =
+    beforeStates.length > 0 && afterStates.length > 0;
+  const hasAfterOnly = !hasTransformation && afterStates.length > 0;
 
   // Parse body zones
   let bodyZones: string[] = [];
@@ -83,7 +89,7 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
         </Button>
       </div>
 
-      {/* Transformation block */}
+      {/* Transformation block: Before → After */}
       {hasTransformation && (
         <div
           className="rounded-[1.75rem] border border-white/25 p-5 backdrop-blur-2xl space-y-4"
@@ -91,11 +97,38 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
             background: "linear-gradient(135deg, hsla(160,50%,92%,0.5) 0%, hsla(0,0%,100%,0.4) 50%, hsla(35,90%,90%,0.4) 100%)",
           }}
         >
+          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium text-center">
+            Трансформация
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col items-center gap-1.5 max-w-[110px]">
+              <span className="text-3xl leading-none">{getEmojiForStateName(beforeStates[0])}</span>
+              <p className="text-xs font-serif italic text-foreground/85 text-center">{beforeStates[0]}</p>
+              <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">До</p>
+            </div>
+            <span className="text-xl text-primary/60">➔</span>
+            <div className="flex flex-col items-center gap-1.5 max-w-[110px]">
+              <span className="text-3xl leading-none">{getEmojiForStateName(afterStates[0])}</span>
+              <p className="text-xs font-serif italic text-foreground/85 text-center">{afterStates[0]}</p>
+              <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60">После</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Single-snapshot block (legacy entries without "before") */}
+      {hasAfterOnly && (
+        <div
+          className="rounded-[1.75rem] border border-white/25 p-5 backdrop-blur-2xl space-y-4"
+          style={{
+            background: "linear-gradient(135deg, hsla(160,50%,92%,0.5) 0%, hsla(0,0%,100%,0.4) 50%, hsla(35,90%,90%,0.4) 100%)",
+          }}
+        >
           <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
-            Состояние после практики
+            Состояние
           </p>
           <div className="flex flex-wrap items-center justify-center gap-5">
-            {moodStates.map((state, idx) => (
+            {afterStates.map((state, idx) => (
               <div key={`${state}-${idx}`} className="flex flex-col items-center gap-1.5">
                 <span className="text-3xl leading-none">{getEmojiForStateName(state)}</span>
                 <p className="text-xs font-serif italic text-foreground/85">{state}</p>

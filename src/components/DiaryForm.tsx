@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { BodyZoneChips } from "@/components/BodyZoneChips";
-import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff, Compass, Flower2, Sprout } from "lucide-react";
+import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff, Compass, Flower2, Sprout, ChevronDown } from "lucide-react";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +40,11 @@ function EmotionalStateChips({
   selected: string[];
   onChange: (next: string[]) => void;
 }) {
+  // First category open by default; rest collapsed for compact UI.
+  const [openCategory, setOpenCategory] = useState<string | null>(
+    EMOTIONAL_STATES[0]?.category ?? null,
+  );
+
   const toggle = (state: string) => {
     if (navigator.vibrate) navigator.vibrate(8);
     if (selected.includes(state)) {
@@ -52,40 +57,81 @@ function EmotionalStateChips({
     }
   };
 
+  const toggleCategory = (category: string) => {
+    setOpenCategory((current) => (current === category ? null : category));
+  };
+
   return (
-    <div className="space-y-4">
-      {EMOTIONAL_STATES.map((group) => (
-        <div key={group.category}>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/50 mb-2">
-            {group.label}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {group.states.map((state) => {
-              const isSelected = selected.includes(state);
-              return (
-                <motion.button
-                  key={state}
-                  type="button"
-                  onClick={() => toggle(state)}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className={`rounded-full px-4 py-2 text-sm backdrop-blur-md transition-all duration-300 focus:outline-none inline-flex items-center gap-1.5 ${
-                    isSelected
-                      ? "bg-primary/20 text-primary border border-primary/60 shadow-[0_0_12px_rgba(168,139,250,0.35)]"
-                      : "bg-white/5 text-foreground/75 border border-white/10 hover:bg-white/10"
-                  }`}
-                  style={{ WebkitTapHighlightColor: "transparent" }}
+    <div className="space-y-1">
+      {EMOTIONAL_STATES.map((group) => {
+        const isOpen = openCategory === group.category;
+        const selectedInGroup = group.states.filter((s) => selected.includes(s)).length;
+        return (
+          <div key={group.category} className="border-b border-white/10 last:border-b-0">
+            <button
+              type="button"
+              onClick={() => toggleCategory(group.category)}
+              className="w-full py-4 flex justify-between items-center text-left focus:outline-none group"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-[0.18em] text-foreground/65 group-hover:text-foreground/85 transition-colors">
+                  {group.label}
+                </span>
+                {selectedInGroup > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-primary/25 text-primary text-[10px] font-medium">
+                    {selectedInGroup}
+                  </span>
+                )}
+              </div>
+              <motion.span
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="text-foreground/50 group-hover:text-foreground/80"
+              >
+                <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+              </motion.span>
+            </button>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  key="content"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="overflow-hidden"
                 >
-                  <span className="opacity-90 text-base leading-none">{getEmojiForStateName(state)}</span>
-                  <span>{state}</span>
-                </motion.button>
-              );
-            })}
+                  <div className="flex flex-wrap gap-2 pb-4 pt-1">
+                    {group.states.map((state) => {
+                      const isSelected = selected.includes(state);
+                      return (
+                        <motion.button
+                          key={state}
+                          type="button"
+                          onClick={() => toggle(state)}
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.96 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          className={`rounded-full px-4 py-2 text-sm backdrop-blur-md transition-all duration-300 focus:outline-none inline-flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-primary/20 text-primary border border-primary/60 shadow-[0_0_12px_rgba(168,139,250,0.35)]"
+                              : "bg-white/5 text-foreground/75 border border-white/10 hover:bg-white/10"
+                          }`}
+                          style={{ WebkitTapHighlightColor: "transparent" }}
+                        >
+                          <span className="opacity-90 text-base leading-none">{getEmojiForStateName(state)}</span>
+                          <span>{state}</span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-      ))}
-      <p className="text-[10px] text-muted-foreground/60 tracking-wide pt-1">
+        );
+      })}
+      <p className="text-[10px] text-muted-foreground/60 tracking-wide pt-2">
         Можно выбрать до 3 состояний
       </p>
     </div>
@@ -614,7 +660,10 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
       const entryData: Record<string, unknown> = {
         user_id: user.id,
         oil_id: oilId,
-        mood: [...moodsAfter, ...moodsBefore][0] || null,
+        mood:
+          moodsBefore.length || moodsAfter.length
+            ? JSON.stringify({ before: moodsBefore, after: moodsAfter })
+            : null,
         content: content.trim(),
         is_public: isPublic,
         energy_tags: [],
@@ -969,8 +1018,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             <InsightShareCard
               insightText={insightText}
               shareQuote={shareQuote}
-              moodBefore={moodsBefore[0] || null}
-              moodAfter={moodsAfter[0] || null}
+              moodBefore={JSON.stringify({ before: moodsBefore, after: moodsAfter })}
+              moodAfter={JSON.stringify({ before: moodsBefore, after: moodsAfter })}
               energyBefore={null}
               energyAfter={null}
               moodScoreBefore={beforeDone ? moodScoreBefore : null}
