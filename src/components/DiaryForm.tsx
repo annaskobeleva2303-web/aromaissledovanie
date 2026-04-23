@@ -559,6 +559,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   // After state
   const [moodScoreAfter, setMoodScoreAfter] = useState(0);
   const [moodsAfter, setMoodsAfter] = useState<string[]>([]);
+  const [aromaMatch, setAromaMatch] = useState<string | null>(null);
   // Free writing
   const [content, setContent] = useState("");
   const [isPublic, setIsPublic] = useState(false);
