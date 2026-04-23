@@ -610,7 +610,9 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   };
 
   const finishBreath = () => {
-    setPhase("sensory");
+    // New flow: after breath go straight into free writing,
+    // then sensory, then final "after" measurement.
+    setPhase("writing");
   };
 
   const completePhase = (p: SessionPhase) => {
@@ -793,17 +795,17 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               <SessionStagePanel
                 number={3}
                 title="Интеграция"
-                subtitle="Замер После и свободный дневник"
+                subtitle="Свободный поток, сенсорика и финальный замер"
                 Icon={Sprout}
                 completed={afterDone && writingDone}
                 locked={!contactDone}
                 active={contactDone && !(afterDone && writingDone)}
                 onClick={() => {
-                  if (beforeDone && !afterDone) {
-                    setPhase("after");
-                  } else {
-                    setPhase("writing");
-                  }
+                  // New flow: writing → sensory → after
+                  if (!writingDone) setPhase("writing");
+                  else if (!contactDone) setPhase("sensory");
+                  else if (beforeDone && !afterDone) setPhase("after");
+                  else setPhase("writing");
                 }}
               />
             </div>
@@ -903,8 +905,15 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             title="Контакт с Даваной"
             subtitle="Сенсорика и образы"
             onBack={() => setPhase("hub")}
-            onComplete={() => completePhase("sensory")}
-            completeLabel="Завершить этап"
+            onComplete={() => {
+              setContactDone(true);
+              if (beforeDone && !afterDone) {
+                setPhase("after");
+              } else {
+                setPhase("hub");
+              }
+            }}
+            completeLabel={beforeDone && !afterDone ? "Далее — финальный замер" : "Завершить этап"}
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-5">
               <BodyZoneChips selected={oilBodyZones} onChange={setOilBodyZones} />
@@ -927,13 +936,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             title="Сверь своё состояние"
             subtitle="Замер ПОСЛЕ"
             onBack={() => setPhase("hub")}
-            onComplete={() => {
-              completePhase("after");
-              if (!writingDone) {
-                setPhase("writing");
-              }
-            }}
-            completeLabel={writingDone ? "Завершить этап" : "Далее — Дневник"}
+            onComplete={() => completePhase("after")}
+            completeLabel="Завершить этап"
           >
             <div className="glass-card p-6 rounded-[1.75rem] space-y-7">
               <div className="space-y-3">
@@ -954,8 +958,17 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             title="Свободный поток"
             subtitle="Свободный полёт"
             onBack={() => setPhase("hub")}
-            onComplete={() => completePhase("writing")}
-            completeLabel="Завершить этап"
+            onComplete={() => {
+              setWritingDone(true);
+              if (!contactDone) {
+                setPhase("sensory");
+              } else if (beforeDone && !afterDone) {
+                setPhase("after");
+              } else {
+                setPhase("hub");
+              }
+            }}
+            completeLabel={!contactDone ? "Далее — Сенсорика" : beforeDone && !afterDone ? "Далее — финальный замер" : "Завершить этап"}
             disableComplete={!content.trim()}
           >
             <div className="space-y-5">
