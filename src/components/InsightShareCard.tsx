@@ -279,19 +279,30 @@ export function InsightShareCard({
                   border: "1px solid hsla(0 0% 100% / 0.1)",
                 }}
               >
-                {moodBefore && moodAfter && (
+                {hasMoodPair && (
                   <>
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", maxWidth: 130 }}>
                       <span style={{ fontSize: 36 }}>
-                        {getEmojiForState(moodBefore)}
+                        {getEmojiForStateName(beforeName)}
                       </span>
                       <p
                         style={{
-                          fontSize: 10,
-                          color: "hsla(0 0% 100% / 0.5)",
+                          fontSize: 13,
+                          color: "hsla(0 0% 100% / 0.85)",
                           marginTop: 4,
+                          fontFamily: "'Cormorant Garamond', 'Georgia', serif",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {beforeName}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 9,
+                          color: "hsla(0 0% 100% / 0.45)",
+                          marginTop: 2,
                           fontFamily: "'Inter', sans-serif",
-                          letterSpacing: "0.1em",
+                          letterSpacing: "0.18em",
                           textTransform: "uppercase",
                         }}
                       >
@@ -300,23 +311,34 @@ export function InsightShareCard({
                     </div>
                     <span
                       style={{
-                        fontSize: 20,
+                        fontSize: 22,
                         color: "hsla(20 90% 74% / 0.7)",
                       }}
                     >
                       ➔
                     </span>
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", maxWidth: 130 }}>
                       <span style={{ fontSize: 36 }}>
-                        {getEmojiForState(moodAfter)}
+                        {getEmojiForStateName(afterName)}
                       </span>
                       <p
                         style={{
-                          fontSize: 10,
-                          color: "hsla(0 0% 100% / 0.5)",
+                          fontSize: 13,
+                          color: "hsla(0 0% 100% / 0.85)",
                           marginTop: 4,
+                          fontFamily: "'Cormorant Garamond', 'Georgia', serif",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {afterName}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 9,
+                          color: "hsla(0 0% 100% / 0.45)",
+                          marginTop: 2,
                           fontFamily: "'Inter', sans-serif",
-                          letterSpacing: "0.1em",
+                          letterSpacing: "0.18em",
                           textTransform: "uppercase",
                         }}
                       >
@@ -325,7 +347,7 @@ export function InsightShareCard({
                     </div>
                   </>
                 )}
-                {energyBefore != null && energyAfter != null && !moodBefore && (
+                {energyBefore != null && energyAfter != null && !hasMoodPair && (
                   <>
                     <div style={{ textAlign: "center" }}>
                       <span
