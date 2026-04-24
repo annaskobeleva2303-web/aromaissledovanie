@@ -149,7 +149,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
     );
   }
 
-  const moodEntries = Object.entries(stats.mood_counts).sort(
+  const moodEntries = Object.entries(moodAggregation).sort(
     ([, a], [, b]) => b - a
   );
   const totalMoods = moodEntries.reduce((sum, [, count]) => sum + count, 0);
