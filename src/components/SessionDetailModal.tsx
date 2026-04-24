@@ -36,8 +36,15 @@ interface SessionEntry {
   oil_body_location: string | null;
   oil_sensation: string | null;
   oil_visual_image: string | null;
+  aroma_match?: string | null;
   record_type: string;
 }
+
+const AROMA_MATCH_MAP: Record<string, { emoji: string; label: string }> = {
+  not_mine: { emoji: "🥀", label: "Не откликается" },
+  neutral: { emoji: "🌿", label: "Нейтрально" },
+  perfect_match: { emoji: "✨", label: "Абсолютно моё" },
+};
 
 interface SessionDetailModalProps {
   entry: SessionEntry;
