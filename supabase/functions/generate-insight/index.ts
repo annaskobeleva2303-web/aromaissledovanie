@@ -95,7 +95,7 @@ serve(async (req) => {
 
     const { data: entries, error: entriesError } = await supabase
       .from("entries")
-      .select("date, mood, content, energy_tags, energy_before, mood_score_before, energy_after, mood_score_after, oil_body_location, oil_sensation, oil_visual_image, record_type")
+      .select("date, mood, content, energy_tags, aroma_match, oil_body_location, oil_sensation, oil_visual_image, record_type")
       .eq("oil_id", oilId)
       .eq("user_id", user.id)
       .order("date", { ascending: true });
@@ -120,19 +120,60 @@ serve(async (req) => {
 
     const currentEntry = entries[entries.length - 1] as Record<string, unknown>;
 
-    // Build delta block for before/after
-    let deltaBlock = "";
-    if (currentEntry.record_type === "full" && currentEntry.energy_before != null && currentEntry.energy_after != null) {
-      const eBefore = currentEntry.energy_before as number;
-      const eAfter = currentEntry.energy_after as number;
-      const mBefore = currentEntry.mood_score_before as number;
-      const mAfter = currentEntry.mood_score_after as number;
-      const eDelta = eAfter - eBefore;
-      const mDelta = mAfter - mBefore;
-      deltaBlock = `
-ЗАМЕР ТРАНСФОРМАЦИИ:
-- Энергия: ${eBefore} → ${eAfter} (${eDelta >= 0 ? "+" : ""}${eDelta})
-- Настроение: ${mBefore} → ${mAfter} (${mDelta >= 0 ? "+" : ""}${mDelta})`;
+    // Parse mood pair (new JSON format) with backward compatibility
+    const parseMoodPair = (data: unknown): { before: string[]; after: string[] } => {
+      if (!data) return { before: [], after: [] };
+      if (typeof data !== "string") return { before: [], after: [] };
+      const trimmed = data.trim();
+      if (trimmed.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return {
+              before: Array.isArray(parsed.before) ? parsed.before.filter(Boolean).map(String) : [],
+              after: Array.isArray(parsed.after) ? parsed.after.filter(Boolean).map(String) : [],
+            };
+          }
+        } catch { /* fallthrough */ }
+      }
+      // Legacy fallback
+      if (trimmed.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) return { before: [], after: parsed.filter(Boolean).map(String) };
+        } catch { /* fallthrough */ }
+      }
+      return { before: [], after: [trimmed] };
+    };
+
+    const moodPair = parseMoodPair(currentEntry.mood);
+
+    // Build transformation block (Before → After states)
+    let transformationBlock = "";
+    if (moodPair.before.length > 0 || moodPair.after.length > 0) {
+      const beforeTxt = moodPair.before.length ? moodPair.before.join(", ") : "—";
+      const afterTxt = moodPair.after.length ? moodPair.after.join(", ") : "—";
+      const same =
+        moodPair.before.length > 0 &&
+        moodPair.after.length > 0 &&
+        moodPair.before.join("|") === moodPair.after.join("|");
+      transformationBlock = `
+ТРАНСФОРМАЦИЯ СОСТОЯНИЙ:
+- До практики: ${beforeTxt}
+- После практики: ${afterTxt}${same ? "\n- Состояние НЕ изменилось — мягко исследуй, что могло помешать переключению" : ""}`;
+    }
+
+    // Aroma match block
+    const aromaMatch = currentEntry.aroma_match as string | null;
+    let aromaBlock = "";
+    if (aromaMatch) {
+      const aromaMap: Record<string, string> = {
+        not_mine: "🥀 Не откликается — сигнал сопротивления или того, что тема сейчас слишком острая. НЕ интерпретируй как ошибку.",
+        neutral: "🌿 Нейтрально — спокойное исследование без ярких пиков.",
+        perfect_match: "✨ Абсолютно моё — состояние потока и глубокого резонанса с маслом.",
+      };
+      aromaBlock = `
+ОТКЛИК НА АРОМАТ: ${aromaMap[aromaMatch] || aromaMatch}`;
     }
 
     // Build sensory block
@@ -142,46 +183,59 @@ serve(async (req) => {
     const visual = currentEntry.oil_visual_image as string | null;
     if (bodyLoc || sens || visual) {
       sensoryBlock = `
-СЕНСОРИКА МАСЛА:
-${bodyLoc ? `- Где в теле: ${bodyLoc}` : ""}
+СЕНСОРИКА И ОБРАЗЫ (используй как метафоры — психосоматика):
+${bodyLoc ? `- Зоны тела: ${bodyLoc}` : ""}
 ${sens ? `- Ощущение: ${sens}` : ""}
-${visual ? `- Образ: ${visual}` : ""}`;
+${visual ? `- Визуальный образ: ${visual}` : ""}`;
     }
 
     const userContent = `
-СЕГОДНЯШНЯЯ ЗАПИСЬ (Анализируй ТОЛЬКО её):
-
-Настроение: ${currentEntry.mood || "не указано"}
-${deltaBlock}
+СЕГОДНЯШНЯЯ СЕССИЯ (анализируй ТОЛЬКО её):
+${transformationBlock}
+${aromaBlock}
 ${sensoryBlock}
 
-Текст: ${currentEntry.content}
+Свободный поток клиента: ${currentEntry.content || "(пусто)"}
 `;
 
-    const systemPrompt = `Ты — высококвалифицированный психолог-аналитик. Клиент исследует себя через эфирное масло «${oil.title}» (фокус: ${oil.focus || "общее исследование"}). Твоя задача — дать короткий (2-3 предложения), точный, отрезвляющий и поддерживающий отклик на его последнюю запись.
+    const systemPrompt = `Ты — Давана: экспертный психолог и ароматерапевт. Клиент исследует себя через эфирное масло «${oil.title}» (фокус: ${oil.focus || "общее исследование"}). Ты чувствуешь клиента напрямую — НЕ начинай с «Основываясь на ваших данных» или подобных канцеляризмов. Сразу переходи к сути, как будто ты видишь его насквозь.
 
 Фоновый контекст (НЕ упоминай напрямую):
 ${statsBlock}
 
-СТРОГИЕ ПРАВИЛА:
-- НЕ пересказывай то, что написал клиент. НЕ констатируй очевидное.
-- Если есть данные трансформации (До/После) — используй ДЕЛЬТУ энергии и настроения как ключевую точку анализа. Покажи, что изменилось и ПОЧЕМУ это значимо психологически.
-- Если клиент описал сенсорику масла (где в теле, ощущение, образ) — интерпретируй эти телесные сигналы через призму психосоматики.
-- Ищи СКРЫТЫЙ МЕХАНИЗМ за эмоцией: какую защиту, потребность или противоречие она маскирует. Назови это прямо.
-- Если используешь метафору — она должна быть одна, хирургически точная, объясняющая психический механизм. ЗАПРЕЩЕНЫ эзотерические клише: «коконы», «свет», «вибрации», «потоки энергии».
-- ТИПОГРАФИКА: Оберни 1-2 ключевых слова-метафоры или психологических концепта в _нижние подчёркивания_ (например: _защита_, _теневая потребность_, _внутренний расщеп_). Это создаст редакционный курсивный акцент. НЕ оборачивай больше 2 слов на весь ответ. НЕ оборачивай служебные или общие слова.
-- Заверши одним коротким вопросом для рефлексии, который вернёт клиенту ответственность.
-- Анализируй ТОЛЬКО сегодняшнюю запись. ЗАПРЕЩЕНО упоминать прошлые состояния, если клиент не говорит о них сейчас.
-- Обращайся на «ты». Тон: ясный, профессиональный, вызывающий мурашки правдивостью. Максимум 2-3 предложения + вопрос.
+ЛОГИКА АНАЛИЗА:
+
+1. ТРАНСФОРМАЦИЯ (До → После состояний):
+   - Сравни списки. Если был, например, «Раздражение», а стало «Расслабленность» — подсвети это как путь от сжатой пружины к мягкому течению, как успех в отпускании зажимов.
+   - Если состояния НЕ изменились — мягко и точно исследуй, что могло помешать переключению (сопротивление, незавершённость, защита).
+
+2. ОТКЛИК НА АРОМАТ (aroma_match):
+   - 'not_mine' (🥀): НЕ ошибка. Это сопротивление или сигнал, что тема сейчас слишком острая.
+   - 'perfect_match' (✨): Состояние потока и глубокого резонанса.
+   - 'neutral' (🌿): Спокойное исследование без пиков.
+   Свяжи отклик на аромат с трансформацией состояний — это даёт ключ к интерпретации.
+
+3. СЕНСОРИКА И ОБРАЗЫ:
+   - Используй зоны тела и визуальный образ как метафоры через психосоматику.
+   - Тепло в груди → тема принятия, сердечный центр. Сжатие в горле → невысказанное. И так далее — точно, не шаблонно.
+
+СТИЛЬ:
+- Прямой, но бережный. Поэтичный, но терапевтически точный.
+- ЗАПРЕЩЕНЫ эзотерические клише: «коконы», «свет», «вибрации», «потоки энергии», «чакры».
+- Если используешь метафору — она должна быть одна, хирургически точная.
+- Обращайся на «ты». Тон: ясный, профессиональный, вызывающий мурашки правдивостью.
+- Объём: 3-4 предложения + один короткий вопрос для рефлексии в конце, который вернёт клиенту ответственность.
+
+ТИПОГРАФИКА: Оберни 1-2 ключевых слова-инсайта в _нижние подчёркивания_ для курсивного акцента (например: _гиперконтроль_, _теневая потребность_, _внутренний расщеп_). НЕ больше 2 слов на весь ответ. НЕ оборачивай служебные слова.
 
 ФОРМАТ ОТВЕТА (СТРОГО):
 Ответь РОВНО в таком формате, разделяя два блока маркером ---SHARE_QUOTE---:
 
-[Твой полный психоаналитический отклик: 2-3 предложения + вопрос]
+[Полный психоаналитический отклик: 3-4 предложения + вопрос]
 
 ---SHARE_QUOTE---
 
-[ОДНА глубокая, терапевтичная, ясная и цепляющая цитата. Максимум 12-15 слов. Это эссенция инсайта — без лишних слов, без эзотерики. Тон: ясный, отрезвляющий, вызывающий мурашки. Обращайся на «ты». Можешь обернуть 1 ключевое слово в _подчёркивания_ для курсивного акцента.]`;
+[ОДНА глубокая, терапевтичная цитата. Максимум 12-15 слов. Эссенция инсайта — без эзотерики. Тон: ясный, отрезвляющий. Обращайся на «ты». Можешь обернуть 1 ключевое слово в _подчёркивания_.]`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
