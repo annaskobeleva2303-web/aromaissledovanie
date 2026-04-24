@@ -314,7 +314,9 @@ export function GroupField({ oilId }: GroupFieldProps) {
 
           <div className="space-y-3">
             {publicEntries.map((entry) => {
-              const moodInfo = entry.mood ? MOOD_MAP[entry.mood] : null;
+              const { after } = parseMoodPair(entry.mood as string | null);
+              const topMood = after[0] ?? null;
+              const moodEmoji = topMood ? getEmojiForStateName(topMood) : null;
               return (
                 <div
                   key={entry.id}
@@ -329,12 +331,12 @@ export function GroupField({ oilId }: GroupFieldProps) {
                   <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap pr-8">
                     {entry.content}
                   </p>
-                  {moodInfo && (
+                  {moodEmoji && (
                     <span
                       className="absolute bottom-4 right-4 text-lg opacity-60"
-                      title={moodInfo.label}
+                      title={topMood ?? undefined}
                     >
-                      {moodInfo.emoji}
+                      {moodEmoji}
                     </span>
                   )}
                 </div>
