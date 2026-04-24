@@ -5,17 +5,7 @@ import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-const MOOD_MAP: Record<string, { label: string; emoji: string }> = {
-  calm: { label: "Спокойно", emoji: "😌" },
-  anxious: { label: "Тревожно", emoji: "😟" },
-  joyful: { label: "Радостно", emoji: "😊" },
-  sad: { label: "Грустно", emoji: "😢" },
-  energetic: { label: "Энергично", emoji: "⚡" },
-  irritated: { label: "Раздражённо", emoji: "😤" },
-  reflective: { label: "Задумчиво", emoji: "🤔" },
-  grateful: { label: "Благодарно", emoji: "🙏" },
-};
+import { parseMoodPair, getEmojiForStateName } from "@/utils/stateUtils";
 
 interface GroupStats {
   total_entries: number;
@@ -78,6 +68,30 @@ export function GroupField({ oilId }: GroupFieldProps) {
     enabled: !!user,
   });
 
+  // Raw moods for accurate aggregation (handles new JSON before/after format)
+  const { data: moodAggregation = {} } = useQuery({
+    queryKey: ["group-mood-agg", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("mood")
+        .eq("oil_id", oilId)
+        .not("mood", "is", null);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        const { after } = parseMoodPair(row.mood as string | null);
+        for (const name of after) {
+          if (!name) continue;
+          counts[name] = (counts[name] ?? 0) + 1;
+        }
+      }
+      return counts;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
   // Public entries feed
   const { data: publicEntries = [] } = useQuery({
     queryKey: ["public-entries", oilId],
@@ -135,7 +149,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
     );
   }
 
-  const moodEntries = Object.entries(stats.mood_counts).sort(
+  const moodEntries = Object.entries(moodAggregation).sort(
     ([, a], [, b]) => b - a
   );
   const totalMoods = moodEntries.reduce((sum, [, count]) => sum + count, 0);
@@ -169,14 +183,14 @@ export function GroupField({ oilId }: GroupFieldProps) {
           </div>
           <div className="relative space-y-3">
             {moodEntries.map(([mood, count]) => {
-              const info = MOOD_MAP[mood];
+              const emoji = getEmojiForStateName(mood);
               const percent = Math.round((count / totalMoods) * 100);
               return (
                 <div key={mood} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2 text-foreground/90">
-                      <span className="text-base">{info?.emoji ?? "❓"}</span>
-                      {info?.label ?? mood}
+                      <span className="text-base">{emoji}</span>
+                      {mood}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">{percent}%</span>
                   </div>
@@ -300,7 +314,9 @@ export function GroupField({ oilId }: GroupFieldProps) {
 
           <div className="space-y-3">
             {publicEntries.map((entry) => {
-              const moodInfo = entry.mood ? MOOD_MAP[entry.mood] : null;
+              const { after } = parseMoodPair(entry.mood as string | null);
+              const topMood = after[0] ?? null;
+              const moodEmoji = topMood ? getEmojiForStateName(topMood) : null;
               return (
                 <div
                   key={entry.id}
@@ -315,12 +331,12 @@ export function GroupField({ oilId }: GroupFieldProps) {
                   <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap pr-8">
                     {entry.content}
                   </p>
-                  {moodInfo && (
+                  {moodEmoji && (
                     <span
                       className="absolute bottom-4 right-4 text-lg opacity-60"
-                      title={moodInfo.label}
+                      title={topMood ?? undefined}
                     >
-                      {moodInfo.emoji}
+                      {moodEmoji}
                     </span>
                   )}
                 </div>
