@@ -68,6 +68,30 @@ export function GroupField({ oilId }: GroupFieldProps) {
     enabled: !!user,
   });
 
+  // Raw moods for accurate aggregation (handles new JSON before/after format)
+  const { data: moodAggregation = {} } = useQuery({
+    queryKey: ["group-mood-agg", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("mood")
+        .eq("oil_id", oilId)
+        .not("mood", "is", null);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        const { after } = parseMoodPair(row.mood as string | null);
+        for (const name of after) {
+          if (!name) continue;
+          counts[name] = (counts[name] ?? 0) + 1;
+        }
+      }
+      return counts;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
   // Public entries feed
   const { data: publicEntries = [] } = useQuery({
     queryKey: ["public-entries", oilId],
