@@ -180,6 +180,26 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
         </div>
       )}
 
+      {/* Aroma match */}
+      {entry.aroma_match && AROMA_MATCH_MAP[entry.aroma_match] && (
+        <div
+          className="rounded-[1.75rem] border border-white/25 p-5 backdrop-blur-2xl space-y-3"
+          style={{
+            background: "linear-gradient(135deg, hsla(35,90%,92%,0.45) 0%, hsla(0,0%,100%,0.4) 100%)",
+          }}
+        >
+          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
+            Отклик на аромат
+          </p>
+          <div className="flex items-center gap-3 rounded-2xl bg-white/30 backdrop-blur-xl px-4 py-3 border border-white/20">
+            <span className="text-2xl leading-none">{AROMA_MATCH_MAP[entry.aroma_match].emoji}</span>
+            <p className="text-sm font-serif italic text-foreground/85">
+              {AROMA_MATCH_MAP[entry.aroma_match].label}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Free writing */}
       {entry.content && (
         <div
