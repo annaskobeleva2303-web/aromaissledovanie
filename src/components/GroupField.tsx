@@ -5,17 +5,7 @@ import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-const MOOD_MAP: Record<string, { label: string; emoji: string }> = {
-  calm: { label: "Спокойно", emoji: "😌" },
-  anxious: { label: "Тревожно", emoji: "😟" },
-  joyful: { label: "Радостно", emoji: "😊" },
-  sad: { label: "Грустно", emoji: "😢" },
-  energetic: { label: "Энергично", emoji: "⚡" },
-  irritated: { label: "Раздражённо", emoji: "😤" },
-  reflective: { label: "Задумчиво", emoji: "🤔" },
-  grateful: { label: "Благодарно", emoji: "🙏" },
-};
+import { parseMoodPair, getEmojiForStateName } from "@/utils/stateUtils";
 
 interface GroupStats {
   total_entries: number;
