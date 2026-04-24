@@ -713,13 +713,48 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
     },
     onSuccess: (result) => {
       toast.success("Запись сохранена ✨");
+
+      // Invalidate caches so Diary/Calendar/Field instantly pick up the new entry
+      queryClient.invalidateQueries({ queryKey: ["entries", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["public-entries", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["ai-insights-history", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["ai-insights-by-date", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["entries-count", oilId] });
+      queryClient.invalidateQueries({ queryKey: ["group-mood-agg", oilId] });
+
+      // HARD RESET — wipe all session form state so the next session starts as tabula rasa.
+      // Insight text/phase are intentionally set AFTER the reset so the insight screen still renders.
+      setBeforeDone(false);
+      setContactDone(false);
+      setAfterDone(false);
+      setWritingDone(false);
+      setSkipBefore(false);
+      setMoodScoreBefore(0);
+      setMoodsBefore([]);
+      setOilBodyZones([]);
+      setOilSensation("");
+      setOilVisualImage("");
+      setMoodScoreAfter(0);
+      setMoodsAfter([]);
+      setAromaMatch(null);
+      setContent("");
+      setIsPublic(false);
+
+      // Clear any local draft if one exists (defensive — no draft key is currently used)
+      try {
+        localStorage.removeItem(`diary_draft_${oilId}`);
+        sessionStorage.removeItem(`diary_draft_${oilId}`);
+      } catch {
+        /* storage unavailable — ignore */
+      }
+
       if (result?.insight) {
         setInsightText(result.insight);
         setShareQuote(result.quote);
         setPhase("insight");
       } else {
-        // No insight generated, still show success and go to insight with fallback
         setInsightText("Запись сохранена. Инсайт будет доступен позже.");
+        setShareQuote(null);
         setPhase("insight");
       }
     },
