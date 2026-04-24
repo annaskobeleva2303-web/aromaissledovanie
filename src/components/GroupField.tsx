@@ -183,14 +183,14 @@ export function GroupField({ oilId }: GroupFieldProps) {
           </div>
           <div className="relative space-y-3">
             {moodEntries.map(([mood, count]) => {
-              const info = MOOD_MAP[mood];
+              const emoji = getEmojiForStateName(mood);
               const percent = Math.round((count / totalMoods) * 100);
               return (
                 <div key={mood} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2 text-foreground/90">
-                      <span className="text-base">{info?.emoji ?? "❓"}</span>
-                      {info?.label ?? mood}
+                      <span className="text-base">{emoji}</span>
+                      {mood}
                     </span>
                     <span className="text-xs font-medium text-muted-foreground">{percent}%</span>
                   </div>
