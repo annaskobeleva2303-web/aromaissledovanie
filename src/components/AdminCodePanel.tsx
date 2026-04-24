@@ -385,16 +385,35 @@ export function AdminCodePanel() {
     setClearingId(userId);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      // Delete entries, insights, and personal summaries
-      const { error: e1 } = await supabase.from("entries").delete().eq("user_id", userId);
-      if (e1) throw e1;
-      const { error: e2 } = await supabase.from("ai_insights").delete().eq("user_id", userId);
-      if (e2) throw e2;
-      const { error: e3 } = await supabase.from("personal_summaries").delete().eq("user_id", userId);
-      if (e3) throw e3;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error("Нет активной сессии. Войдите снова.");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-clear-entries`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ target_user_id: userId }),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || `Ошибка ${res.status}`);
+      }
+
       toast.success(`Записи ${nickname} очищены`);
       queryClient.invalidateQueries({ queryKey: ["entries"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-entries"] });
       queryClient.invalidateQueries({ queryKey: ["ai_insights"] });
+      queryClient.invalidateQueries({ queryKey: ["ai-insights-history"] });
+      queryClient.invalidateQueries({ queryKey: ["public-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["group-mood-agg"] });
+      queryClient.invalidateQueries({ queryKey: ["personal_summaries"] });
       setConfirmClear(null);
     } catch (e: any) {
       toast.error(e.message);
