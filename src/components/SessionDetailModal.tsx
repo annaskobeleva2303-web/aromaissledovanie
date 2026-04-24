@@ -36,8 +36,15 @@ interface SessionEntry {
   oil_body_location: string | null;
   oil_sensation: string | null;
   oil_visual_image: string | null;
+  aroma_match?: string | null;
   record_type: string;
 }
+
+const AROMA_MATCH_MAP: Record<string, { emoji: string; label: string }> = {
+  not_mine: { emoji: "🥀", label: "Не откликается" },
+  neutral: { emoji: "🌿", label: "Нейтрально" },
+  perfect_match: { emoji: "✨", label: "Абсолютно моё" },
+};
 
 interface SessionDetailModalProps {
   entry: SessionEntry;
@@ -170,6 +177,26 @@ export function SessionDetailModal({ entry, insight, onClose }: SessionDetailMod
               <p className="text-sm text-foreground/85">{entry.oil_visual_image}</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Aroma match */}
+      {entry.aroma_match && AROMA_MATCH_MAP[entry.aroma_match] && (
+        <div
+          className="rounded-[1.75rem] border border-white/25 p-5 backdrop-blur-2xl space-y-3"
+          style={{
+            background: "linear-gradient(135deg, hsla(35,90%,92%,0.45) 0%, hsla(0,0%,100%,0.4) 100%)",
+          }}
+        >
+          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
+            Отклик на аромат
+          </p>
+          <div className="flex items-center gap-3 rounded-2xl bg-white/30 backdrop-blur-xl px-4 py-3 border border-white/20">
+            <span className="text-2xl leading-none">{AROMA_MATCH_MAP[entry.aroma_match].emoji}</span>
+            <p className="text-sm font-serif italic text-foreground/85">
+              {AROMA_MATCH_MAP[entry.aroma_match].label}
+            </p>
+          </div>
         </div>
       )}
 

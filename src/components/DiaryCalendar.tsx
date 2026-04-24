@@ -28,7 +28,7 @@ export function DiaryCalendar({ oilId, viewOnly = false }: DiaryCalendarProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location, oil_sensation, oil_visual_image")
+        .select("id, date, mood, content, created_at, energy_tags, energy_before, energy_after, mood_score_before, mood_score_after, record_type, oil_body_location, oil_sensation, oil_visual_image, aroma_match")
         .eq("oil_id", oilId)
         .eq("user_id", user!.id)
         .order("date", { ascending: false });
