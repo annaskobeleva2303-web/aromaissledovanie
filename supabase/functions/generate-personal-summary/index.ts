@@ -50,9 +50,18 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const OPENAI_BASE_URL = Deno.env.get("OPENAI_BASE_URL");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!LOVABLE_API_KEY) {
+    const useOpenAI = !!(OPENAI_API_KEY && OPENAI_BASE_URL);
+    const aiKey = useOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY;
+    const aiUrl = useOpenAI
+      ? `${OPENAI_BASE_URL!.replace(/\/+$/, "")}/chat/completions`
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const aiModel = useOpenAI ? "gpt-4o-mini" : "google/gemini-3-flash-preview";
+
+    if (!aiKey) {
       return new Response(JSON.stringify({ error: "AI key not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -190,23 +199,20 @@ ${statsBlock}
    - Один глубокий вопрос для рефлексии, который вернёт клиенту ответственность и направит фокус внутрь.
 5. ТОН: Профессиональный, ясный, вызывающий инсайты своей правдивостью. Не утешай — проясняй. Обращайся на «ты».`;
 
-        const aiResponse = await fetch(
-          "https://ai.gateway.lovable.dev/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: diaryText },
-              ],
-            }),
-          }
-        );
+        const aiResponse = await fetch(aiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${aiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: aiModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: diaryText },
+            ],
+          }),
+        });
 
         if (!aiResponse.ok) {
           console.error(`AI error for user ${userId}:`, aiResponse.status);
