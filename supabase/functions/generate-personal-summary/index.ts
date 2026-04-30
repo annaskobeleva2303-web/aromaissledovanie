@@ -199,23 +199,20 @@ ${statsBlock}
    - Один глубокий вопрос для рефлексии, который вернёт клиенту ответственность и направит фокус внутрь.
 5. ТОН: Профессиональный, ясный, вызывающий инсайты своей правдивостью. Не утешай — проясняй. Обращайся на «ты».`;
 
-        const aiResponse = await fetch(
-          "https://ai.gateway.lovable.dev/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: diaryText },
-              ],
-            }),
-          }
-        );
+        const aiResponse = await fetch(aiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${aiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: aiModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: diaryText },
+            ],
+          }),
+        });
 
         if (!aiResponse.ok) {
           console.error(`AI error for user ${userId}:`, aiResponse.status);
