@@ -19,4 +19,10 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
+  define: {
+    // Переопределяем Supabase URL на reverse proxy.
+    // Клиент в src/integrations/supabase/client.ts автогенерируемый и читает import.meta.env.VITE_SUPABASE_URL,
+    // поэтому подменяем значение на этапе сборки.
+    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("https://aromasmysly.ru/supabase-api"),
+  },
 }));
