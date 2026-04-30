@@ -498,6 +498,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      redeem_activation_code: {
+        Args: { _code: string; _oil_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "user" | "admin"
