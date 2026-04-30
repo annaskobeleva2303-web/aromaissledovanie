@@ -155,23 +155,20 @@ serve(async (req) => {
 Обращайся к группе как «участники исследования». Никогда не упоминай конкретных людей.
 Стиль — премиальный, метафоричный, тёплый.`;
 
-      const aiResponse = await fetch(
-        "https://ai.gateway.lovable.dev/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: anonymizedText },
-            ],
-          }),
-        }
-      );
+      const aiResponse = await fetch(aiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${aiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: aiModel,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: anonymizedText },
+          ],
+        }),
+      });
 
       if (!aiResponse.ok) {
         console.error(`AI error for ${oil.title}:`, aiResponse.status);
