@@ -34,42 +34,35 @@ export function ActivationModal({ oil, open, onOpenChange }: ActivationModalProp
 
     const normalizedCode = code.trim().toUpperCase();
 
-    // Find the code
-    const { data: codeRecord, error: fetchError } = await supabase
-      .from("activation_codes")
-      .select("*")
-      .eq("code", normalizedCode)
-      .eq("oil_id", oil.id)
-      .eq("is_used", false)
-      .maybeSingle();
+    const { data, error: rpcError } = await supabase.rpc("redeem_activation_code" as any, {
+      _code: normalizedCode,
+      _oil_id: oil.id,
+    });
 
-    if (fetchError || !codeRecord) {
-      setError("Код не найден или уже использован");
-      setLoading(false);
-      return;
-    }
-
-    // Create access
-    const { error: accessError } = await supabase
-      .from("user_access")
-      .insert({ user_id: user.id, oil_id: oil.id });
-
-    if (accessError) {
+    if (rpcError) {
       setError("Не удалось активировать доступ");
       setLoading(false);
       return;
     }
 
-    // Mark code as used
-    await supabase
-      .from("activation_codes")
-      .update({ is_used: true, used_by: user.id } as any)
-      .eq("id", codeRecord.id);
+    const result = data as { success?: boolean; error?: string } | null;
+    if (!result?.success) {
+      if (result?.error === "invalid_code") {
+        setError("Код не найден или уже использован");
+      } else if (result?.error === "unauthorized") {
+        setError("Войдите в аккаунт, чтобы активировать код");
+      } else {
+        setError("Не удалось активировать доступ");
+      }
+      setLoading(false);
+      return;
+    }
 
     queryClient.invalidateQueries({ queryKey: ["user_access"] });
     queryClient.invalidateQueries({ queryKey: ["activation_codes"] });
     toast.success("Доступ к исследованию активирован! 🌿");
     setCode("");
+    setLoading(false);
     onOpenChange(false);
   };
 
