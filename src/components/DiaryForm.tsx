@@ -156,138 +156,269 @@ const formatInsightText = (text: string) => {
   });
 };
 
-// --- Voice Input Button ---
+// --- Animated Waveform (live mic level) ---
+function LiveWaveform({ analyser }: { analyser: AnalyserNode | null }) {
+  const [levels, setLevels] = useState<number[]>(() => Array(24).fill(0.15));
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!analyser) return;
+    const buffer = new Uint8Array(analyser.frequencyBinCount);
+    const tick = () => {
+      analyser.getByteFrequencyData(buffer);
+      const bins = 24;
+      const step = Math.floor(buffer.length / bins);
+      const next: number[] = [];
+      for (let i = 0; i < bins; i++) {
+        let sum = 0;
+        for (let j = 0; j < step; j++) sum += buffer[i * step + j];
+        const avg = sum / step / 255;
+        next.push(Math.max(0.12, Math.min(1, avg * 1.6)));
+      }
+      setLevels(next);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [analyser]);
+
+  return (
+    <div className="flex items-center justify-center gap-[3px] h-8 w-full max-w-[220px]">
+      {levels.map((lv, i) => (
+        <motion.span
+          key={i}
+          className="w-[3px] rounded-full bg-gradient-to-t from-primary/40 via-primary/80 to-accent"
+          animate={{ height: `${Math.round(lv * 100)}%` }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          style={{ minHeight: 4 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// --- Voice Input Button (Whisper via Edge Function) ---
 function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => void }) {
-  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
-  const committedIndexRef = useRef<number>(-1);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
 
-  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  const isSupported = !!SpeechRecognition;
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const toggleListening = useCallback(() => {
-    if (!isSupported) {
-      setError("Голосовой ввод не поддерживается в этом браузере");
+  const cleanupStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+      audioCtxRef.current.close().catch(() => {});
+    }
+    audioCtxRef.current = null;
+    setAnalyser(null);
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") {
+      mr.stop();
+    }
+    setIsRecording(false);
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    setError(null);
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setError("Запись не поддерживается в этом браузере");
       return;
     }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
+      // Audio analysis for waveform
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      audioCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(stream);
+      const an = ctx.createAnalyser();
+      an.fftSize = 256;
+      source.connect(an);
+      setAnalyser(an);
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = "ru-RU";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognitionRef.current = recognition;
-    committedIndexRef.current = -1;
-
-    recognition.onresult = (event: any) => {
-      let finalTranscript = "";
-      for (let i = 0; i < event.results.length; i++) {
-        // Only commit each finalized result once, regardless of how many times
-        // the engine re-emits the cumulative results array.
-        if (event.results[i].isFinal && i > committedIndexRef.current) {
-          finalTranscript += event.results[i][0].transcript;
-          committedIndexRef.current = i;
+      // Pick a supported mime type
+      const candidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ];
+      let mimeType = "";
+      for (const c of candidates) {
+        if ((window as any).MediaRecorder?.isTypeSupported?.(c)) {
+          mimeType = c;
+          break;
         }
       }
-      if (finalTranscript.trim()) {
-        onTranscript(finalTranscript.trim());
-      }
-    };
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      chunksRef.current = [];
 
-    recognition.onerror = (event: any) => {
-      if (event.error === "not-allowed") {
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mr.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        cleanupStream();
+        if (blob.size === 0) {
+          setError("Аудио не записано");
+          return;
+        }
+        setIsTranscribing(true);
+        try {
+          const ext = (mr.mimeType || "audio/webm").includes("mp4") ? "mp4"
+            : (mr.mimeType || "").includes("ogg") ? "ogg" : "webm";
+          const file = new File([blob], `recording.${ext}`, { type: blob.type });
+          const form = new FormData();
+          form.append("file", file);
+          form.append("language", "ru");
+
+          const { data, error: fnError } = await supabase.functions.invoke("transcribe-audio", {
+            body: form,
+          });
+          if (fnError) throw fnError;
+          const text = (data as { text?: string })?.text?.trim();
+          if (text) {
+            onTranscript(text);
+          } else {
+            setError("Не удалось распознать речь");
+          }
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : "Ошибка транскрибации";
+          setError(msg);
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mr.start();
+      setIsRecording(true);
+    } catch (err: unknown) {
+      cleanupStream();
+      const name = (err as { name?: string })?.name;
+      if (name === "NotAllowedError" || name === "SecurityError") {
         setError("Доступ к микрофону запрещён. Разреши его в настройках браузера");
-      } else if (event.error !== "aborted") {
-        setError("Ошибка распознавания. Попробуй ещё раз");
+      } else {
+        setError("Не удалось начать запись");
       }
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    try {
-      recognition.start();
-      setIsListening(true);
-      setError(null);
-    } catch {
-      setError("Не удалось запустить распознавание речи");
     }
-  }, [isListening, isSupported, onTranscript]);
+  }, [cleanupStream, onTranscript]);
+
+  const toggle = useCallback(() => {
+    if (isTranscribing) return;
+    if (isRecording) stopRecording();
+    else startRecording();
+  }, [isRecording, isTranscribing, startRecording, stopRecording]);
 
   useEffect(() => {
     return () => {
-      recognitionRef.current?.stop();
+      try {
+        mediaRecorderRef.current?.state !== "inactive" && mediaRecorderRef.current?.stop();
+      } catch {}
+      cleanupStream();
     };
-  }, []);
-
-  if (!isSupported) return null;
+  }, [cleanupStream]);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3 w-full">
       <motion.button
         type="button"
-        onClick={toggleListening}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.92 }}
-        className={`relative w-14 h-14 rounded-full backdrop-blur-2xl border flex items-center justify-center transition-all duration-300 ${
-          isListening
-            ? "bg-white/50 border-white/40"
-            : "bg-white/30 border-white/20 hover:bg-white/40"
-        }`}
+        onClick={toggle}
+        disabled={isTranscribing}
+        whileHover={{ scale: isTranscribing ? 1 : 1.05 }}
+        whileTap={{ scale: isTranscribing ? 1 : 0.92 }}
+        className={`relative w-16 h-16 rounded-full backdrop-blur-2xl flex items-center justify-center transition-all duration-300 ${
+          isRecording ? "bg-white/55" : "bg-white/30 hover:bg-white/45"
+        } ${isTranscribing ? "opacity-70 cursor-wait" : ""}`}
         style={
-          isListening
+          isRecording
             ? {
                 boxShadow:
-                  "0 0 24px 8px hsl(20 95% 73% / 0.35), 0 0 48px 16px hsl(263 72% 52% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.4)",
+                  "0 0 0 6px hsl(0 84% 65% / 0.18), 0 0 28px 10px hsl(0 84% 65% / 0.40), 0 0 60px 18px hsl(263 72% 52% / 0.18), inset 0 1px 0 hsl(0 0% 100% / 0.5)",
               }
             : {
                 boxShadow:
-                  "0 4px 20px hsl(263 72% 52% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
+                  "0 4px 20px hsl(263 72% 52% / 0.10), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
               }
         }
       >
-        {isListening && (
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0, 0.4] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: "radial-gradient(circle, hsl(20 95% 73% / 0.3), transparent 70%)",
-            }}
-          />
+        {/* Pulsing ring */}
+        {isRecording && (
+          <>
+            <motion.span
+              className="absolute inset-0 rounded-full"
+              animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
+              style={{ background: "radial-gradient(circle, hsl(0 84% 65% / 0.35), transparent 70%)" }}
+            />
+            <motion.span
+              className="absolute inset-0 rounded-full border border-red-400/40"
+              animate={{ scale: [1, 1.8], opacity: [0.7, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+            />
+          </>
         )}
-        {isListening ? (
-          <Mic className="h-6 w-6 text-primary relative z-10 drop-shadow-[0_0_8px_hsl(20_95%_73%/0.7)]" strokeWidth={1.8} />
+
+        {isTranscribing ? (
+          <Loader2 className="h-6 w-6 text-primary relative z-10 animate-spin" strokeWidth={1.8} />
+        ) : isRecording ? (
+          <Mic
+            className="h-7 w-7 text-red-500 relative z-10 drop-shadow-[0_0_10px_hsl(0_84%_65%/0.8)]"
+            strokeWidth={2}
+          />
         ) : (
           <MicOff className="h-6 w-6 text-muted-foreground/70 relative z-10" strokeWidth={1.5} />
         )}
       </motion.button>
 
-      <AnimatePresence>
-        {isListening && (
-          <motion.p
+      <AnimatePresence mode="wait">
+        {isRecording && (
+          <motion.div
+            key="recording"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="text-xs text-primary/70 tracking-wide font-light"
+            className="flex flex-col items-center gap-2 w-full"
           >
-            Слушаю... говорите
-          </motion.p>
+            <LiveWaveform analyser={analyser} />
+            <p className="text-xs text-primary/80 tracking-wide font-light">
+              Записываю ваш поток...
+            </p>
+          </motion.div>
         )}
-        {error && (
-          <motion.p
+        {isTranscribing && (
+          <motion.div
+            key="transcribing"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="text-xs text-destructive/70 text-center max-w-[200px]"
+            className="flex items-center gap-2 text-xs text-primary/80 tracking-wide font-light"
+          >
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Расшифровываю запись...</span>
+          </motion.div>
+        )}
+        {error && !isRecording && !isTranscribing && (
+          <motion.p
+            key="error"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="text-xs text-destructive/80 text-center max-w-[240px]"
           >
             {error}
           </motion.p>
