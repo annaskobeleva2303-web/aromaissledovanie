@@ -265,9 +265,9 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
           />
         )}
         {isListening ? (
-          <MicOff className="h-6 w-6 text-destructive/80 relative z-10" strokeWidth={1.5} />
+          <Mic className="h-6 w-6 text-primary relative z-10 drop-shadow-[0_0_8px_hsl(20_95%_73%/0.7)]" strokeWidth={1.8} />
         ) : (
-          <Mic className="h-6 w-6 text-primary/70 relative z-10" strokeWidth={1.5} />
+          <MicOff className="h-6 w-6 text-muted-foreground/70 relative z-10" strokeWidth={1.5} />
         )}
       </motion.button>
 
