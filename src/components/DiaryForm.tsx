@@ -161,6 +161,7 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
+  const committedIndexRef = useRef<number>(-1);
 
   const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   const isSupported = !!SpeechRecognition;
@@ -182,16 +183,20 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     recognition.continuous = true;
     recognition.interimResults = true;
     recognitionRef.current = recognition;
+    committedIndexRef.current = -1;
 
     recognition.onresult = (event: any) => {
       let finalTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
+      for (let i = 0; i < event.results.length; i++) {
+        // Only commit each finalized result once, regardless of how many times
+        // the engine re-emits the cumulative results array.
+        if (event.results[i].isFinal && i > committedIndexRef.current) {
           finalTranscript += event.results[i][0].transcript;
+          committedIndexRef.current = i;
         }
       }
-      if (finalTranscript) {
-        onTranscript(finalTranscript);
+      if (finalTranscript.trim()) {
+        onTranscript(finalTranscript.trim());
       }
     };
 
@@ -260,9 +265,9 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
           />
         )}
         {isListening ? (
-          <MicOff className="h-6 w-6 text-destructive/80 relative z-10" strokeWidth={1.5} />
+          <Mic className="h-6 w-6 text-primary relative z-10 drop-shadow-[0_0_8px_hsl(20_95%_73%/0.7)]" strokeWidth={1.8} />
         ) : (
-          <Mic className="h-6 w-6 text-primary/70 relative z-10" strokeWidth={1.5} />
+          <MicOff className="h-6 w-6 text-muted-foreground/70 relative z-10" strokeWidth={1.5} />
         )}
       </motion.button>
 
