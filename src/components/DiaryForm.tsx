@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import { EMOTIONAL_STATE_MAP, getEmojiForStateName } from "@/utils/stateUtils";
 import fixWebmDuration from "webm-duration-fix";
+import { audioBlobToWav } from "@/lib/audioToWav";
 
 const EMOTIONAL_STATES: { category: string; label: string; states: string[] }[] = [
   {
