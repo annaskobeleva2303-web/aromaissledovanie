@@ -540,7 +540,8 @@ ${statsBlock}
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: aiModel,
+            model: FALLBACK_MODEL,
+            max_tokens: 80,
             messages: [
               {
                 role: "system",
