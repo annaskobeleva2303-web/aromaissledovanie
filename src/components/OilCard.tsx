@@ -43,7 +43,7 @@ export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: Oil
       {oil.image_url && (
         <div className="relative h-40 w-full overflow-hidden">
           <img
-            src={oil.image_url}
+            src={proxiedStorageUrl(oil.image_url)}
             alt={oil.title}
             className="h-full w-full object-cover"
             loading="lazy"
