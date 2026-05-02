@@ -246,13 +246,70 @@ ${visual ? `- Визуальный образ: ${visual}` : ""}`;
       (currentEntry.content as string | null) || ""
     );
 
+    // ===== Двухэтапная генерация: для длинных потоков сначала сжимаем дешёвой моделью =====
+    const LONG_TRANSCRIPT_THRESHOLD = 3000;
+    let processedContent = sanitizedContent;
+    let preprocessUsed = false;
+
+    const OPENAI_API_KEY_PRE = Deno.env.get("OPENAI_API_KEY");
+    const OPENAI_BASE_URL_PRE = Deno.env.get("OPENAI_BASE_URL");
+    const useOpenAI_PRE = !!(OPENAI_API_KEY_PRE && OPENAI_BASE_URL_PRE);
+
+    if (sanitizedContent.length >= LONG_TRANSCRIPT_THRESHOLD && useOpenAI_PRE) {
+      const normalize = (baseUrl: string) => {
+        const trimmed = baseUrl.replace(/\/+$/, "");
+        return /^https:\/\/api\.proxyapi\.ru\/openai\/v1$/i.test(trimmed)
+          ? "https://openai.api.proxyapi.ru/v1"
+          : trimmed;
+      };
+      const preUrl = `${normalize(OPENAI_BASE_URL_PRE!)}/chat/completions`;
+      const preSystem = "Ты — ассистент психолога. Твоя задача: сделать подробный, но плотный конспект этого длинного потока мыслей. Убери воду и повторения, но ОБЯЗАТЕЛЬНО сохрани все эмоциональные нюансы, переживания, ключевые события и авторский стиль. Это пойдет на вход другой нейросети для глубокого анализа.";
+      console.log(`Длинный транскрипт (${sanitizedContent.length} симв.) — пре-процессинг через openai/gpt-4o-mini`);
+      try {
+        const preResp = await fetch(preUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY_PRE}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-4o-mini",
+            max_tokens: 1200,
+            messages: [
+              { role: "system", content: preSystem },
+              { role: "user", content: sanitizedContent },
+            ],
+          }),
+        });
+        if (preResp.ok) {
+          const preData = await preResp.json();
+          const condensed = preData.choices?.[0]?.message?.content?.trim();
+          if (condensed && condensed.length > 50) {
+            processedContent = condensed;
+            preprocessUsed = true;
+            console.log(`Пре-процессинг успешен: ${sanitizedContent.length} → ${condensed.length} симв.`);
+          } else {
+            console.warn("Пре-процессинг вернул пустой/слишком короткий результат, используем оригинал");
+          }
+        } else {
+          console.warn(`Пре-процессинг не удался (${preResp.status}), используем оригинальный транскрипт`);
+        }
+      } catch (e) {
+        console.error("Ошибка пре-процессинга:", e);
+      }
+    }
+
+    const transcriptLabel = preprocessUsed
+      ? "Сжатый конспект потока клиента (после пре-процессинга длинного аудио — содержит ключевые эмоции, события и стиль)"
+      : "Свободный поток клиента (после серверной очистки от артефактов Whisper; токены вида [?слово] — подозрительные, игнорируй их)";
+
     const userContent = `
 СЕГОДНЯШНЯЯ СЕССИЯ (анализируй ТОЛЬКО её):
 ${transformationBlock}
 ${aromaBlock}
 ${sensoryBlock}
 
-Свободный поток клиента (после серверной очистки от артефактов Whisper; токены вида [?слово] — подозрительные, игнорируй их): ${sanitizedContent || "(пусто)"}
+${transcriptLabel}: ${processedContent || "(пусто)"}
 `;
 
     const systemPrompt = `Ты — высококлассный психотерапевт. Твой стиль — лаконичность, глубина, живой язык. Говоришь как человек с человеком, а не как нейросеть.
