@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, Video, X, BookOpen } from "lucide-react";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 interface OilFull {
   id: string;
   title: string;
