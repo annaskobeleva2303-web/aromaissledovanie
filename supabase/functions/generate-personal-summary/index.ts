@@ -200,20 +200,33 @@ ${statsBlock}
    - Один глубокий вопрос для рефлексии, который вернёт клиенту ответственность и направит фокус внутрь.
 5. ТОН: Профессиональный, ясный, вызывающий инсайты своей правдивостью. Не утешай — проясняй. Обращайся на «ты».`;
 
-        const aiResponse = await fetch(aiUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${aiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: aiModel,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: diaryText },
-            ],
-          }),
-        });
+        const callAI = (model: string) =>
+          fetch(aiUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${aiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              max_tokens: 450,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: diaryText },
+              ],
+            }),
+          });
+
+        let aiResponse = await callAI(aiModel);
+        if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
+          console.warn(`personal-summary: primary ${aiModel} failed (${aiResponse.status}), fallback to ${aiFallbackModel}`);
+          try {
+            const fb = await callAI(aiFallbackModel);
+            if (fb.ok) aiResponse = fb;
+          } catch (e) {
+            console.error("personal-summary fallback failed:", e);
+          }
+        }
 
         if (!aiResponse.ok) {
           console.error(`AI error for user ${userId}:`, aiResponse.status);
