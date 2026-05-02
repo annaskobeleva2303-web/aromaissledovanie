@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import { EMOTIONAL_STATE_MAP, getEmojiForStateName } from "@/utils/stateUtils";
 import fixWebmDuration from "webm-duration-fix";
-import { audioBlobToWav } from "@/lib/audioToWav";
+import { audioBlobToWav, pcmChunksToWav } from "@/lib/audioToWav";
 
 const EMOTIONAL_STATES: { category: string; label: string; states: string[] }[] = [
   {
@@ -216,8 +216,18 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const recorderNodeRef = useRef<ScriptProcessorNode | null>(null);
+  const recorderSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const pcmChunksRef = useRef<Float32Array[]>([]);
+  const recordingModeRef = useRef<"pcm" | "media-recorder">("media-recorder");
 
   const cleanupStream = useCallback(() => {
+    try {
+      recorderNodeRef.current?.disconnect();
+      recorderSourceRef.current?.disconnect();
+    } catch {}
+    recorderNodeRef.current = null;
+    recorderSourceRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
