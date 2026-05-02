@@ -25,7 +25,8 @@ serve(async (req) => {
     const aiUrl = useOpenAI
       ? `${OPENAI_BASE_URL!.replace(/\/+$/, "")}/chat/completions`
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const aiModel = useOpenAI ? "gpt-4o" : "google/gemini-3-flash-preview";
+    const aiModel = useOpenAI ? "claude-3.5-sonnet" : "google/gemini-3-flash-preview";
+    const aiFallbackModel = useOpenAI ? "claude-3-haiku" : "google/gemini-2.5-flash-lite";
 
     if (!aiKey) {
       return new Response(JSON.stringify({ error: "AI key not configured" }), {
@@ -155,20 +156,33 @@ serve(async (req) => {
 Обращайся к группе как «участники исследования». Никогда не упоминай конкретных людей.
 Стиль — премиальный, метафоричный, тёплый.`;
 
-      const aiResponse = await fetch(aiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${aiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: aiModel,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: anonymizedText },
-          ],
-        }),
-      });
+      const callAI = (model: string) =>
+        fetch(aiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${aiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: 450,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: anonymizedText },
+            ],
+          }),
+        });
+
+      let aiResponse = await callAI(aiModel);
+      if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
+        console.warn(`group-trends: primary ${aiModel} failed (${aiResponse.status}), fallback to ${aiFallbackModel}`);
+        try {
+          const fb = await callAI(aiFallbackModel);
+          if (fb.ok) aiResponse = fb;
+        } catch (e) {
+          console.error("group-trends fallback failed:", e);
+        }
+      }
 
       if (!aiResponse.ok) {
         console.error(`AI error for ${oil.title}:`, aiResponse.status);
