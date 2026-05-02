@@ -8,12 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { BodyZoneChips } from "@/components/BodyZoneChips";
-import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff, Compass, Flower2, Sprout, ChevronDown } from "lucide-react";
+import { Loader2, Users, ArrowLeft, Sparkles, Heart, Zap, Smile, Check, Lock, Mic, MicOff, Compass, Flower2, Sprout, ChevronDown, RotateCw } from "lucide-react";
 import { InsightShareCard } from "@/components/InsightShareCard";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import { EMOTIONAL_STATE_MAP, getEmojiForStateName } from "@/utils/stateUtils";
+import fixWebmDuration from "webm-duration-fix";
 
 const EMOTIONAL_STATES: { category: string; label: string; states: string[] }[] = [
   {
