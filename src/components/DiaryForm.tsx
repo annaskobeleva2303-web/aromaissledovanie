@@ -202,6 +202,15 @@ function LiveWaveform({ analyser }: { analyser: AnalyserNode | null }) {
 }
 
 // --- Voice Input Button (Whisper via Edge Function) ---
+const extensionFromAudioType = (type: string): "wav" | "m4a" | "mp3" | "webm" | "ogg" => {
+  const normalized = type.toLowerCase();
+  if (normalized.includes("wav")) return "wav";
+  if (normalized.includes("mp4") || normalized.includes("m4a") || normalized.includes("aac")) return "m4a";
+  if (normalized.includes("mpeg") || normalized.includes("mp3")) return "mp3";
+  if (normalized.includes("ogg")) return "ogg";
+  return "webm";
+};
+
 function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -221,15 +230,6 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const recorderGainRef = useRef<GainNode | null>(null);
   const pcmChunksRef = useRef<Float32Array[]>([]);
   const recordingModeRef = useRef<"pcm" | "media-recorder">("media-recorder");
-
-  const extensionFromAudioType = (type: string): "wav" | "m4a" | "mp3" | "webm" | "ogg" => {
-    const normalized = type.toLowerCase();
-    if (normalized.includes("wav")) return "wav";
-    if (normalized.includes("mp4") || normalized.includes("m4a") || normalized.includes("aac")) return "m4a";
-    if (normalized.includes("mpeg") || normalized.includes("mp3")) return "mp3";
-    if (normalized.includes("ogg")) return "ogg";
-    return "webm";
-  };
 
   const cleanupStream = useCallback(() => {
     try {
