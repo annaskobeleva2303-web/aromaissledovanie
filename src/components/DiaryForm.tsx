@@ -315,8 +315,39 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       source.connect(an);
       setAnalyser(an);
 
-      // Pick a supported mime type — prefer WebM/Opus because that's what
-      // webm-duration-fix can repair.
+      try {
+        const processor = ctx.createScriptProcessor(4096, 1, 1);
+        const silentGain = ctx.createGain();
+        silentGain.gain.value = 0;
+        pcmChunksRef.current = [];
+        recordingModeRef.current = "pcm";
+        recorderSourceRef.current = source;
+        recorderNodeRef.current = processor;
+        processor.onaudioprocess = (event) => {
+          const input = event.inputBuffer;
+          const frameCount = input.length;
+          const mixed = new Float32Array(frameCount);
+          for (let channel = 0; channel < input.numberOfChannels; channel++) {
+            const channelData = input.getChannelData(channel);
+            for (let i = 0; i < frameCount; i++) mixed[i] += channelData[i] / input.numberOfChannels;
+          }
+          pcmChunksRef.current.push(mixed);
+        };
+        source.connect(processor);
+        processor.connect(silentGain);
+        silentGain.connect(ctx.destination);
+        if (ctx.state === "suspended") await ctx.resume();
+        mediaRecorderRef.current = null;
+        setIsRecording(true);
+        return;
+      } catch (pcmError) {
+        console.warn("PCM WAV recorder unavailable, falling back to MediaRecorder", pcmError);
+        recordingModeRef.current = "media-recorder";
+        pcmChunksRef.current = [];
+      }
+
+      // Fallback: MediaRecorder. Обычно сюда не попадём на Mac/Chrome,
+      // потому что основной путь выше пишет WAV напрямую.
       const candidates = [
         "audio/webm;codecs=opus",
         "audio/webm",
