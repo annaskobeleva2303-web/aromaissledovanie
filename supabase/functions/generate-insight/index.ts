@@ -28,6 +28,59 @@ function computeStats(entries: { mood: string | null; energy_tags: unknown }[]) 
   return { topMoods };
 }
 
+/**
+ * Серверная очистка транскрипта от артефактов Whisper:
+ * 1. Схлопывает подряд повторяющиеся слова/фразы (зацикленность распознавания).
+ * 2. Удаляет повторы фраз длиной 2-5 слов.
+ * 3. Помечает «подозрительные» одиночные токены префиксом [?...]:
+ *    - не-кириллические/не-латинские буквы вперемешку,
+ *    - слова из 3+ повторяющихся символов подряд (ааааа),
+ *    - изолированные кириллические слова длиной >18 символов.
+ * Не меняет смысл — только снижает шум перед LLM.
+ */
+function sanitizeTranscript(input: string): string {
+  if (!input) return "";
+  let text = input.replace(/\s+/g, " ").trim();
+  if (!text) return "";
+
+  // 1. Схлопываем непосредственные повторы одного слова: "слово слово слово" -> "слово"
+  text = text.replace(/\b([\p{L}\p{N}'-]+)(\s+\1\b){1,}/giu, "$1");
+
+  // 2. Схлопываем повторы коротких фраз (2-5 слов), идущих подряд
+  for (let n = 5; n >= 2; n--) {
+    const pattern = new RegExp(
+      `((?:\\b[\\p{L}\\p{N}'-]+\\b[\\s,]*){${n}})(\\1){1,}`,
+      "giu"
+    );
+    text = text.replace(pattern, "$1");
+  }
+  text = text.replace(/\s+/g, " ").trim();
+
+  // 3. Маркируем подозрительные одиночные токены
+  const tokens = text.split(/(\s+)/);
+  const cleaned = tokens.map((tok) => {
+    if (/^\s+$/.test(tok) || tok.length === 0) return tok;
+    const word = tok.replace(/[.,!?;:«»"'()[\]…—-]+$/g, "").replace(/^[.,!?;:«»"'()[\]…—-]+/g, "");
+    if (!word) return tok;
+
+    // 3+ одинаковых символа подряд (аааа, ййй)
+    if (/(\p{L})\1{2,}/u.test(word)) {
+      return tok.replace(word, `[?${word}]`);
+    }
+    // Смешение кириллицы и латиницы внутри одного слова
+    if (/\p{Script=Cyrillic}/u.test(word) && /\p{Script=Latin}/u.test(word)) {
+      return tok.replace(word, `[?${word}]`);
+    }
+    // Очень длинные «слова» (вероятно слипшиеся артефакты)
+    if (word.length > 22 && /^\p{L}+$/u.test(word)) {
+      return tok.replace(word, `[?${word}]`);
+    }
+    return tok;
+  });
+
+  return cleaned.join("").trim();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -189,13 +242,17 @@ ${sens ? `- Ощущение: ${sens}` : ""}
 ${visual ? `- Визуальный образ: ${visual}` : ""}`;
     }
 
+    const sanitizedContent = sanitizeTranscript(
+      (currentEntry.content as string | null) || ""
+    );
+
     const userContent = `
 СЕГОДНЯШНЯЯ СЕССИЯ (анализируй ТОЛЬКО её):
 ${transformationBlock}
 ${aromaBlock}
 ${sensoryBlock}
 
-Свободный поток клиента: ${currentEntry.content || "(пусто)"}
+Свободный поток клиента (после серверной очистки от артефактов Whisper; токены вида [?слово] — подозрительные, игнорируй их): ${sanitizedContent || "(пусто)"}
 `;
 
     const systemPrompt = `Ты — профессиональный, бережный и заземленный аромапсихолог. Твоя цель — помочь пользователю расшифровать его реакцию на эфирное масло «${oil.title}» (фокус: ${oil.focus || "общее исследование"}) и интегрировать этот опыт. Пользователь вводит текст через голосовой диктофон (Whisper), поэтому в тексте возможны абсурдные опечатки.
