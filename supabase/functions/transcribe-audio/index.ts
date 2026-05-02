@@ -87,7 +87,11 @@ serve(async (req) => {
     }
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    const openaiBaseUrl = (Deno.env.get("OPENAI_BASE_URL") || "https://api.openai.com/v1").replace(/\/$/, "");
+    // Изолированный стабильный endpoint для транскрибации через ProxyAPI.
+    // Не зависит от OPENAI_BASE_URL, чтобы изменения для других функций
+    // (например generate-insight) не ломали Whisper.
+    const aiUrl = "https://api.proxyapi.ru/openai/v1/audio/transcriptions";
+    console.log("Запрос транскрибации отправлен на:", aiUrl);
     if (!openaiKey) {
       return new Response(JSON.stringify({ error: "OPENAI_API_KEY не настроен" }), {
         status: 500,
@@ -179,7 +183,7 @@ serve(async (req) => {
 
       console.log(`transcribe-audio: attempt ${i + 1}/${attempts.length}`, { name, type });
 
-      const res = await fetch(`${openaiBaseUrl}/audio/transcriptions`, {
+      const res = await fetch(aiUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${openaiKey}` },
         body: form,
