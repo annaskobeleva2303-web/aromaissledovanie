@@ -183,7 +183,7 @@ serve(async (req) => {
 
       console.log(`transcribe-audio: attempt ${i + 1}/${attempts.length}`, { name, type });
 
-      const res = await fetch(`${openaiBaseUrl}/audio/transcriptions`, {
+      const res = await fetch(aiUrl, {
         method: "POST",
         headers: { Authorization: `Bearer ${openaiKey}` },
         body: form,
