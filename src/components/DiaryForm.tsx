@@ -206,6 +206,10 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  // Keep the last recorded blob around so we can retry if the network /
+  // edge function fails. Without this the user would lose their entire
+  // monologue on a single transient error.
+  const [lastBlob, setLastBlob] = useState<{ blob: Blob; ext: string } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -230,8 +234,41 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     setIsRecording(false);
   }, []);
 
+  const sendBlob = useCallback(
+    async (blob: Blob, ext: string) => {
+      setIsTranscribing(true);
+      setError(null);
+      try {
+        const file = new File([blob], `recording.${ext}`, { type: blob.type });
+        const form = new FormData();
+        form.append("file", file);
+        form.append("language", "ru");
+
+        const { data, error: fnError } = await supabase.functions.invoke("transcribe-audio", {
+          body: form,
+        });
+        if (fnError) throw fnError;
+        const text = (data as { text?: string })?.text?.trim();
+        if (text) {
+          onTranscript(text);
+          setLastBlob(null); // success — drop the buffer
+        } else {
+          setError("Не удалось распознать речь. Попробуйте ещё раз.");
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Ошибка транскрибации";
+        setError(msg);
+        toast.error("Не удалось расшифровать запись. Аудио сохранено — попробуйте повторить.");
+      } finally {
+        setIsTranscribing(false);
+      }
+    },
+    [onTranscript],
+  );
+
   const startRecording = useCallback(async () => {
     setError(null);
+    setLastBlob(null);
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setError("Запись не поддерживается в этом браузере");
       return;
@@ -250,7 +287,8 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       source.connect(an);
       setAnalyser(an);
 
-      // Pick a supported mime type
+      // Pick a supported mime type — prefer WebM/Opus because that's what
+      // webm-duration-fix can repair.
       const candidates = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -273,37 +311,33 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       };
 
       mr.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        const recordedType = mr.mimeType || "audio/webm";
+        let blob = new Blob(chunksRef.current, { type: recordedType });
         cleanupStream();
         if (blob.size === 0) {
           setError("Аудио не записано");
           return;
         }
-        setIsTranscribing(true);
-        try {
-          const ext = (mr.mimeType || "audio/webm").includes("mp4") ? "mp4"
-            : (mr.mimeType || "").includes("ogg") ? "ogg" : "webm";
-          const file = new File([blob], `recording.${ext}`, { type: blob.type });
-          const form = new FormData();
-          form.append("file", file);
-          form.append("language", "ru");
 
-          const { data, error: fnError } = await supabase.functions.invoke("transcribe-audio", {
-            body: form,
-          });
-          if (fnError) throw fnError;
-          const text = (data as { text?: string })?.text?.trim();
-          if (text) {
-            onTranscript(text);
-          } else {
-            setError("Не удалось распознать речь");
+        // MediaRecorder produces WebM streams without a duration in the
+        // EBML header. Whisper rejects them with
+        // {"detail":"Cannot extract audio duration"}. Patch the metadata
+        // before sending. For non-webm containers we just pass through.
+        if (recordedType.includes("webm")) {
+          try {
+            blob = await fixWebmDuration(blob);
+          } catch (e) {
+            console.warn("webm-duration-fix failed, sending original blob", e);
           }
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : "Ошибка транскрибации";
-          setError(msg);
-        } finally {
-          setIsTranscribing(false);
         }
+
+        const ext = recordedType.includes("mp4")
+          ? "mp4"
+          : recordedType.includes("ogg")
+            ? "ogg"
+            : "webm";
+        setLastBlob({ blob, ext });
+        await sendBlob(blob, ext);
       };
 
       mr.start();
@@ -317,13 +351,18 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
         setError("Не удалось начать запись");
       }
     }
-  }, [cleanupStream, onTranscript]);
+  }, [cleanupStream, sendBlob]);
 
   const toggle = useCallback(() => {
     if (isTranscribing) return;
     if (isRecording) stopRecording();
     else startRecording();
   }, [isRecording, isTranscribing, startRecording, stopRecording]);
+
+  const retry = useCallback(() => {
+    if (!lastBlob || isTranscribing) return;
+    sendBlob(lastBlob.blob, lastBlob.ext);
+  }, [lastBlob, isTranscribing, sendBlob]);
 
   useEffect(() => {
     return () => {
@@ -414,15 +453,25 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
           </motion.div>
         )}
         {error && !isRecording && !isTranscribing && (
-          <motion.p
+          <motion.div
             key="error"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="text-xs text-destructive/80 text-center max-w-[240px]"
+            className="flex flex-col items-center gap-2 max-w-[280px]"
           >
-            {error}
-          </motion.p>
+            <p className="text-xs text-destructive/80 text-center">{error}</p>
+            {lastBlob && (
+              <button
+                type="button"
+                onClick={retry}
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs text-primary bg-white/20 backdrop-blur-md border border-primary/30 hover:bg-white/30 transition-all"
+              >
+                <RotateCw className="h-3 w-3" />
+                Повторить транскрибацию
+              </button>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
