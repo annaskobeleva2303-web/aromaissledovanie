@@ -389,6 +389,7 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       mr.onstop = async () => {
         const recordedType = mr.mimeType || "audio/webm";
         let blob = new Blob(chunksRef.current, { type: recordedType });
+        console.log("Input blob type:", blob.type);
         cleanupStream();
         if (blob.size === 0) {
           setError("Аудио не записано");
@@ -401,23 +402,21 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
         // Решение: декодируем аудио через AudioContext и пересобираем в WAV
         // (PCM 16-bit) — у WAV размер данных всегда есть в заголовке,
         // и Whisper/ProxyAPI читают его без проблем.
-        let ext: "wav" | "mp4" | "ogg" | "webm" = "webm";
+        let ext: "wav" | "m4a" | "mp3" | "ogg" | "webm" = extensionFromAudioType(blob.type || recordedType);
         try {
           blob = await audioBlobToWav(blob);
+          console.log("WAV conversion result:", "success");
           ext = "wav";
         } catch (e) {
+          console.log("WAV conversion result:", "error");
           console.warn("audioBlobToWav failed, fallback to original container", e);
           // Fallback: хотя бы попробуем починить длительность WebM.
           if (recordedType.includes("webm")) {
             try { blob = await fixWebmDuration(blob); } catch (err) {
               console.warn("webm-duration-fix failed, sending original blob", err);
             }
-            ext = "webm";
-          } else if (recordedType.includes("mp4")) {
-            ext = "mp4";
-          } else if (recordedType.includes("ogg")) {
-            ext = "ogg";
           }
+          ext = extensionFromAudioType(blob.type || recordedType);
         }
         setLastBlob({ blob, ext });
         await sendBlob(blob, ext);
