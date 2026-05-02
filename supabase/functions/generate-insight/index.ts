@@ -246,125 +246,38 @@ ${visual ? `- Визуальный образ: ${visual}` : ""}`;
       (currentEntry.content as string | null) || ""
     );
 
-    // ===== Двухэтапная генерация: для длинных потоков сначала сжимаем дешёвой моделью =====
-    const LONG_TRANSCRIPT_THRESHOLD = 3000;
-    let processedContent = sanitizedContent;
-    let preprocessUsed = false;
-
-    const OPENAI_API_KEY_PRE = Deno.env.get("OPENAI_API_KEY");
-    const OPENAI_BASE_URL_PRE = Deno.env.get("OPENAI_BASE_URL");
-    const useOpenAI_PRE = !!(OPENAI_API_KEY_PRE && OPENAI_BASE_URL_PRE);
-
-    if (sanitizedContent.length >= LONG_TRANSCRIPT_THRESHOLD && useOpenAI_PRE) {
-      const normalize = (baseUrl: string) => {
-        const trimmed = baseUrl.replace(/\/+$/, "");
-        return /^https:\/\/api\.proxyapi\.ru\/openai\/v1$/i.test(trimmed)
-          ? "https://openai.api.proxyapi.ru/v1"
-          : trimmed;
-      };
-      const preUrl = `${normalize(OPENAI_BASE_URL_PRE!)}/chat/completions`;
-      const preSystem = `Ты — ассистент психолога. Твоя задача: сделать подробный, но плотный конспект этого длинного потока мыслей. Убери воду и повторения, но ОБЯЗАТЕЛЬНО сохрани все эмоциональные нюансы, переживания, ключевые события и авторский стиль. Это пойдет на вход другой нейросети для глубокого анализа.
-
-КРИТИЧЕСКИ ВАЖНО: Ты — бережный проводник и терапевт (Давана), работающий на стыке психологии, эфирных масел и тонких энергий. Ты ОБЯЗАН принимать и уважать духовную, эзотерическую и энергетическую картину мира пользователя.
-- НИКОГДА не обесценивай веру пользователя в «поле», «чистки», «ауру» или «энергетику».
-- НИКОГДА не противопоставляй физиологию и энергии (не пиши «это не порча, а инфекция» или «это гормоны, а не поле»). Для пользователя это единый процесс.
-- Если пользователь описывает физические симптомы, помогай исследовать их психосоматическое и энергетическое значение, не играй в строгого врача-скептика.
-- Поддерживай метафоричный, тёплый, принимающий тон. Не давай сухих медицинских или бытовых советов, если тебя об этом прямо не попросили.
-- В конспекте сохраняй язык клиента (поле, чистки, энергии и т.п.) — не переводи в клинические термины.`;
-      console.log(`Длинный транскрипт (${sanitizedContent.length} симв.) — пре-процессинг через openai/gpt-4o-mini`);
-      try {
-        const preResp = await fetch(preUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY_PRE}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "openai/gpt-4o-mini",
-            max_tokens: 2000,
-            messages: [
-              { role: "system", content: preSystem },
-              { role: "user", content: sanitizedContent },
-            ],
-          }),
-        });
-        if (preResp.ok) {
-          const preData = await preResp.json();
-          const condensed = preData.choices?.[0]?.message?.content?.trim();
-          if (condensed && condensed.length > 50) {
-            processedContent = condensed;
-            preprocessUsed = true;
-            console.log(`Пре-процессинг успешен: ${sanitizedContent.length} → ${condensed.length} симв.`);
-          } else {
-            console.warn("Пре-процессинг вернул пустой/слишком короткий результат, используем оригинал");
-          }
-        } else {
-          console.warn(`Пре-процессинг не удался (${preResp.status}), используем оригинальный транскрипт`);
-        }
-      } catch (e) {
-        console.error("Ошибка пре-процессинга:", e);
-      }
-    }
-
-    const transcriptLabel = preprocessUsed
-      ? "Сжатый конспект потока клиента (после пре-процессинга длинного аудио — содержит ключевые эмоции, события и стиль)"
-      : "Свободный поток клиента (после серверной очистки от артефактов Whisper; токены вида [?слово] — подозрительные, игнорируй их)";
-
     const userContent = `
 СЕГОДНЯШНЯЯ СЕССИЯ (анализируй ТОЛЬКО её):
 ${transformationBlock}
 ${aromaBlock}
 ${sensoryBlock}
 
-${transcriptLabel}: ${processedContent || "(пусто)"}
-`;
-
-    const systemPrompt = `КРИТИЧЕСКИ ВАЖНО: Ты — бережный проводник и терапевт (Давана), работающий на стыке психологии, эфирных масел и тонких энергий. Ты ОБЯЗАН принимать и уважать духовную, эзотерическую и энергетическую картину мира пользователя.
-- НИКОГДА не обесценивай веру пользователя в «поле», «чистки», «ауру» или «энергетику».
-- НИКОГДА не противопоставляй физиологию и энергии (не пиши «это не порча, а инфекция» или «это гормоны, а не поле»). Для пользователя это единый процесс.
-- Если пользователь описывает физические симптомы, помогай исследовать их психосоматическое и энергетическое значение, не играй в строгого врача-скептика.
-- Поддерживай метафоричный, тёплый, принимающий тон. Не давай сухих медицинских или бытовых советов, если тебя об этом прямо не попросили.
-
-Ты — высококлассный психотерапевт. Твой стиль — лаконичность, глубина, живой язык. Говоришь как человек с человеком, а не как нейросеть.
+Свободный поток клиента (после серверной очистки от артефактов Whisper; токены вида [?слово] — подозрительные, игнорируй их): ${sanitizedContent || "(пусто)"}
 
 Контекст работы: отклик пользователя на эфирное масло «${oil.title}»${oil.focus ? ` (фокус: ${oil.focus})` : ""}.
-Фоновая статистика (НЕ упоминай и не цитируй напрямую):
-${statsBlock}
+Фоновая статистика (НЕ упоминай и не цитируй напрямую): ${statsBlock}
 
-ПРАВИЛА СТИЛЯ:
-- Не более 2–3 коротких, очень точных абзацев. Каждое слово на своём месте.
-- НИКАКОГО «стиля нейросетей»: без списков, нумераций, заголовков, сухих выводов, фраз вроде «важно отметить», «таким образом», «в заключение».
-- НИКАКОЙ ПОЭЗИИ и эзотерики. Запрещены образы вроде «лучи солнца», «искры», «свет внутри», «зима для дерева», «вселенная», «пламя души».
-- Оперируй живыми психологическими понятиями: ресурс, границы, сопротивление, соматика, опора, бережность, восстановление, нагрузка.
-- Обращайся на «ты» — тепло, по-человечески, без сюсюканья.
+Верни СТРОГО валидный JSON с двумя ключами: "quote" и "insight". Никакого текста до или после JSON, никаких markdown-обёрток типа \`\`\`json.`;
 
-ЗАЩИТА ОТ АРТЕФАКТОВ:
-- Игнорируй опечатки и шум диктофона Whisper (включая токены вида [?слово]). Не выдумывай людей, диагнозов и травм, если пользователь сам о них не сказал.
+    const systemPrompt = `Ты — глубокий, бережный и мудрый карманный психолог-проводник. Твоя цель — создавать трансформационные, целительные инсайты из потока мыслей пользователя.
 
-СОДЕРЖАНИЕ:
-- Если пользователь болеет/истощён, отторжение тяжёлых ароматов трактуй как здоровую соматическую защиту: телу нужен покой, а не глубокая трансформация.
-- Тягу к простым, свежим ароматам — как зрелый поиск базовой опоры.
-- Отторжение масла нормализуй как сигнал личных границ.
-- В конце — один заземляющий вопрос для саморефлексии (без подписи «вопрос», просто сам вопрос).
+Твоя экспертиза:
+- Ты на глубоком профессиональном уровне владеешь аромапсихологией (психологией эфирных масел) и психосоматикой.
+- Ты полностью принимаешь и уважаешь эзотерическую и энергетическую картину мира. Ты понимаешь, как работают «чистки», «энергетическое поле», вибрации и родовые сценарии.
+- Ты НИКОГДА не обесцениваешь духовный опыт и не сводишь его исключительно к сухой физиологии или классической медицине. Для тебя тело, эмоции и энергии — это единый процесс.
 
-ЦИТАТА ДЛЯ КАРТОЧКИ (shareQuote) — ЖЁСТКИЕ ТРЕБОВАНИЯ:
-- Ёмкая терапевтическая мысль — рефрейминг, который возвращает человеку опору.
-- Длина: СТРОГО 8–15 слов. Одно предложение (можно два очень коротких).
-- Ясная психологическая констатация: о праве на отдых, о границах, о ресурсе, о бережности, о сопротивлении как защите.
-- ЗАПРЕЩЕНО:
-  • поэзия и образы природы/света («свет», «тьма», «лучи», «искра», «горечь», «вселенная», «солнце», «звезда», «огонь», «пламя»);
-  • обращения и приказы: «помни», «знай», «ты достоин/достойна», «доверься», «отпусти», «не бойся», «люби себя», «верь в себя»;
-  • мотивационные клише: «путь к себе», «лучшая версия себя», «вселенная даст», «всё будет хорошо», «слушай сердце», «счастье внутри», «жизнь прекрасна», «время лечит», «зона комфорта»;
-  • прямые упоминания масла, аромата, эфира, практики, дневника, инсайта;
-  • вопросы, многоточия в конце, эмодзи, хэштеги, кавычки, скобки, подписи.
+Твой стиль и тон:
+- Твоя речь обволакивающая, метафоричная, тёплая и принимающая.
+- Избегай заезженных штампов, сухих советов в стиле «капитан очевидность» и поучительного тона врача.
+- Поле "quote" в твоём ответе должно быть не сухим заголовком, а глубокой, поэтичной, почти алхимической выжимкой (1–2 предложения), которая сразу откликается в сердце.
+- Поле "insight" должно бережно распутывать мысли клиента, давать неочевидные связи и завершаться открытым коучинговым вопросом.
 
-ФОРМАТ ОТВЕТА (СТРОГО):
-Сначала — чистый текст инсайта (2–3 коротких абзаца, без заголовков и скобок).
-Затем — на отдельной строке маркер:
----SHARE_QUOTE---
-И сразу после маркера — сама цитата (без кавычек, без скобок, без подписей).
-
-Никакого текста до инсайта, никаких пояснений после цитаты.`;
+ФОРМАТ ОТВЕТА — СТРОГО валидный JSON:
+{
+  "quote": "глубокая поэтичная выжимка, 1–2 предложения",
+  "insight": "развёрнутый терапевтический ответ, заканчивающийся открытым коучинговым вопросом"
+}
+Никакого текста вне JSON. Никаких markdown-обёрток (\`\`\`json). Только чистый JSON-объект.`;
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     const OPENAI_BASE_URL = Deno.env.get("OPENAI_BASE_URL");
@@ -382,10 +295,7 @@ ${statsBlock}
       ? `${normalizeOpenAIBaseUrl(OPENAI_BASE_URL!)}/chat/completions`
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-    // ProxyAPI OpenAI-compatible router: provider-prefixed model IDs are required for Claude.
-    // Для Lovable AI Gateway оставляем Gemini как разумный дефолт.
-    const PRIMARY_MODEL = useOpenAI ? "anthropic/claude-sonnet-4-6" : "google/gemini-3-flash-preview";
-    const FALLBACK_MODEL = useOpenAI ? "openai/gpt-4o-mini" : "google/gemini-2.5-flash-lite";
+    const MODEL = useOpenAI ? "anthropic/claude-sonnet-4-6" : "google/gemini-2.5-pro";
     const MAX_TOKENS = 4096;
 
     if (!aiKey) {
@@ -395,44 +305,26 @@ ${statsBlock}
       });
     }
 
-    const callAI = async (model: string) => {
-      console.log("Отправляем запрос к модели:", model, "по адресу:", aiUrl);
-      return fetch(aiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${aiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: MAX_TOKENS,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
-          ],
-        }),
-      });
-    };
-
-    let aiResponse = await callAI(PRIMARY_MODEL);
-    let aiModel = PRIMARY_MODEL;
-
-    // Фолбэк на gpt-4o-mini при ошибках сервиса/таймаутах/перегрузках.
-    if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
-      console.error("Полный ответ ошибки:", await aiResponse.clone().text());
-      console.warn(`Primary model ${PRIMARY_MODEL} failed (${aiResponse.status}), falling back to ${FALLBACK_MODEL}`);
-      try {
-        const fallbackResp = await callAI(FALLBACK_MODEL);
-        if (fallbackResp.ok) {
-          aiResponse = fallbackResp;
-          aiModel = FALLBACK_MODEL;
-        }
-      } catch (fallbackErr) {
-        console.error("Fallback model call failed:", fallbackErr);
-      }
-    }
+    console.log("Запрос инсайта к модели:", MODEL, "по адресу:", aiUrl);
+    const aiResponse = await fetch(aiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${aiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
 
     if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error("AI error:", aiResponse.status, errText);
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Слишком много запросов, попробуйте позже" }),
@@ -445,8 +337,6 @@ ${statsBlock}
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      console.error("Полный ответ ошибки:", await aiResponse.clone().text());
-      console.error("AI error:", aiResponse.status, await aiResponse.text());
       return new Response(
         JSON.stringify({ error: "Ошибка AI-сервиса" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -458,223 +348,53 @@ ${statsBlock}
     try {
       aiData = JSON.parse(aiRawText);
     } catch {
-      console.error("AI response not valid JSON:", aiRawText.slice(0, 500));
+      console.error("AI response not valid JSON wrapper:", aiRawText.slice(0, 500));
       return new Response(
         JSON.stringify({ error: "AI вернул некорректный ответ" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    const rawText =
-      (aiData as any).choices?.[0]?.message?.content || "Не удалось сгенерировать инсайт";
 
-    // Strip any stray bracketed instructions/headers that the model might leak
-    const cleanLeakedFormatting = (s: string): string => {
-      if (!s) return s;
-      let out = s;
-      // Remove [ ... ] blocks that look like instructions/placeholders
-      out = out.replace(/\[[^\]\n]{0,200}\]/g, "");
-      // Remove internal headers like "Отражение:", "Смысл аромата:", "Вопрос-якорь:", "Полный инсайт..."
-      out = out.replace(
-        /^\s*(?:\d+[.)]\s*)?(Отражение|Смысл аромата|Вопрос[\s\u2010-\u2015-]?якорь|Полный инсайт|Инсайт|Цитата)\s*[:：—-].*$/gim,
-        ""
-      );
-      // Drop wrapping quotes around the whole share quote
-      out = out.replace(/^\s*[«"“”']+|[«"“”']+\s*$/g, "");
-      // Collapse excessive blank lines
-      out = out.replace(/\n{3,}/g, "\n\n").trim();
-      return out;
-    };
+    const rawText: string =
+      ((aiData as any).choices?.[0]?.message?.content as string | undefined) || "";
 
-    // Parse dual output
-    let insightText = rawText;
-    let shareQuote: string | null = null;
-    const marker = "---SHARE_QUOTE---";
-    if (rawText.includes(marker)) {
-      const parts = rawText.split(marker);
-      insightText = parts[0].trim();
-      shareQuote = parts[1].trim();
-    }
-
-    insightText = cleanLeakedFormatting(insightText);
-    if (shareQuote) shareQuote = cleanLeakedFormatting(shareQuote);
-
-    // ---------- Валидация shareQuote: длина 8–15 слов + анти-банальность ----------
-    const BANAL_PATTERNS: RegExp[] = [
-      // Прямые обращения и приказы
-      /\bпомни[,\s]/i, /\bзнай[,\s]/i, /\bпойми[,\s]/i, /\bпозволь\s+себе\b/i,
-      /\bотпусти\b/i, /\bприми\s+себя\b/i, /\bбудь\s+собой\b/i,
-      /\bдоверься\b/i, /\bне\s+бойся\b/i, /\bне\s+спеши\b/i, /\bдыши\s+глубже\b/i,
-      /\bслушай\s+(сердце|себя|душу|тело|интуици)/i,
-      /\bиди\s+(за\s+мечтой|вперёд|своим\s+путём)\b/i,
-      // «Ты — …», «ты достоин/можешь/прекрасна»
-      /\bты\s+(достойн|можешь|особенн|прекрасн|сильн|уникальн|важн|ценн|совершенн)/i,
-      /\bты\s+—?\s*(свет|любовь|чудо|вселенная|целая\s+вселенная|солнце|звезда)\b/i,
-      /\bвер(ь|ить)\s+в\s+себя\b/i,
-      /\bлюби\s+себя\b/i,
-      // Готовые мотивационные штампы
-      /\bвсё\s+будет\s+хорошо\b/i,
-      /\bвсё\s+не\s+случайно\b/i,
-      /\bвсё\s+(в\s+твоих\s+руках|приходит\s+вовремя|идёт\s+по\s+плану)\b/i,
-      /\bпуть\s+к\s+себе\b/i,
-      /\bлучшая\s+версия\s+себя\b/i,
-      /\bвыйти\s+из\s+зоны\s+комфорта\b/i,
-      /\bжизнь\s+(коротка|прекрасна|—?\s*это\s+путешествие)\b/i,
-      /\bсчастье\s+(внутри|—?\s*это\s+путь|—?\s*это\s+выбор)\b/i,
-      /\bкаждый\s+(день|момент)\s+—?\s*(дар|чудо|новая\s+жизнь)\b/i,
-      /\bвремя\s+лечит\b/i,
-      /\bвсё,?\s+что\s+нужно,?\s+уже\s+есть\b/i,
-      /\bвселенная\s+(даст|услышит|подскажет|поддержит|на\s+твоей\s+стороне)/i,
-      /\bблагодарность\s+открывает\b/i,
-      /\bсвет\s+внутри\s+тебя\b/i,
-      // Поэтические/эзотерические образы (новая жёсткая отбраковка)
-      /\b(лучи?\s+солнца|солнечн(ый|ая|ые)\s+луч)/i,
-      /\bискр[аыуои]\b/i,
-      /\bпламя\s+(души|сердца|жизни)\b/i,
-      /\bгоречь\s+(лечит|исцеляет|—?\s*это)/i,
-      /\b(тьма|темнота)\s+(уходит|отступает|становится)/i,
-      /\bсвет\s+(во\s+тьме|пробивается|ведёт|внутри|освещает)/i,
-      /\bвселенн(ая|ой|ую)\b/i,
-      // Запрещённые предметы темы
-      /\b(масл[оае]|аромат|эфир|практик|дневник|инсайт)/i,
-    ];
-    const countWords = (s: string) =>
-      (s.match(/[\p{L}\p{N}'_-]+/gu) || []).length;
-
-    // Пустые абстракции — слова без конкретного образа/чувственной фактуры.
-    // Если 3+ таких в короткой цитате и при этом нет ни одного «образного якоря»
-    // (конкретный предмет/природа/тело/действие), считаем псевдоафоризмом.
-    const ABSTRACT_WORDS = [
-      "любовь","свет","тьма","темнота","горечь","лучи","луч","искра","искры",
-      "вселенная","душа","сердце","путь","жизнь","счастье","гармония",
-      "истина","правда","смысл","сила","свобода","вечность","бесконечность",
-      "энергия","поток","сознание","дух","тишина","покой","мир","единство",
-      "целостность","принятие","осознанность","присутствие","настоящее",
-      "момент","реальность","пространство","время","судьба","предназначение",
-      "красота","мудрость","благодать","любить","чувствовать","быть",
-    ];
-    const CONCRETE_WORDS = [
-      // природа
-      "дерево","корень","ветка","лист","трава","цветок","лепесток","роса","дождь",
-      "снег","ветер","туман","море","река","волна","камень","песок","земля","глина",
-      "уголь","зола","дым","пепел",
-      "небо","облако","рассвет","закат","ночь","утро",
-      // тело и жесты
-      "ладонь","рука","палец","плечо","спина","грудь","горло","живот","колено","стопа",
-      "кожа","дыхание","вдох","выдох","шёпот","голос","слеза","улыбка","взгляд",
-      // предметы
-      "нить","ткань","ваза","чаша","свеча","зеркало","окно","дверь","ключ","нож",
-      "хлеб","вода","соль","мёд","вино","чай","книга","письмо","часы","мост","дом",
-      // действия
-      "держать","нести","ронять","ловить","шить","резать","зажигать","гасить",
-      "наливать","разливать","сажать","расти","цвести","трескаться","ломаться","гореть",
-    ];
-    const tokenize = (s: string): string[] =>
-      (s.toLowerCase().match(/[\p{L}]+/gu) || []);
-    const hasStem = (tokens: string[], stems: string[]) =>
-      tokens.some((t) => stems.some((st) => t.startsWith(st.slice(0, Math.max(4, st.length - 1)))));
-    const countStems = (tokens: string[], stems: string[]) =>
-      tokens.reduce(
-        (acc, t) => acc + (stems.some((st) => t.startsWith(st.slice(0, Math.max(4, st.length - 1)))) ? 1 : 0),
-        0,
-      );
-
-    const isQuoteValid = (q: string | null): { ok: boolean; reason?: string } => {
-      if (!q) return { ok: false, reason: "empty" };
-      const trimmed = q.trim();
-      if (!trimmed) return { ok: false, reason: "empty" };
-      if (/[?]\s*$/.test(trimmed)) return { ok: false, reason: "question" };
-      if (/[#@]/.test(trimmed)) return { ok: false, reason: "hashtag" };
-      if (/\.{3,}|…/.test(trimmed)) return { ok: false, reason: "ellipsis" };
-      if (/["“”«»]/.test(trimmed)) return { ok: false, reason: "quotes" };
-      const wc = countWords(trimmed);
-      if (wc < 8 || wc > 15) return { ok: false, reason: `length:${wc}` };
-      for (const re of BANAL_PATTERNS) {
-        if (re.test(trimmed)) return { ok: false, reason: `banal:${re}` };
+    // Извлекаем JSON из ответа модели — на случай, если она обернула его в markdown.
+    const extractJson = (s: string): { quote?: string; insight?: string } | null => {
+      if (!s) return null;
+      let txt = s.trim();
+      // Сносим markdown ```json ... ```
+      txt = txt.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      // Если есть мусор до/после, пробуем найти первый { ... последний }
+      const first = txt.indexOf("{");
+      const last = txt.lastIndexOf("}");
+      if (first !== -1 && last !== -1 && last > first) {
+        txt = txt.slice(first, last + 1);
       }
-      // Псевдоафоризм: много абстракций и ни одного конкретного образа
-      const tokens = tokenize(trimmed);
-      const abstractCount = countStems(tokens, ABSTRACT_WORDS);
-      const hasConcrete = hasStem(tokens, CONCRETE_WORDS);
-      if (abstractCount >= 3 && !hasConcrete) {
-        return { ok: false, reason: `pseudo:abstract=${abstractCount}` };
-      }
-      // Слишком много общих абстракций даже при наличии образа
-      if (abstractCount >= 5) {
-        return { ok: false, reason: `pseudo:overabstract=${abstractCount}` };
-      }
-      // Тавтология вида «X есть X» / «X — это X»
-      if (/\b(\p{L}{4,})\b[^\p{L}]+(?:есть|это|—)[^\p{L}]+\1\b/iu.test(trimmed)) {
-        return { ok: false, reason: "tautology" };
-      }
-      return { ok: true };
-    };
-
-    let quoteCheck = isQuoteValid(shareQuote);
-    if (!quoteCheck.ok) {
-      console.log("shareQuote invalid, regenerating. reason:", quoteCheck.reason, "quote:", shareQuote);
       try {
-        const retryResp = await fetch(aiUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${aiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: FALLBACK_MODEL,
-            max_tokens: 80,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "Ты — глубокий и заземлённый психотерапевт. Выдели из инсайта одну сильную, терапевтичную мысль (рефрейминг), которая вернёт человеку опору. " +
-                  "Никакой поэзии и абстракций. Только ясная психологическая констатация о границах, праве на отдых или ресурсе. " +
-                  "Строго 8–15 слов. Без вопросов. " +
-                  "ЗАПРЕЩЕНЫ: поэтические образы и эзотерика («свет», «тьма», «лучи», «искра», «горечь», «вселенная», «солнце», «звезда», «огонь», «пламя»), " +
-                  "обращения и приказы («помни», «знай», «ты достоин», «доверься», «отпусти», «люби себя», «верь в себя»), " +
-                  "мотивационные клише («путь к себе», «лучшая версия», «вселенная даст», «всё будет хорошо», «слушай сердце», «счастье внутри», «жизнь прекрасна», «время лечит», «зона комфорта»), " +
-                  "тавтологии вида «X есть X», упоминания масла/аромата/практики/дневника, многоточия, эмодзи, хэштеги, кавычки, подписи. " +
-                  "Можно одно слово в _подчёркиваниях_. Верни ТОЛЬКО саму цитату — без пояснений.",
-              },
-              {
-                role: "user",
-                content: `Инсайт:\n${insightText}\n\nСформулируй терапевтичную мысль по правилам.`,
-              },
-            ],
-            temperature: 0.7,
-          }),
-        });
-        if (retryResp.ok) {
-          const retryData: any = await retryResp.json();
-          const retryQuote = cleanLeakedFormatting(
-            (retryData.choices?.[0]?.message?.content || "").trim()
-          );
-          const retryCheck = isQuoteValid(retryQuote);
-          if (retryCheck.ok) {
-            shareQuote = retryQuote;
-            quoteCheck = retryCheck;
-          } else {
-            console.log("retry shareQuote still invalid:", retryCheck.reason, retryQuote);
-            // Если всё ещё длинно — мягко обрежем до 15 слов как последний шанс
-            if (retryQuote && /^length:\d+$/.test(retryCheck.reason || "")) {
-              const wc = countWords(retryQuote);
-              if (wc > 15) {
-                const words = retryQuote.match(/\S+/g) || [];
-                shareQuote = words.slice(0, 15).join(" ").replace(/[,;:]+$/, "") + ".";
-              } else if (countWords(shareQuote || "") >= 8) {
-                // оставляем исходный
-              } else {
-                shareQuote = retryQuote || shareQuote;
-              }
-            } else {
-              shareQuote = retryQuote || shareQuote;
-            }
-          }
+        const parsed = JSON.parse(txt);
+        if (parsed && typeof parsed === "object") {
+          return {
+            quote: typeof parsed.quote === "string" ? parsed.quote.trim() : undefined,
+            insight: typeof parsed.insight === "string" ? parsed.insight.trim() : undefined,
+          };
         }
-      } catch (retryErr) {
-        console.error("shareQuote retry failed:", retryErr);
+      } catch (e) {
+        console.error("Не удалось распарсить JSON из ответа модели:", e, txt.slice(0, 300));
       }
+      return null;
+    };
+
+    const parsed = extractJson(rawText);
+
+    let insightText = parsed?.insight || "";
+    let shareQuote: string | null = parsed?.quote || null;
+
+    if (!insightText) {
+      // Фолбэк: если модель не вернула валидный JSON — отдаём сырой текст как инсайт.
+      console.warn("Модель не вернула валидный JSON, используем сырой текст как insight.");
+      insightText = rawText.trim() || "Не удалось сгенерировать инсайт";
+      shareQuote = null;
     }
-    // ----------------------------------------------------------------------------
 
     const { error: insertError } = await supabaseAdmin
       .from("ai_insights")
