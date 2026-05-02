@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import { EMOTIONAL_STATE_MAP, getEmojiForStateName } from "@/utils/stateUtils";
 import fixWebmDuration from "webm-duration-fix";
-import { audioBlobToWav } from "@/lib/audioToWav";
+import { audioBlobToWav, pcmChunksToWav } from "@/lib/audioToWav";
 
 const EMOTIONAL_STATES: { category: string; label: string; states: string[] }[] = [
   {
@@ -216,8 +216,21 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const recorderNodeRef = useRef<ScriptProcessorNode | null>(null);
+  const recorderSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const recorderGainRef = useRef<GainNode | null>(null);
+  const pcmChunksRef = useRef<Float32Array[]>([]);
+  const recordingModeRef = useRef<"pcm" | "media-recorder">("media-recorder");
 
   const cleanupStream = useCallback(() => {
+    try {
+      recorderNodeRef.current?.disconnect();
+      recorderSourceRef.current?.disconnect();
+      recorderGainRef.current?.disconnect();
+    } catch {}
+    recorderNodeRef.current = null;
+    recorderSourceRef.current = null;
+    recorderGainRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
@@ -225,14 +238,6 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     }
     audioCtxRef.current = null;
     setAnalyser(null);
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    const mr = mediaRecorderRef.current;
-    if (mr && mr.state !== "inactive") {
-      mr.stop();
-    }
-    setIsRecording(false);
   }, []);
 
   const sendBlob = useCallback(
@@ -267,6 +272,31 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     [onTranscript],
   );
 
+  const stopRecording = useCallback(() => {
+    if (recordingModeRef.current === "pcm") {
+      setIsRecording(false);
+      const ctx = audioCtxRef.current;
+      const chunks = pcmChunksRef.current;
+      const sampleRate = ctx?.sampleRate || 48000;
+      cleanupStream();
+      if (chunks.length === 0) {
+        setError("Аудио не записано");
+        return;
+      }
+      const blob = pcmChunksToWav(chunks, sampleRate);
+      pcmChunksRef.current = [];
+      setLastBlob({ blob, ext: "wav" });
+      void sendBlob(blob, "wav");
+      return;
+    }
+
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") {
+      mr.stop();
+    }
+    setIsRecording(false);
+  }, [cleanupStream, sendBlob]);
+
   const startRecording = useCallback(async () => {
     setError(null);
     setLastBlob(null);
@@ -288,12 +318,44 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       source.connect(an);
       setAnalyser(an);
 
-      // Pick a supported mime type — prefer WebM/Opus because that's what
-      // webm-duration-fix can repair.
+      try {
+        const processor = ctx.createScriptProcessor(4096, 1, 1);
+        const silentGain = ctx.createGain();
+        silentGain.gain.value = 0;
+        pcmChunksRef.current = [];
+        recordingModeRef.current = "pcm";
+        recorderSourceRef.current = source;
+        recorderNodeRef.current = processor;
+        recorderGainRef.current = silentGain;
+        processor.onaudioprocess = (event) => {
+          const input = event.inputBuffer;
+          const frameCount = input.length;
+          const mixed = new Float32Array(frameCount);
+          for (let channel = 0; channel < input.numberOfChannels; channel++) {
+            const channelData = input.getChannelData(channel);
+            for (let i = 0; i < frameCount; i++) mixed[i] += channelData[i] / input.numberOfChannels;
+          }
+          pcmChunksRef.current.push(mixed);
+        };
+        source.connect(processor);
+        processor.connect(silentGain);
+        silentGain.connect(ctx.destination);
+        if (ctx.state === "suspended") await ctx.resume();
+        mediaRecorderRef.current = null;
+        setIsRecording(true);
+        return;
+      } catch (pcmError) {
+        console.warn("PCM WAV recorder unavailable, falling back to MediaRecorder", pcmError);
+        recordingModeRef.current = "media-recorder";
+        pcmChunksRef.current = [];
+      }
+
+      // Fallback: MediaRecorder. Обычно сюда не попадём на Mac/Chrome,
+      // потому что основной путь выше пишет WAV напрямую.
       const candidates = [
+        "audio/mp4",
         "audio/webm;codecs=opus",
         "audio/webm",
-        "audio/mp4",
         "audio/ogg;codecs=opus",
       ];
       let mimeType = "";

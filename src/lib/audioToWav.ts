@@ -24,6 +24,18 @@ export async function audioBlobToWav(blob: Blob): Promise<Blob> {
   }
 }
 
+export function pcmChunksToWav(chunks: Float32Array[], sampleRate: number): Blob {
+  const totalFrames = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const audioBuffer = new Float32Array(totalFrames);
+  let offset = 0;
+  for (const chunk of chunks) {
+    audioBuffer.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  return encodeWavFromInterleaved(audioBuffer, sampleRate, 1);
+}
+
 function encodeWav(audioBuffer: AudioBuffer): Blob {
   const numChannels = Math.min(audioBuffer.numberOfChannels, 2);
   const sampleRate = audioBuffer.sampleRate;
@@ -39,6 +51,10 @@ function encodeWav(audioBuffer: AudioBuffer): Blob {
     }
   }
 
+  return encodeWavFromInterleaved(interleaved, sampleRate, numChannels);
+}
+
+function encodeWavFromInterleaved(interleaved: Float32Array, sampleRate: number, numChannels: number): Blob {
   const bytesPerSample = 2; // 16-bit PCM
   const blockAlign = numChannels * bytesPerSample;
   const byteRate = sampleRate * blockAlign;
