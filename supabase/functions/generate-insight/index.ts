@@ -281,7 +281,7 @@ ${visual ? `- Визуальный образ: ${visual}` : ""}`;
           },
           body: JSON.stringify({
             model: "openai/gpt-4o-mini",
-            max_tokens: 1200,
+            max_tokens: 2000,
             messages: [
               { role: "system", content: preSystem },
               { role: "user", content: sanitizedContent },
