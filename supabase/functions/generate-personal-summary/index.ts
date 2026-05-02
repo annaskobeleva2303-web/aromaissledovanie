@@ -55,12 +55,18 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     const useOpenAI = !!(OPENAI_API_KEY && OPENAI_BASE_URL);
+    const normalizeOpenAIBaseUrl = (baseUrl: string) => {
+      const trimmed = baseUrl.replace(/\/+$/, "");
+      return /^https:\/\/api\.proxyapi\.ru\/openai\/v1$/i.test(trimmed)
+        ? "https://openai.api.proxyapi.ru/v1"
+        : trimmed;
+    };
     const aiKey = useOpenAI ? OPENAI_API_KEY : LOVABLE_API_KEY;
     const aiUrl = useOpenAI
-      ? `${OPENAI_BASE_URL!.replace(/\/+$/, "")}/chat/completions`
+      ? `${normalizeOpenAIBaseUrl(OPENAI_BASE_URL!)}/chat/completions`
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const aiModel = useOpenAI ? "claude-3.5-sonnet" : "google/gemini-3-flash-preview";
-    const aiFallbackModel = useOpenAI ? "gpt-4o-mini" : "google/gemini-2.5-flash-lite";
+    const aiModel = useOpenAI ? "anthropic/claude-sonnet-4-6" : "google/gemini-3-flash-preview";
+    const aiFallbackModel = useOpenAI ? "openai/gpt-4o-mini" : "google/gemini-2.5-flash-lite";
 
     if (!aiKey) {
       return new Response(JSON.stringify({ error: "AI key not configured" }), {
