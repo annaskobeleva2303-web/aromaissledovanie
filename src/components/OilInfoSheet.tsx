@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 
 interface OilInfo {
   title: string;
