@@ -59,8 +59,8 @@ serve(async (req) => {
     const aiUrl = useOpenAI
       ? `${OPENAI_BASE_URL!.replace(/\/+$/, "")}/chat/completions`
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const aiModel = useOpenAI ? "claude-3-5-sonnet-20240620" : "google/gemini-3-flash-preview";
-    const aiFallbackModel = useOpenAI ? "gpt-4o-mini" : "google/gemini-2.5-flash-lite";
+    const aiModel = useOpenAI ? "anthropic/claude-3-5-sonnet" : "google/gemini-3-flash-preview";
+    const aiFallbackModel = useOpenAI ? "openai/gpt-4o-mini" : "google/gemini-2.5-flash-lite";
 
     if (!aiKey) {
       return new Response(JSON.stringify({ error: "AI key not configured" }), {
