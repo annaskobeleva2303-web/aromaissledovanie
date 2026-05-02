@@ -305,7 +305,12 @@ ${statsBlock}
     const aiUrl = useOpenAI
       ? `${OPENAI_BASE_URL!.replace(/\/+$/, "")}/chat/completions`
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
-    const aiModel = useOpenAI ? "gpt-4o" : "google/gemini-3-flash-preview";
+
+    // ProxyAPI: основной — Claude 3.5 Sonnet, фолбэк — Claude 3 Haiku.
+    // Для Lovable AI Gateway оставляем Gemini как разумный дефолт.
+    const PRIMARY_MODEL = useOpenAI ? "claude-3.5-sonnet" : "google/gemini-3-flash-preview";
+    const FALLBACK_MODEL = useOpenAI ? "claude-3-haiku" : "google/gemini-2.5-flash-lite";
+    const MAX_TOKENS = 450;
 
     if (!aiKey) {
       return new Response(JSON.stringify({ error: "AI ключ не настроен" }), {
@@ -314,20 +319,39 @@ ${statsBlock}
       });
     }
 
-    const aiResponse = await fetch(aiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${aiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: aiModel,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-      }),
-    });
+    const callAI = async (model: string) =>
+      fetch(aiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${aiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: MAX_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+        }),
+      });
+
+    let aiResponse = await callAI(PRIMARY_MODEL);
+    let aiModel = PRIMARY_MODEL;
+
+    // Фолбэк на Haiku при ошибках сервиса/таймаутах/перегрузках.
+    if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
+      console.warn(`Primary model ${PRIMARY_MODEL} failed (${aiResponse.status}), falling back to ${FALLBACK_MODEL}`);
+      try {
+        const fallbackResp = await callAI(FALLBACK_MODEL);
+        if (fallbackResp.ok) {
+          aiResponse = fallbackResp;
+          aiModel = FALLBACK_MODEL;
+        }
+      } catch (fallbackErr) {
+        console.error("Fallback model call failed:", fallbackErr);
+      }
+    }
 
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {
