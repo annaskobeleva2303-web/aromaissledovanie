@@ -11,6 +11,7 @@ import { MeetingArchiveManager } from "@/components/MeetingArchiveManager";
 import { IntroMeditationManager } from "@/components/IntroMeditationManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 import {
   Dialog,
   DialogContent,
