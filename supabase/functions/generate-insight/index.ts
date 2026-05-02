@@ -306,10 +306,10 @@ ${statsBlock}
       ? `${OPENAI_BASE_URL!.replace(/\/+$/, "")}/chat/completions`
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-    // ProxyAPI: основной — Claude 3.5 Sonnet, фолбэк — Claude 3 Haiku.
+    // ProxyAPI: основной — Claude 3.5 Sonnet, фолбэк — стабильная OpenAI-модель.
     // Для Lovable AI Gateway оставляем Gemini как разумный дефолт.
-    const PRIMARY_MODEL = useOpenAI ? "claude-3-5-sonnet" : "google/gemini-3-flash-preview";
-    const FALLBACK_MODEL = useOpenAI ? "claude-3-haiku" : "google/gemini-2.5-flash-lite";
+    const PRIMARY_MODEL = useOpenAI ? "claude-3-5-sonnet-20240620" : "google/gemini-3-flash-preview";
+    const FALLBACK_MODEL = useOpenAI ? "gpt-4o-mini" : "google/gemini-2.5-flash-lite";
     const MAX_TOKENS = 450;
 
     if (!aiKey) {
@@ -341,8 +341,9 @@ ${statsBlock}
     let aiResponse = await callAI(PRIMARY_MODEL);
     let aiModel = PRIMARY_MODEL;
 
-    // Фолбэк на Haiku при ошибках сервиса/таймаутах/перегрузках.
+    // Фолбэк на gpt-4o-mini при ошибках сервиса/таймаутах/перегрузках.
     if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
+      console.error("Полный ответ ошибки:", await aiResponse.clone().text());
       console.warn(`Primary model ${PRIMARY_MODEL} failed (${aiResponse.status}), falling back to ${FALLBACK_MODEL}`);
       try {
         const fallbackResp = await callAI(FALLBACK_MODEL);
@@ -368,6 +369,7 @@ ${statsBlock}
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      console.error("Полный ответ ошибки:", await aiResponse.clone().text());
       console.error("AI error:", aiResponse.status, await aiResponse.text());
       return new Response(
         JSON.stringify({ error: "Ошибка AI-сервиса" }),
