@@ -878,13 +878,22 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         throw error;
       }
 
-      // Entry saved successfully, now try to get insight
+      // Entry saved successfully, now try to get insight.
+      // Claude 3.5 Sonnet may take 30–45s on long entries, so allow 60s
+      // before giving up and showing the "будет позже" placeholder.
       let insight: string | null = null;
       let quote: string | null = null;
       try {
-        const { data, error: fnError } = await supabase.functions.invoke("generate-insight", {
+        const insightPromise = supabase.functions.invoke("generate-insight", {
           body: { oilId },
         });
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("insight_timeout")), 60_000),
+        );
+        const { data, error: fnError } = (await Promise.race([
+          insightPromise,
+          timeoutPromise,
+        ])) as Awaited<typeof insightPromise>;
         if (fnError) {
           console.error("Insight function error:", fnError);
         }
