@@ -124,37 +124,94 @@ serve(async (req) => {
       }
     }
 
-    const { name: outName, type: outType } = pickFilenameAndType(contentType, originalName);
-    const outBlob = new Blob([await processed.arrayBuffer()], { type: outType });
+    const sourceBytes = new Uint8Array(await processed.arrayBuffer());
 
-    const outForm = new FormData();
-    outForm.append("file", outBlob, outName);
-    outForm.append("model", "whisper-1");
-    outForm.append("language", language);
-    outForm.append("response_format", "json");
+    // Build a primary attempt + fallback chain. Edge runtime has no ffmpeg,
+    // so "auto-conversion" here means re-presenting the same bytes with
+    // alternative container/extension hints that Whisper accepts. This
+    // resolves cases where the device-reported MIME doesn't match the
+    // actual stream (common on Mac/iOS/Android).
+    const primary = pickFilenameAndType(contentType, originalName);
 
-    const whisperRes = await fetch(`${openaiBaseUrl}/audio/transcriptions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-      },
-      body: outForm,
-    });
-
-    if (!whisperRes.ok) {
-      const errText = await whisperRes.text();
-      console.error("Whisper error", whisperRes.status, errText, { sentAs: outName, type: outType });
-      return new Response(
-        JSON.stringify({ error: "Ошибка транскрибации", status: whisperRes.status, details: errText }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    const isWebmStream = isWebm(sourceBytes);
+    const fallbacks: Array<{ name: string; type: string }> = [];
+    if (isWebmStream) {
+      // True WebM bytes — try webm first, then ogg (same Matroska family hint).
+      if (primary.type !== "audio/webm") fallbacks.push({ name: "audio.webm", type: "audio/webm" });
+      fallbacks.push({ name: "audio.ogg", type: "audio/ogg" });
+    } else {
+      // Likely MP4/M4A/MP3/WAV. Try common containers in order.
+      const candidates: Array<{ name: string; type: string }> = [
+        { name: "audio.m4a", type: "audio/mp4" },
+        { name: "audio.mp4", type: "audio/mp4" },
+        { name: "audio.mp3", type: "audio/mpeg" },
+        { name: "audio.wav", type: "audio/wav" },
+        { name: "audio.webm", type: "audio/webm" },
+      ];
+      for (const c of candidates) {
+        if (c.name !== primary.name || c.type !== primary.type) fallbacks.push(c);
+      }
     }
 
-    const data = await whisperRes.json();
-    return new Response(JSON.stringify({ text: data.text ?? "" }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const attempts = [primary, ...fallbacks];
+    let lastErr: { status: number; details: string; sentAs: string; type: string } | null = null;
+
+    const isFormatError = (status: number, details: string) => {
+      if (status === 400 || status === 415) return true;
+      const d = details.toLowerCase();
+      return (
+        d.includes("invalid file format") ||
+        d.includes("could not be decoded") ||
+        d.includes("unsupported") ||
+        d.includes("unrecognized") ||
+        d.includes("audio file") && d.includes("format")
+      );
+    };
+
+    for (let i = 0; i < attempts.length; i++) {
+      const { name, type } = attempts[i];
+      const blob = new Blob([sourceBytes], { type });
+      const form = new FormData();
+      form.append("file", blob, name);
+      form.append("model", "whisper-1");
+      form.append("language", language);
+      form.append("response_format", "json");
+
+      console.log(`transcribe-audio: attempt ${i + 1}/${attempts.length}`, { name, type });
+
+      const res = await fetch(`${openaiBaseUrl}/audio/transcriptions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${openaiKey}` },
+        body: form,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (i > 0) console.log(`transcribe-audio: succeeded on fallback as ${name} (${type})`);
+        return new Response(JSON.stringify({ text: data.text ?? "" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const errText = await res.text();
+      lastErr = { status: res.status, details: errText, sentAs: name, type };
+      console.error(`Whisper attempt ${i + 1} failed`, res.status, errText, { sentAs: name, type });
+
+      // Only retry with alternative format hints on format-related errors.
+      if (!isFormatError(res.status, errText)) break;
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: "Ошибка транскрибации",
+        status: lastErr?.status ?? 502,
+        details: lastErr?.details ?? "unknown",
+        sentAs: lastErr?.sentAs,
+        type: lastErr?.type,
+      }),
+      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("transcribe-audio error", message);
