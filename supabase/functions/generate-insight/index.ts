@@ -386,7 +386,7 @@ ${statsBlock}
     // Для Lovable AI Gateway оставляем Gemini как разумный дефолт.
     const PRIMARY_MODEL = useOpenAI ? "anthropic/claude-sonnet-4-6" : "google/gemini-3-flash-preview";
     const FALLBACK_MODEL = useOpenAI ? "openai/gpt-4o-mini" : "google/gemini-2.5-flash-lite";
-    const MAX_TOKENS = 450;
+    const MAX_TOKENS = 4096;
 
     if (!aiKey) {
       return new Response(JSON.stringify({ error: "AI ключ не настроен" }), {
