@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 
 interface OilInfo {
   title: string;
@@ -70,7 +71,7 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
             className="relative mb-8 overflow-hidden rounded-2xl"
           >
             <img
-              src={oil.image_url}
+              src={proxiedStorageUrl(oil.image_url)}
               alt={oil.title}
               className="w-full h-52 object-cover"
             />

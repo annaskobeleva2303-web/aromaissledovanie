@@ -3,6 +3,7 @@ import { Leaf, Lock, Flame, Trophy, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { Oil } from "@/hooks/useOils";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 
 const RESEARCH_DAYS = 21;
 const DESC_LIMIT = 100;
@@ -42,7 +43,7 @@ export function OilCard({ oil, locked = false, daysCompleted = 0, onClick }: Oil
       {oil.image_url && (
         <div className="relative h-40 w-full overflow-hidden">
           <img
-            src={oil.image_url}
+            src={proxiedStorageUrl(oil.image_url)}
             alt={oil.title}
             className="h-full w-full object-cover"
             loading="lazy"

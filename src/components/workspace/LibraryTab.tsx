@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, Video, X, BookOpen } from "lucide-react";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 interface OilFull {
   id: string;
   title: string;
@@ -70,7 +71,7 @@ export function LibraryTab({ oil }: LibraryTabProps) {
         </div>
         {oil.image_url && (
           <div className="overflow-hidden rounded-2xl">
-            <img src={oil.image_url} alt={oil.title} className="h-44 w-full object-cover" />
+            <img src={proxiedStorageUrl(oil.image_url)} alt={oil.title} className="h-44 w-full object-cover" />
           </div>
         )}
         <div>

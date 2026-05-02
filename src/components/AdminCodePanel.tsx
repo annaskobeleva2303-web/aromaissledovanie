@@ -11,6 +11,7 @@ import { MeetingArchiveManager } from "@/components/MeetingArchiveManager";
 import { IntroMeditationManager } from "@/components/IntroMeditationManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { proxiedStorageUrl } from "@/lib/storageUrl";
 import {
   Dialog,
   DialogContent,
@@ -211,7 +212,7 @@ function OilEditor({ allOils }: { allOils: { id: string; title: string }[] }) {
             <Label className="text-xs text-muted-foreground">Изображение</Label>
             {form.image_url && (
               <div className="relative mt-1 mb-2 rounded-xl overflow-hidden">
-                <img src={form.image_url} alt="Oil" className="w-full h-32 object-cover rounded-xl" />
+                <img src={proxiedStorageUrl(form.image_url)} alt="Oil" className="w-full h-32 object-cover rounded-xl" />
                 <Button
                   variant="ghost"
                   size="icon"
