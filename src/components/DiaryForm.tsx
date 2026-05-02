@@ -218,6 +218,7 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const audioCtxRef = useRef<AudioContext | null>(null);
   const recorderNodeRef = useRef<ScriptProcessorNode | null>(null);
   const recorderSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const recorderGainRef = useRef<GainNode | null>(null);
   const pcmChunksRef = useRef<Float32Array[]>([]);
   const recordingModeRef = useRef<"pcm" | "media-recorder">("media-recorder");
 
@@ -225,9 +226,11 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     try {
       recorderNodeRef.current?.disconnect();
       recorderSourceRef.current?.disconnect();
+      recorderGainRef.current?.disconnect();
     } catch {}
     recorderNodeRef.current = null;
     recorderSourceRef.current = null;
+    recorderGainRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
@@ -323,6 +326,7 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
         recordingModeRef.current = "pcm";
         recorderSourceRef.current = source;
         recorderNodeRef.current = processor;
+        recorderGainRef.current = silentGain;
         processor.onaudioprocess = (event) => {
           const input = event.inputBuffer;
           const frameCount = input.length;
@@ -349,9 +353,9 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       // Fallback: MediaRecorder. Обычно сюда не попадём на Mac/Chrome,
       // потому что основной путь выше пишет WAV напрямую.
       const candidates = [
+        "audio/mp4",
         "audio/webm;codecs=opus",
         "audio/webm",
-        "audio/mp4",
         "audio/ogg;codecs=opus",
       ];
       let mimeType = "";
