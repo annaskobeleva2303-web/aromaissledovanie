@@ -352,6 +352,24 @@ ${statsBlock}
     const rawText =
       (aiData as any).choices?.[0]?.message?.content || "Не удалось сгенерировать инсайт";
 
+    // Strip any stray bracketed instructions/headers that the model might leak
+    const cleanLeakedFormatting = (s: string): string => {
+      if (!s) return s;
+      let out = s;
+      // Remove [ ... ] blocks that look like instructions/placeholders
+      out = out.replace(/\[[^\]\n]{0,200}\]/g, "");
+      // Remove internal headers like "Отражение:", "Смысл аромата:", "Вопрос-якорь:", "Полный инсайт..."
+      out = out.replace(
+        /^\s*(?:\d+[.)]\s*)?(Отражение|Смысл аромата|Вопрос[\s\u2010-\u2015-]?якорь|Полный инсайт|Инсайт|Цитата)\s*[:：—-].*$/gim,
+        ""
+      );
+      // Drop wrapping quotes around the whole share quote
+      out = out.replace(/^\s*[«"“”']+|[«"“”']+\s*$/g, "");
+      // Collapse excessive blank lines
+      out = out.replace(/\n{3,}/g, "\n\n").trim();
+      return out;
+    };
+
     // Parse dual output
     let insightText = rawText;
     let shareQuote: string | null = null;
@@ -361,6 +379,9 @@ ${statsBlock}
       insightText = parts[0].trim();
       shareQuote = parts[1].trim();
     }
+
+    insightText = cleanLeakedFormatting(insightText);
+    if (shareQuote) shareQuote = cleanLeakedFormatting(shareQuote);
 
     const { error: insertError } = await supabaseAdmin
       .from("ai_insights")
