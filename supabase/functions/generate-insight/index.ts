@@ -308,8 +308,8 @@ ${statsBlock}
 
     // ProxyAPI: основной — Claude 3.5 Sonnet, фолбэк — Claude 3 Haiku.
     // Для Lovable AI Gateway оставляем Gemini как разумный дефолт.
-    const PRIMARY_MODEL = useOpenAI ? "claude-3-5-sonnet-20240620" : "google/gemini-3-flash-preview";
-    const FALLBACK_MODEL = useOpenAI ? "claude-3-haiku-20240307" : "google/gemini-2.5-flash-lite";
+    const PRIMARY_MODEL = useOpenAI ? "claude-3-5-sonnet" : "google/gemini-3-flash-preview";
+    const FALLBACK_MODEL = useOpenAI ? "claude-3-haiku" : "google/gemini-2.5-flash-lite";
     const MAX_TOKENS = 450;
 
     if (!aiKey) {
@@ -319,8 +319,9 @@ ${statsBlock}
       });
     }
 
-    const callAI = async (model: string) =>
-      fetch(aiUrl, {
+    const callAI = async (model: string) => {
+      console.log("Отправляем запрос к модели:", model, "по адресу:", aiUrl);
+      return fetch(aiUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${aiKey}`,
@@ -335,6 +336,7 @@ ${statsBlock}
           ],
         }),
       });
+    };
 
     let aiResponse = await callAI(PRIMARY_MODEL);
     let aiModel = PRIMARY_MODEL;
