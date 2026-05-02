@@ -140,17 +140,16 @@ serve(async (req) => {
     const isWebmStream = isWebm(sourceBytes);
     const fallbacks: Array<{ name: string; type: string }> = [];
     if (isWebmStream) {
-      // True WebM bytes — try webm first, then ogg (same Matroska family hint).
+      // True WebM bytes — never relabel them as OGG/MP4 without real conversion.
+      // ProxyAPI fails duration parsing when WebM bytes are sent as audio.ogg.
       if (primary.type !== "audio/webm") fallbacks.push({ name: "audio.webm", type: "audio/webm" });
-      fallbacks.push({ name: "audio.ogg", type: "audio/ogg" });
     } else {
-      // Likely MP4/M4A/MP3/WAV. Try common containers in order.
+      // Likely MP4/M4A/MP3/WAV. Try common matching hints, but do not force OGG.
       const candidates: Array<{ name: string; type: string }> = [
         { name: "audio.m4a", type: "audio/mp4" },
         { name: "audio.mp4", type: "audio/mp4" },
         { name: "audio.mp3", type: "audio/mpeg" },
         { name: "audio.wav", type: "audio/wav" },
-        { name: "audio.webm", type: "audio/webm" },
       ];
       for (const c of candidates) {
         if (c.name !== primary.name || c.type !== primary.type) fallbacks.push(c);

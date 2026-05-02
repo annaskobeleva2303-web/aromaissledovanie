@@ -202,6 +202,15 @@ function LiveWaveform({ analyser }: { analyser: AnalyserNode | null }) {
 }
 
 // --- Voice Input Button (Whisper via Edge Function) ---
+const extensionFromAudioType = (type: string): "wav" | "m4a" | "mp3" | "webm" | "ogg" => {
+  const normalized = type.toLowerCase();
+  if (normalized.includes("wav")) return "wav";
+  if (normalized.includes("mp4") || normalized.includes("m4a") || normalized.includes("aac")) return "m4a";
+  if (normalized.includes("mpeg") || normalized.includes("mp3")) return "mp3";
+  if (normalized.includes("ogg")) return "ogg";
+  return "webm";
+};
+
 function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -245,7 +254,9 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       setIsTranscribing(true);
       setError(null);
       try {
-        const file = new File([blob], `recording.${ext}`, { type: blob.type });
+        const fileName = ext === "wav" ? "audio.wav" : `audio.${ext}`;
+        console.log("Sending audio file:", { name: fileName, type: blob.type, size: blob.size });
+        const file = new File([blob], fileName, { type: blob.type });
         const form = new FormData();
         form.append("file", file);
         form.append("language", "ru");
@@ -284,6 +295,8 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
         return;
       }
       const blob = pcmChunksToWav(chunks, sampleRate);
+      console.log("Input blob type:", blob.type);
+      console.log("WAV conversion result:", "success");
       pcmChunksRef.current = [];
       setLastBlob({ blob, ext: "wav" });
       void sendBlob(blob, "wav");
@@ -376,6 +389,7 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       mr.onstop = async () => {
         const recordedType = mr.mimeType || "audio/webm";
         let blob = new Blob(chunksRef.current, { type: recordedType });
+        console.log("Input blob type:", blob.type);
         cleanupStream();
         if (blob.size === 0) {
           setError("Аудио не записано");
@@ -388,23 +402,21 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
         // Решение: декодируем аудио через AudioContext и пересобираем в WAV
         // (PCM 16-bit) — у WAV размер данных всегда есть в заголовке,
         // и Whisper/ProxyAPI читают его без проблем.
-        let ext: "wav" | "mp4" | "ogg" | "webm" = "webm";
+        let ext: "wav" | "m4a" | "mp3" | "ogg" | "webm" = extensionFromAudioType(blob.type || recordedType);
         try {
           blob = await audioBlobToWav(blob);
+          console.log("WAV conversion result:", "success");
           ext = "wav";
         } catch (e) {
+          console.log("WAV conversion result:", "error");
           console.warn("audioBlobToWav failed, fallback to original container", e);
           // Fallback: хотя бы попробуем починить длительность WebM.
           if (recordedType.includes("webm")) {
             try { blob = await fixWebmDuration(blob); } catch (err) {
               console.warn("webm-duration-fix failed, sending original blob", err);
             }
-            ext = "webm";
-          } else if (recordedType.includes("mp4")) {
-            ext = "mp4";
-          } else if (recordedType.includes("ogg")) {
-            ext = "ogg";
           }
+          ext = extensionFromAudioType(blob.type || recordedType);
         }
         setLastBlob({ blob, ext });
         await sendBlob(blob, ext);
