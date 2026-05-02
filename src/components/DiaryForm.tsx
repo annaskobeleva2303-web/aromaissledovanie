@@ -237,31 +237,6 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     setAnalyser(null);
   }, []);
 
-  const stopRecording = useCallback(() => {
-    if (recordingModeRef.current === "pcm") {
-      setIsRecording(false);
-      const ctx = audioCtxRef.current;
-      const chunks = pcmChunksRef.current;
-      const sampleRate = ctx?.sampleRate || 48000;
-      cleanupStream();
-      if (chunks.length === 0) {
-        setError("Аудио не записано");
-        return;
-      }
-      const blob = pcmChunksToWav(chunks, sampleRate);
-      pcmChunksRef.current = [];
-      setLastBlob({ blob, ext: "wav" });
-      void sendBlob(blob, "wav");
-      return;
-    }
-
-    const mr = mediaRecorderRef.current;
-    if (mr && mr.state !== "inactive") {
-      mr.stop();
-    }
-    setIsRecording(false);
-  }, [cleanupStream, sendBlob]);
-
   const sendBlob = useCallback(
     async (blob: Blob, ext: string) => {
       setIsTranscribing(true);
@@ -293,6 +268,31 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
     },
     [onTranscript],
   );
+
+  const stopRecording = useCallback(() => {
+    if (recordingModeRef.current === "pcm") {
+      setIsRecording(false);
+      const ctx = audioCtxRef.current;
+      const chunks = pcmChunksRef.current;
+      const sampleRate = ctx?.sampleRate || 48000;
+      cleanupStream();
+      if (chunks.length === 0) {
+        setError("Аудио не записано");
+        return;
+      }
+      const blob = pcmChunksToWav(chunks, sampleRate);
+      pcmChunksRef.current = [];
+      setLastBlob({ blob, ext: "wav" });
+      void sendBlob(blob, "wav");
+      return;
+    }
+
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") {
+      mr.stop();
+    }
+    setIsRecording(false);
+  }, [cleanupStream, sendBlob]);
 
   const startRecording = useCallback(async () => {
     setError(null);
