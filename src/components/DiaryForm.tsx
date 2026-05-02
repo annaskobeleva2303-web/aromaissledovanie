@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import { EMOTIONAL_STATE_MAP, getEmojiForStateName } from "@/utils/stateUtils";
 import fixWebmDuration from "webm-duration-fix";
+import { audioBlobToWav } from "@/lib/audioToWav";
 
 const EMOTIONAL_STATES: { category: string; label: string; states: string[] }[] = [
   {
@@ -319,23 +320,30 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
           return;
         }
 
-        // MediaRecorder produces WebM streams without a duration in the
-        // EBML header. Whisper rejects them with
-        // {"detail":"Cannot extract audio duration"}. Patch the metadata
-        // before sending. For non-webm containers we just pass through.
-        if (recordedType.includes("webm")) {
-          try {
-            blob = await fixWebmDuration(blob);
-          } catch (e) {
-            console.warn("webm-duration-fix failed, sending original blob", e);
+        // MediaRecorder отдает WebM/Opus без длительности в EBML-заголовке.
+        // ProxyAPI отвергает такие файлы с
+        // {"detail":"Cannot extract audio duration"}.
+        // Решение: декодируем аудио через AudioContext и пересобираем в WAV
+        // (PCM 16-bit) — у WAV размер данных всегда есть в заголовке,
+        // и Whisper/ProxyAPI читают его без проблем.
+        let ext: "wav" | "mp4" | "ogg" | "webm" = "webm";
+        try {
+          blob = await audioBlobToWav(blob);
+          ext = "wav";
+        } catch (e) {
+          console.warn("audioBlobToWav failed, fallback to original container", e);
+          // Fallback: хотя бы попробуем починить длительность WebM.
+          if (recordedType.includes("webm")) {
+            try { blob = await fixWebmDuration(blob); } catch (err) {
+              console.warn("webm-duration-fix failed, sending original blob", err);
+            }
+            ext = "webm";
+          } else if (recordedType.includes("mp4")) {
+            ext = "mp4";
+          } else if (recordedType.includes("ogg")) {
+            ext = "ogg";
           }
         }
-
-        const ext = recordedType.includes("mp4")
-          ? "mp4"
-          : recordedType.includes("ogg")
-            ? "ogg"
-            : "webm";
         setLastBlob({ blob, ext });
         await sendBlob(blob, ext);
       };
