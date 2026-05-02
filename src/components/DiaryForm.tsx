@@ -222,6 +222,15 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
   const pcmChunksRef = useRef<Float32Array[]>([]);
   const recordingModeRef = useRef<"pcm" | "media-recorder">("media-recorder");
 
+  const extensionFromAudioType = (type: string): "wav" | "m4a" | "mp3" | "webm" | "ogg" => {
+    const normalized = type.toLowerCase();
+    if (normalized.includes("wav")) return "wav";
+    if (normalized.includes("mp4") || normalized.includes("m4a") || normalized.includes("aac")) return "m4a";
+    if (normalized.includes("mpeg") || normalized.includes("mp3")) return "mp3";
+    if (normalized.includes("ogg")) return "ogg";
+    return "webm";
+  };
+
   const cleanupStream = useCallback(() => {
     try {
       recorderNodeRef.current?.disconnect();
@@ -245,7 +254,9 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
       setIsTranscribing(true);
       setError(null);
       try {
-        const file = new File([blob], `recording.${ext}`, { type: blob.type });
+        const fileName = ext === "wav" ? "audio.wav" : `audio.${ext}`;
+        console.log("Sending audio file:", { name: fileName, type: blob.type, size: blob.size });
+        const file = new File([blob], fileName, { type: blob.type });
         const form = new FormData();
         form.append("file", file);
         form.append("language", "ru");
@@ -284,6 +295,8 @@ function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => vo
         return;
       }
       const blob = pcmChunksToWav(chunks, sampleRate);
+      console.log("Input blob type:", blob.type);
+      console.log("WAV conversion result:", "success");
       pcmChunksRef.current = [];
       setLastBlob({ blob, ext: "wav" });
       void sendBlob(blob, "wav");
