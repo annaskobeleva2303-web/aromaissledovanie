@@ -71,7 +71,7 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
             className="relative mb-8 overflow-hidden rounded-2xl"
           >
             <img
-              src={oil.image_url}
+              src={proxiedStorageUrl(oil.image_url)}
               alt={oil.title}
               className="w-full h-52 object-cover"
             />
