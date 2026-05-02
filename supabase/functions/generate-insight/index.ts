@@ -308,8 +308,8 @@ ${statsBlock}
 
     // ProxyAPI: основной — Claude 3.5 Sonnet, фолбэк — стабильная OpenAI-модель.
     // Для Lovable AI Gateway оставляем Gemini как разумный дефолт.
-    const PRIMARY_MODEL = useOpenAI ? "anthropic/claude-3-5-sonnet" : "google/gemini-3-flash-preview";
-    const FALLBACK_MODEL = useOpenAI ? "openai/gpt-4o-mini" : "google/gemini-2.5-flash-lite";
+    const PRIMARY_MODEL = useOpenAI ? "claude-sonnet-4-6" : "google/gemini-3-flash-preview";
+    const FALLBACK_MODEL = useOpenAI ? "gpt-5.4-mini" : "google/gemini-2.5-flash-lite";
     const MAX_TOKENS = 450;
 
     if (!aiKey) {
