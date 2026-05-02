@@ -274,8 +274,17 @@ ${statsBlock}
 ТОН И СТИЛЬ:
 Глубокий, тёплый, вдохновляющий, поэтичный. Текст должен звучать как послание от самой природы или очень мудрого наставника, который видит душу. В конце — один красивый, открытый вопрос для рефлексии (без слов «вопрос-якорь», просто сам вопрос).
 
-ЦИТАТА ДЛЯ КАРТОЧКИ (shareQuote):
-Это должен быть настоящий афоризм — глубокая, красивая, поэтичная мысль (1–2 предложения), в которой есть магия и инсайт. Настолько вдохновляющая, чтобы пользователь захотел поставить её на заставку телефона. Никакой банальности, никаких «помни, что…», «ты достоин…». Можешь обернуть 1 ключевое слово в _подчёркивания_.
+ЦИТАТА ДЛЯ КАРТОЧКИ (shareQuote) — ЖЁСТКИЕ ТРЕБОВАНИЯ:
+- Длина: СТРОГО 8–15 слов. Не меньше 8, не больше 15. Это одно ёмкое предложение (можно два очень коротких, но в сумме 8–15 слов).
+- Это афоризм-молния: образ + поворот смысла. Должна звучать как строка из стихотворения или дневника мудреца.
+- Должна работать в отрыве от инсайта — самостоятельно, на заставке телефона.
+- ЗАПРЕЩЕНО (банальность и шаблоны):
+  • обращения и наставления: «помни», «знай», «ты достоин/достойна», «ты можешь», «верь в себя», «всё будет хорошо», «люби себя», «ты особенная», «доверься», «не бойся»;
+  • мотивационные клише: «путь к себе», «лучшая версия себя», «вселенная даст», «всё не случайно», «слушай сердце», «иди за мечтой»;
+  • прямые упоминания масла, аромата, эфира, практики, дневника, инсайта;
+  • вопросы, многоточия в конце, эмодзи, хэштеги, кавычки, скобки, подписи автора.
+- Никаких абстрактных существительных через запятую («любовь, свет, тепло»). Нужен живой образ или парадокс.
+- Можешь обернуть 1 ключевое слово в _подчёркивания_ (одно, не больше).
 
 ФОРМАТ ОТВЕТА (СТРОГО):
 Сначала — чистый художественный текст инсайта (без заголовков и скобок).
@@ -382,6 +391,103 @@ ${statsBlock}
 
     insightText = cleanLeakedFormatting(insightText);
     if (shareQuote) shareQuote = cleanLeakedFormatting(shareQuote);
+
+    // ---------- Валидация shareQuote: длина 8–15 слов + анти-банальность ----------
+    const BANAL_PATTERNS: RegExp[] = [
+      /\bпомни[,\s]/i, /\bзнай[,\s]/i,
+      /\bты\s+(достойн|можешь|особенн|прекрасн|сильн|уникальн)/i,
+      /\bвер(ь|ить)\s+в\s+себя\b/i,
+      /\bвсё\s+будет\s+хорошо\b/i,
+      /\bлюби\s+себя\b/i,
+      /\bдоверься\b/i, /\bне\s+бойся\b/i,
+      /\bпуть\s+к\s+себе\b/i,
+      /\bлучшая\s+версия\s+себя\b/i,
+      /\bвселенная\s+(даст|услышит|подскажет)/i,
+      /\bвсё\s+не\s+случайно\b/i,
+      /\bслушай\s+(сердце|себя)\b/i,
+      /\bиди\s+за\s+мечтой\b/i,
+      /\b(масл[оае]|аромат|эфир|практик|дневник|инсайт)/i,
+    ];
+    const countWords = (s: string) =>
+      (s.match(/[\p{L}\p{N}'_-]+/gu) || []).length;
+    const isQuoteValid = (q: string | null): { ok: boolean; reason?: string } => {
+      if (!q) return { ok: false, reason: "empty" };
+      const trimmed = q.trim();
+      if (!trimmed) return { ok: false, reason: "empty" };
+      if (/[?]\s*$/.test(trimmed)) return { ok: false, reason: "question" };
+      if (/[#@]/.test(trimmed)) return { ok: false, reason: "hashtag" };
+      const wc = countWords(trimmed);
+      if (wc < 8 || wc > 15) return { ok: false, reason: `length:${wc}` };
+      for (const re of BANAL_PATTERNS) {
+        if (re.test(trimmed)) return { ok: false, reason: `banal:${re}` };
+      }
+      return { ok: true };
+    };
+
+    let quoteCheck = isQuoteValid(shareQuote);
+    if (!quoteCheck.ok) {
+      console.log("shareQuote invalid, regenerating. reason:", quoteCheck.reason, "quote:", shareQuote);
+      try {
+        const retryResp = await fetch(aiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${aiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: aiModel,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Ты — поэт-афорист. На основе инсайта создай ОДНУ строку-афоризм для заставки телефона. " +
+                  "Жёсткие правила: ровно 8–15 слов, одно-два коротких предложения, " +
+                  "живой образ или парадокс (не абстракции). " +
+                  "ЗАПРЕЩЕНО: обращения («помни», «знай», «ты достоин»), мотивационные клише " +
+                  "(«путь к себе», «лучшая версия», «вселенная даст», «всё будет хорошо», «люби себя», «слушай сердце»), " +
+                  "упоминания масла/аромата/практики/дневника, вопросы, многоточия, эмодзи, хэштеги, кавычки, подписи. " +
+                  "Можно одно слово в _подчёркиваниях_. Верни ТОЛЬКО саму цитату — без пояснений.",
+              },
+              {
+                role: "user",
+                content: `Инсайт:\n${insightText}\n\nСоздай афоризм по правилам.`,
+              },
+            ],
+            temperature: 0.9,
+          }),
+        });
+        if (retryResp.ok) {
+          const retryData: any = await retryResp.json();
+          const retryQuote = cleanLeakedFormatting(
+            (retryData.choices?.[0]?.message?.content || "").trim()
+          );
+          const retryCheck = isQuoteValid(retryQuote);
+          if (retryCheck.ok) {
+            shareQuote = retryQuote;
+            quoteCheck = retryCheck;
+          } else {
+            console.log("retry shareQuote still invalid:", retryCheck.reason, retryQuote);
+            // Если всё ещё длинно — мягко обрежем до 15 слов как последний шанс
+            if (retryQuote && /^length:\d+$/.test(retryCheck.reason || "")) {
+              const wc = countWords(retryQuote);
+              if (wc > 15) {
+                const words = retryQuote.match(/\S+/g) || [];
+                shareQuote = words.slice(0, 15).join(" ").replace(/[,;:]+$/, "") + ".";
+              } else if (countWords(shareQuote || "") >= 8) {
+                // оставляем исходный
+              } else {
+                shareQuote = retryQuote || shareQuote;
+              }
+            } else {
+              shareQuote = retryQuote || shareQuote;
+            }
+          }
+        }
+      } catch (retryErr) {
+        console.error("shareQuote retry failed:", retryErr);
+      }
+    }
+    // ----------------------------------------------------------------------------
 
     const { error: insertError } = await supabaseAdmin
       .from("ai_insights")
