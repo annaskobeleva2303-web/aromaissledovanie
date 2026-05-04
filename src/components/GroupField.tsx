@@ -53,7 +53,26 @@ export function GroupField({ oilId }: GroupFieldProps) {
     refetchInterval: 30000,
   });
 
-  const { data: trends = [] } = useQuery({
+  const { data: reports = [] } = useQuery({
+    queryKey: ["group-reports", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_reports")
+        .select("id, report_type, period_start, period_end, report_text, created_at")
+        .eq("oil_id", oilId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const finalReport = reports.find((r) => r.report_type === "final") ?? null;
+  const weeklyReports = reports.filter((r) => r.report_type === "weekly");
+
+  // Legacy fallback to old group_trends if no new reports yet
+  const { data: legacyTrends = [] } = useQuery({
     queryKey: ["group-trends", oilId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,8 +84,23 @@ export function GroupField({ oilId }: GroupFieldProps) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!user,
+    enabled: !!user && reports.length === 0,
   });
+
+  const weeklyList: { id: string; text: string; period_start: string; period_end: string | null }[] =
+    weeklyReports.length > 0
+      ? weeklyReports.map((r) => ({
+          id: r.id,
+          text: r.report_text,
+          period_start: r.period_start,
+          period_end: r.period_end,
+        }))
+      : legacyTrends.map((t) => ({
+          id: t.id,
+          text: t.trend_text,
+          period_start: t.week_start,
+          period_end: null,
+        }));
 
   // Raw moods for accurate aggregation (handles new JSON before/after format)
   const { data: moodAggregation = {} } = useQuery({
