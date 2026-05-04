@@ -269,25 +269,66 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
-      {/* AI Group Trends */}
-      {trends.length > 0 && (
+      {/* Final report — pinned at top with golden glow */}
+      {finalReport && (
+        <div
+          className="relative overflow-hidden rounded-3xl p-8 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(45,80%,90%,0.55) 0%, hsla(35,70%,85%,0.45) 50%, hsla(25,80%,82%,0.4) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 50px hsla(38,90%,55%,0.18), 0 0 80px hsla(38,90%,55%,0.1), inset 0 1px 0 hsla(0,0%,100%,0.55)",
+          }}
+        >
+          <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-amber-300/20 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/25">
+              <Sparkles className="h-5 w-5 text-amber-700" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700/80">
+                Итог цикла
+              </p>
+              <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
+                Финальный отчёт Даваны
+              </h3>
+            </div>
+          </div>
+          <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+            {renderBoldText(finalReport.report_text)}
+          </div>
+          <p className="text-xs text-muted-foreground/60">
+            Цикл с{" "}
+            {new Date(finalReport.period_start).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+            {" "}по{" "}
+            {new Date(finalReport.period_end).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+          </p>
+        </div>
+      )}
+
+      {/* Weekly reports carousel */}
+      {weeklyList.length > 0 && (
         <GlassSection glow>
           <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
               <IconBox><Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} /></IconBox>
               <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                  Неделя {weeklyList.length - trendIndex}
+                </p>
                 <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-                  ИИ-обзор недели
+                  ИИ-обзор группы
                 </h3>
-                {trends.length > 1 && (
+                {weeklyList.length > 1 && (
                   <p className="text-xs text-muted-foreground/60">
-                    {trendIndex + 1} из {trends.length}
+                    {trendIndex + 1} из {weeklyList.length}
                   </p>
                 )}
               </div>
             </div>
-            {trends.length > 1 && (
+            {weeklyList.length > 1 && (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setTrendIndex((i) => Math.max(0, i - 1))}
@@ -297,8 +338,8 @@ export function GroupField({ oilId }: GroupFieldProps) {
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => setTrendIndex((i) => Math.min(trends.length - 1, i + 1))}
-                  disabled={trendIndex === trends.length - 1}
+                  onClick={() => setTrendIndex((i) => Math.min(weeklyList.length - 1, i + 1))}
+                  disabled={trendIndex === weeklyList.length - 1}
                   className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -307,11 +348,11 @@ export function GroupField({ oilId }: GroupFieldProps) {
             )}
           </div>
           <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-            {renderBoldText(trends[trendIndex].trend_text)}
+            {renderBoldText(weeklyList[trendIndex].text)}
           </div>
           <p className="text-xs text-muted-foreground/60">
             Неделя с{" "}
-            {new Date(trends[trendIndex].week_start).toLocaleDateString("ru-RU", {
+            {new Date(weeklyList[trendIndex].period_start).toLocaleDateString("ru-RU", {
               day: "numeric",
               month: "long",
             })}
