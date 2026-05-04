@@ -104,11 +104,17 @@ serve(async (req) => {
       });
     }
 
-    // Get all active oils
-    const { data: oils, error: oilsError } = await supabase
-      .from("oils")
-      .select("id, title, focus")
-      .eq("is_active", true);
+    // Optional body: { oilId } to limit generation to one oil (admin manual trigger)
+    let targetOilId: string | null = null;
+    try {
+      const body = await req.json();
+      if (body && typeof body.oilId === "string") targetOilId = body.oilId;
+    } catch { /* no body */ }
+
+    // Get active oils (or just one)
+    let oilsQuery = supabase.from("oils").select("id, title, focus").eq("is_active", true);
+    if (targetOilId) oilsQuery = oilsQuery.eq("id", targetOilId);
+    const { data: oils, error: oilsError } = await oilsQuery;
 
     if (oilsError || !oils) {
       console.error("Failed to fetch oils:", oilsError);
@@ -148,11 +154,12 @@ serve(async (req) => {
         continue;
       }
 
-      // Fetch all entries for this oil in the last 7 days (anonymized — no user_id in output)
+      // Fetch PUBLIC entries for this oil in the last 7 days (anonymized — no user_id in output)
       const { data: entries, error: entriesError } = await supabase
         .from("entries")
         .select("date, mood, content")
         .eq("oil_id", oil.id)
+        .eq("is_public", true)
         .gte("date", weekAgoStr)
         .order("date", { ascending: true });
 
@@ -209,7 +216,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             model,
-            max_tokens: 3000,
+            max_tokens: 4096,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: anonymizedText },
@@ -217,45 +224,68 @@ serve(async (req) => {
           }),
         });
 
-      let aiResponse = await callAI(aiModel);
-      if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
-        console.warn(`group-trends: primary ${aiModel} failed (${aiResponse.status}), fallback to ${aiFallbackModel}`);
+      const tryParse = async (resp: Response): Promise<string | null> => {
+        if (!resp.ok) return null;
         try {
-          const fb = await callAI(aiFallbackModel);
-          if (fb.ok) aiResponse = fb;
-        } catch (e) {
-          console.error("group-trends fallback failed:", e);
-        }
+          const d = await resp.json();
+          const t = d?.choices?.[0]?.message?.content;
+          return typeof t === "string" && t.trim().length > 0 ? t : null;
+        } catch { return null; }
+      };
+
+      let trendText: string | null = await tryParse(await callAI(aiModel));
+      if (!trendText) {
+        console.warn(`group-trends: empty/error first try for ${oil.title}, retrying...`);
+        try {
+          trendText = await tryParse(await callAI(aiModel));
+          if (!trendText && aiFallbackModel) {
+            trendText = await tryParse(await callAI(aiFallbackModel));
+          }
+        } catch (e) { console.error("group-trends retry failed:", e); }
       }
 
-      if (!aiResponse.ok) {
-        console.error(`AI error for ${oil.title}:`, aiResponse.status);
-        results.push({ oil: oil.title, status: `ai_error_${aiResponse.status}` });
+      if (!trendText) {
+        console.error(`AI failed for ${oil.title}; notifying admins`);
+        const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
+        if (admins && admins.length > 0) {
+          await supabase.from("notifications").insert(admins.map((a) => ({
+            user_id: a.user_id,
+            title: "⚠️ Сбой группового отчёта",
+            message: `Не удалось сгенерировать недельный обзор по маслу «${oil.title}».`,
+          })));
+        }
+        results.push({ oil: oil.title, status: "ai_failed" });
         continue;
       }
 
-      const aiData = await aiResponse.json();
-      const trendText =
-        aiData.choices?.[0]?.message?.content || "Не удалось сгенерировать тренд";
+      // Dual write: legacy group_trends + new group_reports
+      const periodEnd = new Date(weekStart);
+      periodEnd.setDate(periodEnd.getDate() + 6);
+      const periodEndStr = periodEnd.toISOString().split("T")[0];
 
       const { error: insertError } = await supabase
         .from("group_trends")
+        .insert({ oil_id: oil.id, week_start: weekStartStr, trend_text: trendText });
+
+      const { error: reportInsertError } = await supabase
+        .from("group_reports")
         .insert({
           oil_id: oil.id,
-          week_start: weekStartStr,
-          trend_text: trendText,
+          report_type: "weekly",
+          period_start: weekStartStr,
+          period_end: periodEndStr,
+          report_text: trendText,
+          generated_by: claimsData.claims.sub,
         });
 
-      if (insertError) {
-        console.error(`Insert error for ${oil.title}:`, insertError);
+      if (insertError && reportInsertError) {
+        console.error(`Insert error for ${oil.title}:`, insertError, reportInsertError);
         results.push({ oil: oil.title, status: "insert_error" });
       } else {
         results.push({ oil: oil.title, status: "success" });
-        // Notify all users who have access to this oil
+        // Notify users with access
         const { data: accessUsers } = await supabase
-          .from("user_access")
-          .select("user_id")
-          .eq("oil_id", oil.id);
+          .from("user_access").select("user_id").eq("oil_id", oil.id);
         if (accessUsers && accessUsers.length > 0) {
           const notifs = accessUsers.map((u) => ({
             user_id: u.user_id,
@@ -263,6 +293,43 @@ serve(async (req) => {
             message: `Новый ИИ-обзор группы по маслу «${oil.title}» готов. Загляните в Групповое поле.`,
           }));
           await supabase.from("notifications").insert(notifs);
+        }
+
+        // Auto-trigger final report when 4 weekly reports are reached
+        const { count: weeklyCount } = await supabase
+          .from("group_reports")
+          .select("id", { count: "exact", head: true })
+          .eq("oil_id", oil.id)
+          .eq("report_type", "weekly");
+
+        if ((weeklyCount ?? 0) >= 4) {
+          const { data: existingFinal } = await supabase
+            .from("group_reports")
+            .select("id")
+            .eq("oil_id", oil.id)
+            .eq("report_type", "final")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          // Trigger only if no final exists, or weekly count exceeds prior finals
+          // Simple rule: trigger one final per cycle of 4. We check if final exists with same period_start as 4th-from-last weekly.
+          if (!existingFinal) {
+            console.log(`Triggering final report for oil ${oil.id}`);
+            try {
+              await fetch(`${supabaseUrl}/functions/v1/generate-final-report`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${serviceRoleKey}`,
+                  "x-internal-call": "true",
+                },
+                body: JSON.stringify({ oilId: oil.id }),
+              });
+            } catch (e) {
+              console.error("Failed to trigger final report:", e);
+            }
+          }
         }
       }
     }

@@ -203,6 +203,39 @@ export type Database = {
           },
         ]
       }
+      group_reports: {
+        Row: {
+          created_at: string
+          generated_by: string | null
+          id: string
+          oil_id: string
+          period_end: string
+          period_start: string
+          report_text: string
+          report_type: Database["public"]["Enums"]["report_type"]
+        }
+        Insert: {
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          oil_id: string
+          period_end: string
+          period_start: string
+          report_text: string
+          report_type: Database["public"]["Enums"]["report_type"]
+        }
+        Update: {
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          oil_id?: string
+          period_end?: string
+          period_start?: string
+          report_text?: string
+          report_type?: Database["public"]["Enums"]["report_type"]
+        }
+        Relationships: []
+      }
       group_trends: {
         Row: {
           created_at: string
@@ -505,6 +538,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin"
+      report_type: "weekly" | "final"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -633,6 +667,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin"],
+      report_type: ["weekly", "final"],
     },
   },
 } as const

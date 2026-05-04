@@ -253,7 +253,7 @@ ${statsBlock}
             },
             body: JSON.stringify({
               model,
-              max_tokens: 3000,
+              max_tokens: 4096,
               messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: diaryText },
@@ -261,25 +261,52 @@ ${statsBlock}
             }),
           });
 
+        // First attempt
         let aiResponse = await callAI(aiModel);
-        if (!aiResponse.ok && aiResponse.status !== 429 && aiResponse.status !== 402) {
-          console.warn(`personal-summary: primary ${aiModel} failed (${aiResponse.status}), fallback to ${aiFallbackModel}`);
+        let aiData: any = null;
+        let summaryText: string | null = null;
+
+        const tryParse = async (resp: Response) => {
+          if (!resp.ok) return null;
           try {
-            const fb = await callAI(aiFallbackModel);
-            if (fb.ok) aiResponse = fb;
+            const d = await resp.json();
+            const t = d?.choices?.[0]?.message?.content;
+            return typeof t === "string" && t.trim().length > 0 ? t : null;
+          } catch { return null; }
+        };
+
+        summaryText = await tryParse(aiResponse);
+
+        // Soft retry on empty/error
+        if (!summaryText) {
+          console.warn(`personal-summary: empty/error on first try (status ${aiResponse.status}), retrying...`);
+          try {
+            const retry = await callAI(aiModel);
+            summaryText = await tryParse(retry);
+            if (!summaryText && aiFallbackModel) {
+              const fb = await callAI(aiFallbackModel);
+              summaryText = await tryParse(fb);
+            }
           } catch (e) {
-            console.error("personal-summary fallback failed:", e);
+            console.error("personal-summary retry failed:", e);
           }
         }
 
-        if (!aiResponse.ok) {
-          console.error(`AI error for user ${userId}:`, aiResponse.status);
+        if (!summaryText) {
+          console.error(`AI failed for user ${userId} oil ${oil.id}; notifying admins`);
+          const { data: admins } = await supabaseAdmin
+            .from("user_roles").select("user_id").eq("role", "admin");
+          if (admins && admins.length > 0) {
+            await supabaseAdmin.from("notifications").insert(
+              admins.map((a) => ({
+                user_id: a.user_id,
+                title: "⚠️ Сбой ИИ-аналитики",
+                message: `Не удалось сгенерировать недельное саммари по маслу «${oil.title}» для одного из участников.`,
+              }))
+            );
+          }
           continue;
         }
-
-        const aiData = await aiResponse.json();
-        const summaryText = aiData.choices?.[0]?.message?.content;
-        if (!summaryText) continue;
 
         if (targetUserId) {
           await supabaseAdmin

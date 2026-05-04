@@ -24,6 +24,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
 
   const [trendIndex, setTrendIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingFinal, setIsGeneratingFinal] = useState(false);
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
@@ -53,7 +54,26 @@ export function GroupField({ oilId }: GroupFieldProps) {
     refetchInterval: 30000,
   });
 
-  const { data: trends = [] } = useQuery({
+  const { data: reports = [] } = useQuery({
+    queryKey: ["group-reports", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_reports")
+        .select("id, report_type, period_start, period_end, report_text, created_at")
+        .eq("oil_id", oilId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const finalReport = reports.find((r) => r.report_type === "final") ?? null;
+  const weeklyReports = reports.filter((r) => r.report_type === "weekly");
+
+  // Legacy fallback to old group_trends if no new reports yet
+  const { data: legacyTrends = [] } = useQuery({
     queryKey: ["group-trends", oilId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,8 +85,23 @@ export function GroupField({ oilId }: GroupFieldProps) {
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!user,
+    enabled: !!user && reports.length === 0,
   });
+
+  const weeklyList: { id: string; text: string; period_start: string; period_end: string | null }[] =
+    weeklyReports.length > 0
+      ? weeklyReports.map((r) => ({
+          id: r.id,
+          text: r.report_text,
+          period_start: r.period_start,
+          period_end: r.period_end,
+        }))
+      : legacyTrends.map((t) => ({
+          id: t.id,
+          text: t.trend_text,
+          period_start: t.week_start,
+          period_end: null,
+        }));
 
   // Raw moods for accurate aggregation (handles new JSON before/after format)
   const { data: moodAggregation = {} } = useQuery({
@@ -112,14 +147,17 @@ export function GroupField({ oilId }: GroupFieldProps) {
   const handleGenerateTrend = async () => {
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-group-trends");
+      const { data, error } = await supabase.functions.invoke("generate-group-trends", {
+        body: { oilId },
+      });
       if (error) throw error;
-      toast.success("Групповой тренд сгенерирован!");
+      toast.success("Групповой отчёт сгенерирован!");
       setTrendIndex(0);
+      queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
       queryClient.invalidateQueries({ queryKey: ["group-trends", oilId] });
     } catch (e) {
       console.error("Generate trend error:", e);
-      toast.error("Не удалось сгенерировать тренд");
+      toast.error("Не удалось сгенерировать отчёт");
     } finally {
       setIsGenerating(false);
     }
@@ -235,25 +273,66 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
-      {/* AI Group Trends */}
-      {trends.length > 0 && (
+      {/* Final report — pinned at top with golden glow */}
+      {finalReport && (
+        <div
+          className="relative overflow-hidden rounded-3xl p-8 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(45,80%,90%,0.55) 0%, hsla(35,70%,85%,0.45) 50%, hsla(25,80%,82%,0.4) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 50px hsla(38,90%,55%,0.18), 0 0 80px hsla(38,90%,55%,0.1), inset 0 1px 0 hsla(0,0%,100%,0.55)",
+          }}
+        >
+          <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-amber-300/20 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/25">
+              <Sparkles className="h-5 w-5 text-amber-700" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700/80">
+                Итог цикла
+              </p>
+              <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
+                Финальный отчёт Даваны
+              </h3>
+            </div>
+          </div>
+          <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+            {renderBoldText(finalReport.report_text)}
+          </div>
+          <p className="text-xs text-muted-foreground/60">
+            Цикл с{" "}
+            {new Date(finalReport.period_start).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+            {" "}по{" "}
+            {new Date(finalReport.period_end).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+          </p>
+        </div>
+      )}
+
+      {/* Weekly reports carousel */}
+      {weeklyList.length > 0 && (
         <GlassSection glow>
           <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-3">
               <IconBox><Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} /></IconBox>
               <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                  Неделя {weeklyList.length - trendIndex}
+                </p>
                 <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-                  ИИ-обзор недели
+                  ИИ-обзор группы
                 </h3>
-                {trends.length > 1 && (
+                {weeklyList.length > 1 && (
                   <p className="text-xs text-muted-foreground/60">
-                    {trendIndex + 1} из {trends.length}
+                    {trendIndex + 1} из {weeklyList.length}
                   </p>
                 )}
               </div>
             </div>
-            {trends.length > 1 && (
+            {weeklyList.length > 1 && (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setTrendIndex((i) => Math.max(0, i - 1))}
@@ -263,8 +342,8 @@ export function GroupField({ oilId }: GroupFieldProps) {
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => setTrendIndex((i) => Math.min(trends.length - 1, i + 1))}
-                  disabled={trendIndex === trends.length - 1}
+                  onClick={() => setTrendIndex((i) => Math.min(weeklyList.length - 1, i + 1))}
+                  disabled={trendIndex === weeklyList.length - 1}
                   className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -273,11 +352,11 @@ export function GroupField({ oilId }: GroupFieldProps) {
             )}
           </div>
           <div className="relative text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-            {renderBoldText(trends[trendIndex].trend_text)}
+            {renderBoldText(weeklyList[trendIndex].text)}
           </div>
           <p className="text-xs text-muted-foreground/60">
             Неделя с{" "}
-            {new Date(trends[trendIndex].week_start).toLocaleDateString("ru-RU", {
+            {new Date(weeklyList[trendIndex].period_start).toLocaleDateString("ru-RU", {
               day: "numeric",
               month: "long",
             })}
@@ -285,21 +364,47 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
-      {/* Admin: manual trend generation */}
+      {/* Admin: manual report generation */}
       {isAdmin && (
-        <Button
-          variant="ghost"
-          onClick={handleGenerateTrend}
-          disabled={isGenerating}
-          className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
-        >
-          {isGenerating ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-          Сгенерировать групповой тренд сейчас
-        </Button>
+        <div className="space-y-2">
+          <Button
+            variant="ghost"
+            onClick={handleGenerateTrend}
+            disabled={isGenerating || isGeneratingFinal}
+            className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
+          >
+            {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            Сгенерировать недельный отчёт
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              setIsGeneratingFinal(true);
+              try {
+                const { data, error } = await supabase.functions.invoke("generate-final-report", { body: { oilId } });
+                if (error) throw error;
+                if ((data as any)?.status === "not_ready") {
+                  toast.info((data as any).message ?? "Нужно 4 недельных отчёта");
+                } else if ((data as any)?.status === "already_exists") {
+                  toast.info("Итоговый отчёт уже существует");
+                } else {
+                  toast.success("Итоговый отчёт готов!");
+                  queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Не удалось сгенерировать итоговый отчёт");
+              } finally {
+                setIsGeneratingFinal(false);
+              }
+            }}
+            disabled={isGenerating || isGeneratingFinal}
+            className="w-full rounded-full gap-2 text-xs text-amber-700 hover:text-amber-800 border border-dashed border-amber-400/30"
+          >
+            {isGeneratingFinal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Сгенерировать итоговый отчёт цикла
+          </Button>
+        </div>
       )}
 
       {/* Public entries feed */}
