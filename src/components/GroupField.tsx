@@ -24,6 +24,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
 
   const [trendIndex, setTrendIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingFinal, setIsGeneratingFinal] = useState(false);
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
@@ -363,21 +364,47 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
-      {/* Admin: manual trend generation */}
+      {/* Admin: manual report generation */}
       {isAdmin && (
-        <Button
-          variant="ghost"
-          onClick={handleGenerateTrend}
-          disabled={isGenerating}
-          className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
-        >
-          {isGenerating ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-          Сгенерировать групповой тренд сейчас
-        </Button>
+        <div className="space-y-2">
+          <Button
+            variant="ghost"
+            onClick={handleGenerateTrend}
+            disabled={isGenerating || isGeneratingFinal}
+            className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
+          >
+            {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            Сгенерировать недельный отчёт
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              setIsGeneratingFinal(true);
+              try {
+                const { data, error } = await supabase.functions.invoke("generate-final-report", { body: { oilId } });
+                if (error) throw error;
+                if ((data as any)?.status === "not_ready") {
+                  toast.info((data as any).message ?? "Нужно 4 недельных отчёта");
+                } else if ((data as any)?.status === "already_exists") {
+                  toast.info("Итоговый отчёт уже существует");
+                } else {
+                  toast.success("Итоговый отчёт готов!");
+                  queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Не удалось сгенерировать итоговый отчёт");
+              } finally {
+                setIsGeneratingFinal(false);
+              }
+            }}
+            disabled={isGenerating || isGeneratingFinal}
+            className="w-full rounded-full gap-2 text-xs text-amber-700 hover:text-amber-800 border border-dashed border-amber-400/30"
+          >
+            {isGeneratingFinal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Сгенерировать итоговый отчёт цикла
+          </Button>
+        </div>
       )}
 
       {/* Public entries feed */}
