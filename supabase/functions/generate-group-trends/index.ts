@@ -148,11 +148,12 @@ serve(async (req) => {
         continue;
       }
 
-      // Fetch all entries for this oil in the last 7 days (anonymized — no user_id in output)
+      // Fetch PUBLIC entries for this oil in the last 7 days (anonymized — no user_id in output)
       const { data: entries, error: entriesError } = await supabase
         .from("entries")
         .select("date, mood, content")
         .eq("oil_id", oil.id)
+        .eq("is_public", true)
         .gte("date", weekAgoStr)
         .order("date", { ascending: true });
 
