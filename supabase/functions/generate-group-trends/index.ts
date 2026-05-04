@@ -104,11 +104,17 @@ serve(async (req) => {
       });
     }
 
-    // Get all active oils
-    const { data: oils, error: oilsError } = await supabase
-      .from("oils")
-      .select("id, title, focus")
-      .eq("is_active", true);
+    // Optional body: { oilId } to limit generation to one oil (admin manual trigger)
+    let targetOilId: string | null = null;
+    try {
+      const body = await req.json();
+      if (body && typeof body.oilId === "string") targetOilId = body.oilId;
+    } catch { /* no body */ }
+
+    // Get active oils (or just one)
+    let oilsQuery = supabase.from("oils").select("id, title, focus").eq("is_active", true);
+    if (targetOilId) oilsQuery = oilsQuery.eq("id", targetOilId);
+    const { data: oils, error: oilsError } = await oilsQuery;
 
     if (oilsError || !oils) {
       console.error("Failed to fetch oils:", oilsError);
