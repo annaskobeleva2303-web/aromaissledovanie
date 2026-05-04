@@ -146,14 +146,17 @@ export function GroupField({ oilId }: GroupFieldProps) {
   const handleGenerateTrend = async () => {
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-group-trends");
+      const { data, error } = await supabase.functions.invoke("generate-group-trends", {
+        body: { oilId },
+      });
       if (error) throw error;
-      toast.success("Групповой тренд сгенерирован!");
+      toast.success("Групповой отчёт сгенерирован!");
       setTrendIndex(0);
+      queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
       queryClient.invalidateQueries({ queryKey: ["group-trends", oilId] });
     } catch (e) {
       console.error("Generate trend error:", e);
-      toast.error("Не удалось сгенерировать тренд");
+      toast.error("Не удалось сгенерировать отчёт");
     } finally {
       setIsGenerating(false);
     }
