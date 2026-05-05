@@ -1,10 +1,14 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
+import { OilAudioPlayer } from "@/components/OilAudioPlayer";
 
 interface OilInfo {
+  id?: string;
   title: string;
   description?: string | null;
   properties?: string | null;
