@@ -245,34 +245,6 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
-      {/* Activity chart */}
-      {stats.recent_days.length > 0 && (
-        <GlassSection>
-          <div className="relative flex items-center gap-3">
-            <IconBox><TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} /></IconBox>
-            <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-              Активность за 2 недели
-            </h3>
-          </div>
-          <div className="relative flex items-end gap-1.5 h-24">
-            {stats.recent_days.map((day) => {
-              const height = Math.max(8, (day.count / maxDayCount) * 100);
-              const dayNum = new Date(day.date).getDate();
-              return (
-                <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full rounded-t-md bg-gradient-to-t from-primary/60 to-primary/30 transition-all duration-500"
-                    style={{ height: `${height}%` }}
-                    title={`${day.date}: ${day.count} записей`}
-                  />
-                  <span className="text-[9px] text-muted-foreground/50">{dayNum}</span>
-                </div>
-              );
-            })}
-          </div>
-        </GlassSection>
-      )}
-
       {/* Final report — pinned at top with golden glow */}
       {finalReport && (
         <div
