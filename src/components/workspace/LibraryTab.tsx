@@ -108,6 +108,28 @@ export function LibraryTab({ oil }: LibraryTabProps) {
         </div>
       </section>
 
+      {/* Аудио-практики */}
+      {mediaList.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center gap-2">
+            <Headphones className="h-4 w-4 text-primary" />
+            <h2 className="font-serif text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Аудио-практики
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {mediaList.map((m) => (
+              <OilAudioPlayer
+                key={m.id}
+                title={m.title}
+                description={m.description}
+                src={m.file_url}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Мастер-классы */}
       <section>
         <div className="mb-4 flex items-center gap-2">
