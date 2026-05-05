@@ -644,11 +644,6 @@ export function AdminCodePanel() {
             <MeetingArchiveManager />
           </TabsContent>
 
-          {/* Intro Meditation Tab */}
-          <TabsContent value="intro" className="overflow-y-auto flex-1 pr-1 mt-4">
-            <IntroMeditationManager />
-          </TabsContent>
-
           {/* Audio Meditations Tab */}
           <TabsContent value="audio" className="overflow-y-auto flex-1 pr-1 mt-4">
             <MeditationManager />
