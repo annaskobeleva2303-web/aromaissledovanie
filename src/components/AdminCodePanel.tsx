@@ -459,7 +459,6 @@ export function AdminCodePanel() {
             <TabsTrigger value="archive" className="gap-1 text-[10px]">
               <Video className="h-3 w-3" /> Видео
             </TabsTrigger>
-            </TabsTrigger>
             <TabsTrigger value="audio" className="gap-1 text-[10px]">
               <Headphones className="h-3 w-3" /> Аудио
             </TabsTrigger>
