@@ -190,7 +190,6 @@ export function GroupField({ oilId }: GroupFieldProps) {
     ([, a], [, b]) => b - a
   );
   const totalMoods = moodEntries.reduce((sum, [, count]) => sum + count, 0);
-  const maxDayCount = Math.max(...stats.recent_days.map((d) => d.count), 1);
 
   return (
     <div className="space-y-6">
