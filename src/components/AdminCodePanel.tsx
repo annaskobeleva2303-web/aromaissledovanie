@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2, Eraser, Video, Headphones } from "lucide-react";
 import { MeetingArchiveManager } from "@/components/MeetingArchiveManager";
-import { IntroMeditationManager } from "@/components/IntroMeditationManager";
+
 import { MeditationManager } from "@/components/MeditationManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
