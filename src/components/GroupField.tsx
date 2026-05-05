@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from "lucide-react";
+import { Loader2, Users, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -11,7 +11,6 @@ interface GroupStats {
   total_entries: number;
   unique_users: number;
   mood_counts: Record<string, number>;
-  recent_days: { date: string; count: number }[];
 }
 
 interface GroupFieldProps {
@@ -191,7 +190,6 @@ export function GroupField({ oilId }: GroupFieldProps) {
     ([, a], [, b]) => b - a
   );
   const totalMoods = moodEntries.reduce((sum, [, count]) => sum + count, 0);
-  const maxDayCount = Math.max(...stats.recent_days.map((d) => d.count), 1);
 
   return (
     <div className="space-y-6">
