@@ -11,7 +11,6 @@ interface GroupStats {
   total_entries: number;
   unique_users: number;
   mood_counts: Record<string, number>;
-  recent_days: { date: string; count: number }[];
 }
 
 interface GroupFieldProps {
