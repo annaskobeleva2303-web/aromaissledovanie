@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, TrendingUp, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from "lucide-react";
+import { Loader2, Users, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
