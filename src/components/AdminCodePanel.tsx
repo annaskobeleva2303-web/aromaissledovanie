@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2, Eraser, Video, Headphones } from "lucide-react";
 import { MeetingArchiveManager } from "@/components/MeetingArchiveManager";
-import { IntroMeditationManager } from "@/components/IntroMeditationManager";
+
 import { MeditationManager } from "@/components/MeditationManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -459,9 +459,6 @@ export function AdminCodePanel() {
             <TabsTrigger value="archive" className="gap-1 text-[10px]">
               <Video className="h-3 w-3" /> Видео
             </TabsTrigger>
-            <TabsTrigger value="intro" className="gap-1 text-[10px]">
-              <Headphones className="h-3 w-3" /> Интро
-            </TabsTrigger>
             <TabsTrigger value="audio" className="gap-1 text-[10px]">
               <Headphones className="h-3 w-3" /> Аудио
             </TabsTrigger>
@@ -645,11 +642,6 @@ export function AdminCodePanel() {
           {/* Meeting Archive Tab */}
           <TabsContent value="archive" className="overflow-y-auto flex-1 pr-1 mt-4">
             <MeetingArchiveManager />
-          </TabsContent>
-
-          {/* Intro Meditation Tab */}
-          <TabsContent value="intro" className="overflow-y-auto flex-1 pr-1 mt-4">
-            <IntroMeditationManager />
           </TabsContent>
 
           {/* Audio Meditations Tab */}
