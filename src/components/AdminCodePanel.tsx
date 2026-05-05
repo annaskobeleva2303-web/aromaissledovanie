@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Copy, Check, Loader2, KeyRound, Sparkles, Users, RotateCcw, BookOpen, Save, Upload, X, Plus, Trash2, Eraser, Video, Headphones } from "lucide-react";
 import { MeetingArchiveManager } from "@/components/MeetingArchiveManager";
 import { IntroMeditationManager } from "@/components/IntroMeditationManager";
+import { MeditationManager } from "@/components/MeditationManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
@@ -445,7 +446,7 @@ export function AdminCodePanel() {
         </DialogHeader>
 
         <Tabs defaultValue="codes" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-5 bg-white/30">
+          <TabsList className="grid w-full grid-cols-6 bg-white/30">
             <TabsTrigger value="codes" className="gap-1 text-[10px]">
               <KeyRound className="h-3 w-3" /> Коды
             </TabsTrigger>
@@ -459,7 +460,10 @@ export function AdminCodePanel() {
               <Video className="h-3 w-3" /> Видео
             </TabsTrigger>
             <TabsTrigger value="intro" className="gap-1 text-[10px]">
-              <Headphones className="h-3 w-3" /> Медит.
+              <Headphones className="h-3 w-3" /> Интро
+            </TabsTrigger>
+            <TabsTrigger value="audio" className="gap-1 text-[10px]">
+              <Headphones className="h-3 w-3" /> Аудио
             </TabsTrigger>
           </TabsList>
 
@@ -646,6 +650,11 @@ export function AdminCodePanel() {
           {/* Intro Meditation Tab */}
           <TabsContent value="intro" className="overflow-y-auto flex-1 pr-1 mt-4">
             <IntroMeditationManager />
+          </TabsContent>
+
+          {/* Audio Meditations Tab */}
+          <TabsContent value="audio" className="overflow-y-auto flex-1 pr-1 mt-4">
+            <MeditationManager />
           </TabsContent>
         </Tabs>
 
