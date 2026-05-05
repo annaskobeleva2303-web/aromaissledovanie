@@ -344,6 +344,47 @@ export type Database = {
           },
         ]
       }
+      oil_media: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_url: string
+          id: string
+          oil_id: string
+          order_index: number
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_url: string
+          id?: string
+          oil_id: string
+          order_index?: number
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_url?: string
+          id?: string
+          oil_id?: string
+          order_index?: number
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_media_oil_id_fkey"
+            columns: ["oil_id"]
+            isOneToOne: false
+            referencedRelation: "oils"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oils: {
         Row: {
           additional_info: string | null

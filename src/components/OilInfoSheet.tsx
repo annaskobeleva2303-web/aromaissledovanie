@@ -1,10 +1,14 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
+import { OilAudioPlayer } from "@/components/OilAudioPlayer";
 
 interface OilInfo {
+  id?: string;
   title: string;
   description?: string | null;
   properties?: string | null;
@@ -37,9 +41,24 @@ function InfoBlock({ title, text }: { title: string; text: string }) {
 }
 
 export function OilInfoSheet({ oil }: OilInfoSheetProps) {
+  const { data: media = [] } = useQuery({
+    queryKey: ["oil_media_public", oil.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oil_media")
+        .select("id, title, description, file_url, order_index")
+        .eq("oil_id", oil.id!)
+        .order("order_index", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as Array<{ id: string; title: string; description: string | null; file_url: string; order_index: number }>;
+    },
+    enabled: !!oil.id,
+  });
+
   const hasContent = oil.description || oil.properties || oil.usage || oil.cautions || oil.additional_info;
 
-  if (!hasContent && !oil.image_url) return null;
+  if (!hasContent && !oil.image_url && media.length === 0) return null;
 
   return (
     <Sheet>
@@ -75,7 +94,6 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
               alt={oil.title}
               className="w-full h-52 object-cover"
             />
-            {/* Soft edge fade */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background/80 via-transparent to-transparent" />
           </motion.div>
         )}
@@ -87,6 +105,24 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
           {oil.usage && <InfoBlock title="Способы применения" text={oil.usage} />}
           {oil.cautions && <InfoBlock title="Противопоказания" text={oil.cautions} />}
           {oil.additional_info && <InfoBlock title="Дополнительная информация" text={oil.additional_info} />}
+
+          {media.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <h3 className="font-serif text-sm font-semibold uppercase tracking-[0.12em] text-foreground/80 flex items-center gap-2">
+                <Headphones className="h-3.5 w-3.5" /> Аудио-практики
+              </h3>
+              <div className="space-y-3">
+                {media.map((m) => (
+                  <OilAudioPlayer
+                    key={m.id}
+                    title={m.title}
+                    description={m.description}
+                    src={m.file_url}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>

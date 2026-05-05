@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, Video, X, BookOpen } from "lucide-react";
+import { Loader2, Play, Video, X, BookOpen, Headphones } from "lucide-react";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
+import { OilAudioPlayer } from "@/components/OilAudioPlayer";
 interface OilFull {
   id: string;
   title: string;
@@ -59,6 +60,20 @@ export function LibraryTab({ oil }: LibraryTabProps) {
     },
   });
 
+  const { data: mediaList = [] } = useQuery({
+    queryKey: ["oil_media_public", oil.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oil_media")
+        .select("id, title, description, file_url, order_index")
+        .eq("oil_id", oil.id)
+        .order("order_index", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as Array<{ id: string; title: string; description: string | null; file_url: string; order_index: number }>;
+    },
+  });
+
   return (
     <div className="space-y-8">
       {/* Паспорт масла */}
@@ -92,6 +107,28 @@ export function LibraryTab({ oil }: LibraryTabProps) {
           <PassportBlock title="Дополнительно" text={oil.additional_info} />
         </div>
       </section>
+
+      {/* Аудио-практики */}
+      {mediaList.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center gap-2">
+            <Headphones className="h-4 w-4 text-primary" />
+            <h2 className="font-serif text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Аудио-практики
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {mediaList.map((m) => (
+              <OilAudioPlayer
+                key={m.id}
+                title={m.title}
+                description={m.description}
+                src={m.file_url}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Мастер-классы */}
       <section>
