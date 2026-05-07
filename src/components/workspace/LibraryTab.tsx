@@ -37,17 +37,21 @@ interface Meeting {
   oil_id: string | null;
 }
 
-function PassportBlock({ title, text }: { title: string; text?: string | null }) {
+function PassportBlock({ value, title, text }: { value: string; title: string; text?: string | null }) {
   if (!text) return null;
   return (
-    <div className="space-y-1.5">
-      <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground/70">
-        {title}
-      </h4>
-      <p className="text-sm leading-relaxed text-foreground/75 whitespace-pre-line">
-        {text}
-      </p>
-    </div>
+    <AccordionItem value={value} className="border-b border-white/10 last:border-b-0">
+      <AccordionTrigger className="py-3 hover:no-underline">
+        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground/70 text-left">
+          {title}
+        </h4>
+      </AccordionTrigger>
+      <AccordionContent>
+        <p className="text-sm leading-relaxed text-foreground/75 whitespace-pre-line pt-1 pb-2">
+          {text}
+        </p>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
 
