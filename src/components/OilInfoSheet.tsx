@@ -28,21 +28,20 @@ interface OilInfoSheetProps {
   oil: OilInfo;
 }
 
-function InfoBlock({ title, text }: { title: string; text: string }) {
+function InfoBlock({ value, title, text }: { value: string; title: string; text: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-2"
-    >
-      <h3 className="font-serif text-sm font-semibold uppercase tracking-[0.12em] text-foreground/80">
-        {title}
-      </h3>
-      <p className="text-sm leading-relaxed text-foreground/70 whitespace-pre-line">
-        {text}
-      </p>
-    </motion.div>
+    <AccordionItem value={value} className="border-b border-white/10 last:border-b-0">
+      <AccordionTrigger className="py-3 hover:no-underline">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-[0.12em] text-foreground/80 text-left">
+          {title}
+        </h3>
+      </AccordionTrigger>
+      <AccordionContent>
+        <p className="text-sm leading-relaxed text-foreground/70 whitespace-pre-line pt-1 pb-2">
+          {text}
+        </p>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
 
