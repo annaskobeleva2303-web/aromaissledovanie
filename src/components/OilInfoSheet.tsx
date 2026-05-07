@@ -6,6 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface OilInfo {
   id?: string;
@@ -22,21 +28,20 @@ interface OilInfoSheetProps {
   oil: OilInfo;
 }
 
-function InfoBlock({ title, text }: { title: string; text: string }) {
+function InfoBlock({ value, title, text }: { value: string; title: string; text: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-2"
-    >
-      <h3 className="font-serif text-sm font-semibold uppercase tracking-[0.12em] text-foreground/80">
-        {title}
-      </h3>
-      <p className="text-sm leading-relaxed text-foreground/70 whitespace-pre-line">
-        {text}
-      </p>
-    </motion.div>
+    <AccordionItem value={value} className="border-b border-white/10 last:border-b-0">
+      <AccordionTrigger className="py-3 hover:no-underline">
+        <h3 className="font-serif text-sm font-semibold uppercase tracking-[0.12em] text-foreground/80 text-left">
+          {title}
+        </h3>
+      </AccordionTrigger>
+      <AccordionContent>
+        <p className="text-sm leading-relaxed text-foreground/70 whitespace-pre-line pt-1 pb-2">
+          {text}
+        </p>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
 
@@ -100,11 +105,15 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
 
         {/* Text sections */}
         <div className="space-y-6">
-          {oil.description && <InfoBlock title="Описание" text={oil.description} />}
-          {oil.properties && <InfoBlock title="Свойства" text={oil.properties} />}
-          {oil.usage && <InfoBlock title="Способы применения" text={oil.usage} />}
-          {oil.cautions && <InfoBlock title="Противопоказания" text={oil.cautions} />}
-          {oil.additional_info && <InfoBlock title="Дополнительная информация" text={oil.additional_info} />}
+          {(oil.description || oil.properties || oil.usage || oil.cautions || oil.additional_info) && (
+            <Accordion type="single" collapsible defaultValue="description" className="w-full">
+              {oil.description && <InfoBlock value="description" title="О масле" text={oil.description} />}
+              {oil.properties && <InfoBlock value="properties" title="Свойства" text={oil.properties} />}
+              {oil.usage && <InfoBlock value="usage" title="Способы применения" text={oil.usage} />}
+              {oil.cautions && <InfoBlock value="cautions" title="Противопоказания" text={oil.cautions} />}
+              {oil.additional_info && <InfoBlock value="additional" title="Дополнительная информация" text={oil.additional_info} />}
+            </Accordion>
+          )}
 
           {media.length > 0 && (
             <div className="space-y-3 pt-2">
