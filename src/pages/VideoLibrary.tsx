@@ -22,6 +22,30 @@ interface Meeting {
 const VideoLibrary = () => {
   const navigate = useNavigate();
   const [activeMeeting, setActiveMeeting] = useState<Meeting | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+
+  useEffect(() => {
+    if (!activeMeeting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveMeeting(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeMeeting]);
+
+  useEffect(() => {
+    setIframeLoaded(false);
+    setIframeError(false);
+    if (!activeMeeting) return;
+    const t = setTimeout(() => {
+      setIframeLoaded((loaded) => {
+        if (!loaded) setIframeError(true);
+        return loaded;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [activeMeeting]);
 
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["meeting_archive_public"],
