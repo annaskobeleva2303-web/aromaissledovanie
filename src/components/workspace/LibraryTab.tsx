@@ -6,6 +6,12 @@ import { Loader2, Play, Video, X, BookOpen, Headphones, ExternalLink } from "luc
 import { proxiedStorageUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
 import { toEmbedUrl } from "@/lib/videoEmbed";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 interface OilFull {
   id: string;
   title: string;
