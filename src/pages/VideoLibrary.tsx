@@ -177,10 +177,22 @@ const VideoLibrary = () => {
                 <iframe
                   src={toEmbedUrl(activeMeeting.video_url)}
                   className="absolute inset-0 h-full w-full"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  frameBorder={0}
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
                   allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
                   title={activeMeeting.title}
                 />
+              </div>
+              <div className="mt-3 text-center">
+                <a
+                  href={activeMeeting.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Открыть оригинальное видео ↗
+                </a>
               </div>
             </motion.div>
           </motion.div>
