@@ -47,6 +47,33 @@ function PassportBlock({ title, text }: { title: string; text?: string | null })
 
 export function LibraryTab({ oil }: LibraryTabProps) {
   const [active, setActive] = useState<Meeting | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+
+  const embedUrl = useMemo(() => (active ? toEmbedUrl(active.video_url) : ""), [active]);
+  const canEmbed = !!active && !!embedUrl && embedUrl !== active.video_url;
+
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActive(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [active]);
+
+  useEffect(() => {
+    setIframeLoaded(false);
+    setIframeError(false);
+    if (!active) return;
+    const t = setTimeout(() => {
+      setIframeLoaded((loaded) => {
+        if (!loaded) setIframeError(true);
+        return loaded;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [active]);
 
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["library_meetings", oil.id],
