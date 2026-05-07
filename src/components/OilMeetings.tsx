@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, Video, X } from "lucide-react";
+import { Loader2, Play, Video, X, ExternalLink } from "lucide-react";
 import { toEmbedUrl } from "@/lib/videoEmbed";
 
 interface Meeting {
@@ -20,6 +20,30 @@ interface OilMeetingsProps {
 
 export function OilMeetings({ oilId }: OilMeetingsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+
+  useEffect(() => {
+    if (!activeId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId]);
+
+  useEffect(() => {
+    setIframeLoaded(false);
+    setIframeError(false);
+    if (!activeId) return;
+    const t = setTimeout(() => {
+      setIframeLoaded((loaded) => {
+        if (!loaded) setIframeError(true);
+        return loaded;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [activeId]);
 
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["meeting_archive_oil", oilId],
@@ -73,24 +97,60 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <div className="relative w-full bg-black" style={{ aspectRatio: "16 / 9" }}>
-                      <iframe
-                        src={toEmbedUrl(m.video_url)}
-                        className="absolute inset-0 h-full w-full"
-                        frameBorder={0}
-                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        title={m.title}
-                      />
-                      <button
-                        onClick={() => setActiveId(null)}
-                        className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-all"
-                        aria-label="Закрыть плеер"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
+                    {(() => {
+                      const embed = toEmbedUrl(m.video_url);
+                      const canEmbed = !!embed && embed !== m.video_url;
+                      return (
+                        <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
+                          {canEmbed && !iframeError && (
+                            <iframe
+                              src={embed}
+                              onLoad={() => setIframeLoaded(true)}
+                              onError={() => setIframeError(true)}
+                              className="absolute inset-0 h-full w-full"
+                              frameBorder={0}
+                              allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
+                              allowFullScreen
+                              referrerPolicy="no-referrer-when-downgrade"
+                              title={m.title}
+                            />
+                          )}
+                          {canEmbed && !iframeLoaded && !iframeError && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-indigo-900/30 to-fuchsia-900/40 animate-pulse" />
+                              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(167,139,250,0.25),transparent_60%)] animate-pulse" />
+                              <div className="relative flex flex-col items-center gap-2 text-white/80">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                                <span className="text-[11px] tracking-wide">Загружаем видео…</span>
+                              </div>
+                            </div>
+                          )}
+                          {(!canEmbed || iframeError) && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-violet-950/80 to-indigo-950/80 px-4 text-center">
+                              <p className="text-xs text-white/80">
+                                Не удалось встроить плеер в приложение.
+                              </p>
+                              <a
+                                href={m.video_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-md px-4 py-2 text-xs text-white shadow-[0_0_20px_6px_rgba(167,139,250,0.25)] hover:bg-white/25 transition-all"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                Открыть видео в новой вкладке
+                              </a>
+                            </div>
+                          )}
+                          <button
+                            onClick={() => setActiveId(null)}
+                            className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-all"
+                            aria-label="Закрыть плеер (Esc)"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      );
+                    })()}
                     <div className="p-3">
                       <p className="font-serif text-sm font-semibold text-foreground line-clamp-2 leading-snug">
                         {m.title}
