@@ -37,17 +37,19 @@ export function toEmbedUrl(rawUrl: string): string {
 
     // VK Video — обычная ссылка vk.com/video{oid}_{id} или vkvideo.ru/video...
     if (host === "vk.com" || host === "m.vk.com" || host === "vkvideo.ru" || host === "vk.ru") {
+      const list = u.searchParams.get("list") || u.searchParams.get("hash");
+      const extra = list ? `&hash=${encodeURIComponent(list)}` : "";
       const m = u.pathname.match(/video(-?\d+)_(\d+)/);
       if (m) {
         const oid = m[1];
         const id = m[2];
-        return `https://vk.com/video_ext.php?oid=${oid}&id=${id}&hd=2&autoplay=0`;
+        return `https://vk.com/video_ext.php?oid=${oid}&id=${id}&hd=2&autoplay=0${extra}`;
       }
       // Ссылка вида ?z=video{oid}_{id}
       const z = u.searchParams.get("z") || "";
       const mz = z.match(/video(-?\d+)_(\d+)/);
       if (mz) {
-        return `https://vk.com/video_ext.php?oid=${mz[1]}&id=${mz[2]}&hd=2&autoplay=0`;
+        return `https://vk.com/video_ext.php?oid=${mz[1]}&id=${mz[2]}&hd=2&autoplay=0${extra}`;
       }
     }
 
