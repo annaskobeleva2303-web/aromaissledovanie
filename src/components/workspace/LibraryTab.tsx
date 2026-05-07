@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, Video, X, BookOpen, Headphones } from "lucide-react";
+import { Loader2, Play, Video, X, BookOpen, Headphones, ExternalLink } from "lucide-react";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
+import { toEmbedUrl } from "@/lib/videoEmbed";
 interface OilFull {
   id: string;
   title: string;
