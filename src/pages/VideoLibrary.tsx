@@ -197,17 +197,53 @@ const VideoLibrary = () => {
               </div>
 
               {/* 16:9 iframe container */}
-              <div className="relative w-full overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)]" style={{ aspectRatio: "16 / 9" }}>
-                <iframe
-                  src={toEmbedUrl(activeMeeting.video_url)}
-                  className="absolute inset-0 h-full w-full"
-                  frameBorder={0}
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
-                  allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title={activeMeeting.title}
-                />
-              </div>
+              {(() => {
+                const embed = toEmbedUrl(activeMeeting.video_url);
+                const canEmbed = !!embed && embed !== activeMeeting.video_url;
+                return (
+                  <div className="relative w-full overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)]" style={{ aspectRatio: "16 / 9" }}>
+                    {canEmbed && !iframeError && (
+                      <iframe
+                        src={embed}
+                        onLoad={() => setIframeLoaded(true)}
+                        onError={() => setIframeError(true)}
+                        className="absolute inset-0 h-full w-full"
+                        frameBorder={0}
+                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
+                        allowFullScreen
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title={activeMeeting.title}
+                      />
+                    )}
+                    {canEmbed && !iframeLoaded && !iframeError && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/50 via-indigo-900/40 to-fuchsia-900/50 animate-pulse" />
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(167,139,250,0.3),transparent_60%)] animate-pulse" />
+                        <div className="relative flex flex-col items-center gap-2 text-white/80">
+                          <Loader2 className="h-7 w-7 animate-spin" />
+                          <span className="text-xs tracking-wide">Загружаем видео…</span>
+                        </div>
+                      </div>
+                    )}
+                    {(!canEmbed || iframeError) && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-violet-950/90 to-indigo-950/90 px-6 text-center">
+                        <p className="text-sm text-white/80">
+                          Не удалось встроить плеер в приложение.
+                        </p>
+                        <a
+                          href={activeMeeting.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-md px-5 py-2.5 text-sm text-white shadow-[0_0_24px_8px_rgba(167,139,250,0.3)] hover:bg-white/25 transition-all"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Открыть видео в новой вкладке
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               <div className="mt-3 text-center">
                 <a
                   href={activeMeeting.video_url}
