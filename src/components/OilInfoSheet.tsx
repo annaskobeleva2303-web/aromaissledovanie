@@ -6,6 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface OilInfo {
   id?: string;
