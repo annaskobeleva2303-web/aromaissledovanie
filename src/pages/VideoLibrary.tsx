@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Play, Video, X } from "lucide-react";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import BrandIcon from "@/components/BrandIcon";
+import { toEmbedUrl } from "@/lib/videoEmbed";
 
 interface Meeting {
   id: string;
@@ -174,7 +175,7 @@ const VideoLibrary = () => {
               {/* 16:9 iframe container */}
               <div className="relative w-full overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)]" style={{ aspectRatio: "16 / 9" }}>
                 <iframe
-                  src={activeMeeting.video_url}
+                  src={toEmbedUrl(activeMeeting.video_url)}
                   className="absolute inset-0 h-full w-full"
                   allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                   allowFullScreen
