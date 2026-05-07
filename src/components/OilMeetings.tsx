@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Play, Video, X } from "lucide-react";
+import { Loader2, Play, Video, X, ExternalLink } from "lucide-react";
 import { toEmbedUrl } from "@/lib/videoEmbed";
 
 interface Meeting {
