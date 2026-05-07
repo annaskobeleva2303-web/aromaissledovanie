@@ -77,8 +77,10 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
                       <iframe
                         src={toEmbedUrl(m.video_url)}
                         className="absolute inset-0 h-full w-full"
-                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                        frameBorder={0}
+                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
                         allowFullScreen
+                        referrerPolicy="no-referrer-when-downgrade"
                         title={m.title}
                       />
                       <button
@@ -100,6 +102,14 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
                           year: "numeric",
                         })}
                       </p>
+                      <a
+                        href={m.video_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                      >
+                        Открыть оригинальное видео ↗
+                      </a>
                     </div>
                   </motion.div>
                 ) : (
