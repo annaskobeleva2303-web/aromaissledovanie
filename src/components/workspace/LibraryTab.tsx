@@ -6,6 +6,12 @@ import { Loader2, Play, Video, X, BookOpen, Headphones, ExternalLink } from "luc
 import { proxiedStorageUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
 import { toEmbedUrl } from "@/lib/videoEmbed";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 interface OilFull {
   id: string;
   title: string;
@@ -31,17 +37,21 @@ interface Meeting {
   oil_id: string | null;
 }
 
-function PassportBlock({ title, text }: { title: string; text?: string | null }) {
+function PassportBlock({ value, title, text }: { value: string; title: string; text?: string | null }) {
   if (!text) return null;
   return (
-    <div className="space-y-1.5">
-      <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground/70">
-        {title}
-      </h4>
-      <p className="text-sm leading-relaxed text-foreground/75 whitespace-pre-line">
-        {text}
-      </p>
-    </div>
+    <AccordionItem value={value} className="border-b border-white/10 last:border-b-0">
+      <AccordionTrigger className="py-3 hover:no-underline">
+        <h4 className="font-serif text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground/70 text-left">
+          {title}
+        </h4>
+      </AccordionTrigger>
+      <AccordionContent>
+        <p className="text-sm leading-relaxed text-foreground/75 whitespace-pre-line pt-1 pb-2">
+          {text}
+        </p>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
 
@@ -127,13 +137,13 @@ export function LibraryTab({ oil }: LibraryTabProps) {
             </p>
           )}
         </div>
-        <div className="space-y-5">
-          <PassportBlock title="О масле" text={oil.description} />
-          <PassportBlock title="Свойства" text={oil.properties} />
-          <PassportBlock title="Применение" text={oil.usage} />
-          <PassportBlock title="Предостережения" text={oil.cautions} />
-          <PassportBlock title="Дополнительно" text={oil.additional_info} />
-        </div>
+        <Accordion type="single" collapsible className="w-full">
+          <PassportBlock value="description" title="О масле" text={oil.description} />
+          <PassportBlock value="properties" title="Свойства" text={oil.properties} />
+          <PassportBlock value="usage" title="Применение" text={oil.usage} />
+          <PassportBlock value="cautions" title="Предостережения" text={oil.cautions} />
+          <PassportBlock value="additional" title="Дополнительно" text={oil.additional_info} />
+        </Accordion>
       </section>
 
       {/* Аудио-практики */}
