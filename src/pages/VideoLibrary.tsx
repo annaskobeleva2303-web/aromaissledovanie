@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Play, Video, X } from "lucide-react";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import BrandIcon from "@/components/BrandIcon";
+import { toEmbedUrl } from "@/lib/videoEmbed";
 
 interface Meeting {
   id: string;
