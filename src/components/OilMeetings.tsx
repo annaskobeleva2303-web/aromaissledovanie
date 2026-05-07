@@ -20,6 +20,30 @@ interface OilMeetingsProps {
 
 export function OilMeetings({ oilId }: OilMeetingsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+
+  useEffect(() => {
+    if (!activeId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId]);
+
+  useEffect(() => {
+    setIframeLoaded(false);
+    setIframeError(false);
+    if (!activeId) return;
+    const t = setTimeout(() => {
+      setIframeLoaded((loaded) => {
+        if (!loaded) setIframeError(true);
+        return loaded;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [activeId]);
 
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["meeting_archive_oil", oilId],
