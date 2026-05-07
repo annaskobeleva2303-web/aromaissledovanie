@@ -137,13 +137,13 @@ export function LibraryTab({ oil }: LibraryTabProps) {
             </p>
           )}
         </div>
-        <div className="space-y-5">
-          <PassportBlock title="О масле" text={oil.description} />
-          <PassportBlock title="Свойства" text={oil.properties} />
-          <PassportBlock title="Применение" text={oil.usage} />
-          <PassportBlock title="Предостережения" text={oil.cautions} />
-          <PassportBlock title="Дополнительно" text={oil.additional_info} />
-        </div>
+        <Accordion type="single" collapsible className="w-full">
+          <PassportBlock value="description" title="О масле" text={oil.description} />
+          <PassportBlock value="properties" title="Свойства" text={oil.properties} />
+          <PassportBlock value="usage" title="Применение" text={oil.usage} />
+          <PassportBlock value="cautions" title="Предостережения" text={oil.cautions} />
+          <PassportBlock value="additional" title="Дополнительно" text={oil.additional_info} />
+        </Accordion>
       </section>
 
       {/* Аудио-практики */}
