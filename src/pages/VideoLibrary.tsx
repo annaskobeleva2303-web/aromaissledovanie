@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Play, Video, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Play, Video, X } from "lucide-react";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import BrandIcon from "@/components/BrandIcon";
 import { toEmbedUrl } from "@/lib/videoEmbed";
