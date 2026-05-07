@@ -105,11 +105,15 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
 
         {/* Text sections */}
         <div className="space-y-6">
-          {oil.description && <InfoBlock title="Описание" text={oil.description} />}
-          {oil.properties && <InfoBlock title="Свойства" text={oil.properties} />}
-          {oil.usage && <InfoBlock title="Способы применения" text={oil.usage} />}
-          {oil.cautions && <InfoBlock title="Противопоказания" text={oil.cautions} />}
-          {oil.additional_info && <InfoBlock title="Дополнительная информация" text={oil.additional_info} />}
+          {(oil.description || oil.properties || oil.usage || oil.cautions || oil.additional_info) && (
+            <Accordion type="single" collapsible defaultValue="description" className="w-full">
+              {oil.description && <InfoBlock value="description" title="О масле" text={oil.description} />}
+              {oil.properties && <InfoBlock value="properties" title="Свойства" text={oil.properties} />}
+              {oil.usage && <InfoBlock value="usage" title="Способы применения" text={oil.usage} />}
+              {oil.cautions && <InfoBlock value="cautions" title="Противопоказания" text={oil.cautions} />}
+              {oil.additional_info && <InfoBlock value="additional" title="Дополнительная информация" text={oil.additional_info} />}
+            </Accordion>
+          )}
 
           {media.length > 0 && (
             <div className="space-y-3 pt-2">
