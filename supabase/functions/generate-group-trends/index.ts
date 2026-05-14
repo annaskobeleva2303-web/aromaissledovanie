@@ -80,8 +80,9 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
+    const { data: userData, error: userError } = await userClient.auth.getUser(token);
+    const callerId = userData?.user?.id;
+    if (userError || !callerId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -93,7 +94,7 @@ serve(async (req) => {
     const { data: roleRow } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", claimsData.claims.sub)
+      .eq("user_id", callerId)
       .eq("role", "admin")
       .maybeSingle();
 
@@ -275,7 +276,7 @@ serve(async (req) => {
           period_start: weekStartStr,
           period_end: periodEndStr,
           report_text: trendText,
-          generated_by: claimsData.claims.sub,
+          generated_by: callerId,
         });
 
       if (insertError && reportInsertError) {
