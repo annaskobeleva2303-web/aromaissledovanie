@@ -1,18 +1,20 @@
 /**
  * Converts a watch URL (VK Video, YouTube, etc.) into an embeddable iframe URL.
  * Returns the original URL if no known pattern matches.
+ *
+ * IMPORTANT: If a URL is already an embed (vk.com/video_ext.php, youtube embed,
+ * rutube embed, vimeo player), it is returned UNTOUCHED — do not strip params.
  */
 export function toEmbedUrl(rawUrl: string): string {
   if (!rawUrl) return rawUrl;
   const url = rawUrl.trim();
 
-  // Already an embed
+  // Already an embed — return AS-IS, never re-parse, never lose params (oid/id/hash).
   if (
-    url.includes("video_ext.php") ||
-    url.includes("youtube.com/embed/") ||
-    url.includes("youtube-nocookie.com/embed/") ||
-    url.includes("rutube.ru/play/embed/") ||
-    url.includes("player.vimeo.com/video/")
+    /\/video_ext\.php\b/i.test(url) ||
+    /youtube(?:-nocookie)?\.com\/embed\//i.test(url) ||
+    /rutube\.ru\/play\/embed\//i.test(url) ||
+    /player\.vimeo\.com\/video\//i.test(url)
   ) {
     return url;
   }
@@ -27,25 +29,22 @@ export function toEmbedUrl(rawUrl: string): string {
       if (id) return `https://www.youtube.com/embed/${id}`;
     }
     if (host.endsWith("youtube.com") || host.endsWith("youtube-nocookie.com")) {
-      // /watch?v=ID
       const v = u.searchParams.get("v");
       if (v) return `https://www.youtube.com/embed/${v}`;
-      // /shorts/ID, /live/ID
       const m = u.pathname.match(/^\/(?:shorts|live|embed)\/([^/?#]+)/);
       if (m) return `https://www.youtube.com/embed/${m[1]}`;
     }
 
-    // VK Video — обычная ссылка vk.com/video{oid}_{id} или vkvideo.ru/video...
+    // VK Video — vk.com/video{oid}_{id} (или vkvideo.ru / vk.ru / m.vk.com)
     if (host === "vk.com" || host === "m.vk.com" || host === "vkvideo.ru" || host === "vk.ru") {
-      const list = u.searchParams.get("list") || u.searchParams.get("hash");
-      const extra = list ? `&hash=${encodeURIComponent(list)}` : "";
+      // Только настоящий hash подходит для приватных/preview видео. list — это плейлист, не hash.
+      const hash = u.searchParams.get("hash");
+      const extra = hash ? `&hash=${encodeURIComponent(hash)}` : "";
+
       const m = u.pathname.match(/video(-?\d+)_(\d+)/);
       if (m) {
-        const oid = m[1];
-        const id = m[2];
-        return `https://vk.com/video_ext.php?oid=${oid}&id=${id}&hd=2&autoplay=0${extra}`;
+        return `https://vk.com/video_ext.php?oid=${m[1]}&id=${m[2]}&hd=2&autoplay=0${extra}`;
       }
-      // Ссылка вида ?z=video{oid}_{id}
       const z = u.searchParams.get("z") || "";
       const mz = z.match(/video(-?\d+)_(\d+)/);
       if (mz) {
