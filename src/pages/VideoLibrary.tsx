@@ -209,9 +209,10 @@ const VideoLibrary = () => {
                         onError={() => setIframeError(true)}
                         className="absolute inset-0 h-full w-full"
                         frameBorder={0}
-                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write; gyroscope; accelerometer"
+                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                         allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
+                        referrerPolicy="no-referrer"
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
                         title={activeMeeting.title}
                       />
                     )}
