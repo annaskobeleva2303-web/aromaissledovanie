@@ -5,6 +5,11 @@
  * IMPORTANT: If a URL is already an embed (vk.com/video_ext.php, youtube embed,
  * rutube embed, vimeo player), it is returned UNTOUCHED — do not strip params.
  */
+export function isRutubeEmbed(url: string): boolean {
+  if (!url) return false;
+  return /(?:^|\/\/)(?:www\.)?rutube\.ru\/(?:play\/embed|video)\//i.test(url.trim());
+}
+
 export function toEmbedUrl(rawUrl: string): string {
   if (!rawUrl) return rawUrl;
   const url = rawUrl.trim();
