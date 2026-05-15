@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, Video, X, BookOpen, Headphones, ExternalLink } from "lucide-react";
 import { proxiedStorageUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
-import { toEmbedUrl } from "@/lib/videoEmbed";
+import { toEmbedUrl, isRutubeEmbed } from "@/lib/videoEmbed";
 import {
   Accordion,
   AccordionContent,
@@ -62,6 +62,7 @@ export function LibraryTab({ oil }: LibraryTabProps) {
 
   const embedUrl = useMemo(() => (active ? toEmbedUrl(active.video_url) : ""), [active]);
   const canEmbed = !!active && !!embedUrl && embedUrl !== active.video_url;
+  const isRutube = isRutubeEmbed(embedUrl);
 
   useEffect(() => {
     if (!active) return;
@@ -76,6 +77,10 @@ export function LibraryTab({ oil }: LibraryTabProps) {
     setIframeLoaded(false);
     setIframeError(false);
     if (!active) return;
+    if (isRutube) {
+      setIframeLoaded(true);
+      return;
+    }
     const t = setTimeout(() => {
       setIframeLoaded((loaded) => {
         if (!loaded) setIframeError(true);
@@ -83,7 +88,7 @@ export function LibraryTab({ oil }: LibraryTabProps) {
       });
     }, 8000);
     return () => clearTimeout(t);
-  }, [active]);
+  }, [active, isRutube]);
 
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["library_meetings", oil.id],
@@ -270,21 +275,25 @@ export function LibraryTab({ oil }: LibraryTabProps) {
                 className="relative w-full overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
                 style={{ aspectRatio: "16 / 9" }}
               >
-                {canEmbed && !iframeError && (
+                {(isRutube || (canEmbed && !iframeError)) && (
                   <iframe
                     src={embedUrl}
                     onLoad={() => setIframeLoaded(true)}
-                    onError={() => setIframeError(true)}
+                    onError={() => { if (!isRutube) setIframeError(true); }}
                     className="absolute inset-0 h-full w-full"
                     frameBorder={0}
+                    width="100%"
+                    height="100%"
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                     allowFullScreen
-                    referrerPolicy="no-referrer"
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
+                    {...(!isRutube && {
+                      referrerPolicy: "no-referrer" as const,
+                      sandbox: "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation",
+                    })}
                     title={active.title}
                   />
                 )}
-                {canEmbed && !iframeLoaded && !iframeError && (
+                {!isRutube && canEmbed && !iframeLoaded && !iframeError && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="absolute inset-0 bg-gradient-to-br from-violet-900/50 via-indigo-900/40 to-fuchsia-900/50 animate-pulse" />
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(167,139,250,0.3),transparent_60%)] animate-pulse" />
@@ -294,7 +303,7 @@ export function LibraryTab({ oil }: LibraryTabProps) {
                     </div>
                   </div>
                 )}
-                {(!canEmbed || iframeError) && (
+                {!isRutube && (!canEmbed || iframeError) && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-violet-950/80 to-indigo-950/80 px-6 text-center">
                     <p className="text-sm text-white/85">
                       Не удалось встроить плеер в приложение.
