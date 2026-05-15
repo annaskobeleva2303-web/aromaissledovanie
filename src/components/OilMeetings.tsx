@@ -23,6 +23,20 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeError, setIframeError] = useState(false);
 
+  const { data: meetings = [], isLoading } = useQuery({
+    queryKey: ["meeting_archive_oil", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("meeting_archive" as any)
+        .select("*")
+        .eq("oil_id", oilId)
+        .order("meeting_date", { ascending: false });
+      if (error) throw error;
+      return data as unknown as Meeting[];
+    },
+    enabled: !!oilId,
+  });
+
   useEffect(() => {
     if (!activeId) return;
     const onKey = (e: KeyboardEvent) => {
@@ -50,20 +64,6 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
     }, 8000);
     return () => clearTimeout(t);
   }, [activeId, meetings]);
-
-  const { data: meetings = [], isLoading } = useQuery({
-    queryKey: ["meeting_archive_oil", oilId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("meeting_archive" as any)
-        .select("*")
-        .eq("oil_id", oilId)
-        .order("meeting_date", { ascending: false });
-      if (error) throw error;
-      return data as unknown as Meeting[];
-    },
-    enabled: !!oilId,
-  });
 
   if (isLoading) {
     return (
