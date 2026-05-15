@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, Video, X, ExternalLink } from "lucide-react";
-import { toEmbedUrl } from "@/lib/videoEmbed";
+import { toEmbedUrl, isRutubeEmbed } from "@/lib/videoEmbed";
 
 interface Meeting {
   id: string;
@@ -36,6 +36,12 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
     setIframeLoaded(false);
     setIframeError(false);
     if (!activeId) return;
+    const active = meetings.find((x) => x.id === activeId);
+    const embed = active ? toEmbedUrl(active.video_url) : "";
+    if (isRutubeEmbed(embed)) {
+      setIframeLoaded(true);
+      return;
+    }
     const t = setTimeout(() => {
       setIframeLoaded((loaded) => {
         if (!loaded) setIframeError(true);
@@ -43,7 +49,7 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
       });
     }, 8000);
     return () => clearTimeout(t);
-  }, [activeId]);
+  }, [activeId, meetings]);
 
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["meeting_archive_oil", oilId],
