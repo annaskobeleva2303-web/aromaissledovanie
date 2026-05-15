@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Loader2, Play, Video, X } from "lucide-react";
 import { SparkleBackground } from "@/components/SparkleBackground";
 import BrandIcon from "@/components/BrandIcon";
-import { toEmbedUrl } from "@/lib/videoEmbed";
+import { toEmbedUrl, isRutubeEmbed } from "@/lib/videoEmbed";
 
 interface Meeting {
   id: string;
@@ -38,6 +38,11 @@ const VideoLibrary = () => {
     setIframeLoaded(false);
     setIframeError(false);
     if (!activeMeeting) return;
+    const embed = toEmbedUrl(activeMeeting.video_url);
+    if (isRutubeEmbed(embed)) {
+      setIframeLoaded(true);
+      return;
+    }
     const t = setTimeout(() => {
       setIframeLoaded((loaded) => {
         if (!loaded) setIframeError(true);
@@ -200,23 +205,28 @@ const VideoLibrary = () => {
               {(() => {
                 const embed = toEmbedUrl(activeMeeting.video_url);
                 const canEmbed = !!embed && embed !== activeMeeting.video_url;
+                const isRutube = isRutubeEmbed(embed);
                 return (
                   <div className="relative w-full overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)]" style={{ aspectRatio: "16 / 9" }}>
-                    {canEmbed && !iframeError && (
+                    {(isRutube || (canEmbed && !iframeError)) && (
                       <iframe
                         src={embed}
                         onLoad={() => setIframeLoaded(true)}
-                        onError={() => setIframeError(true)}
+                        onError={() => { if (!isRutube) setIframeError(true); }}
                         className="absolute inset-0 h-full w-full"
                         frameBorder={0}
+                        width="100%"
+                        height="100%"
                         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                         allowFullScreen
-                        referrerPolicy="no-referrer"
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
+                        {...(!isRutube && {
+                          referrerPolicy: "no-referrer" as const,
+                          sandbox: "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation",
+                        })}
                         title={activeMeeting.title}
                       />
                     )}
-                    {canEmbed && !iframeLoaded && !iframeError && (
+                    {!isRutube && canEmbed && !iframeLoaded && !iframeError && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/50 via-indigo-900/40 to-fuchsia-900/50 animate-pulse" />
                         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(167,139,250,0.3),transparent_60%)] animate-pulse" />
@@ -226,7 +236,7 @@ const VideoLibrary = () => {
                         </div>
                       </div>
                     )}
-                    {(!canEmbed || iframeError) && (
+                    {!isRutube && (!canEmbed || iframeError) && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-violet-950/90 to-indigo-950/90 px-6 text-center">
                         <p className="text-sm text-white/80">
                           Не удалось встроить плеер в приложение.

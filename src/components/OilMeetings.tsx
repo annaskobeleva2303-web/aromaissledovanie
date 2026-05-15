@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Play, Video, X, ExternalLink } from "lucide-react";
-import { toEmbedUrl } from "@/lib/videoEmbed";
+import { toEmbedUrl, isRutubeEmbed } from "@/lib/videoEmbed";
 
 interface Meeting {
   id: string;
@@ -23,28 +23,6 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeError, setIframeError] = useState(false);
 
-  useEffect(() => {
-    if (!activeId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActiveId(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [activeId]);
-
-  useEffect(() => {
-    setIframeLoaded(false);
-    setIframeError(false);
-    if (!activeId) return;
-    const t = setTimeout(() => {
-      setIframeLoaded((loaded) => {
-        if (!loaded) setIframeError(true);
-        return loaded;
-      });
-    }, 8000);
-    return () => clearTimeout(t);
-  }, [activeId]);
-
   const { data: meetings = [], isLoading } = useQuery({
     queryKey: ["meeting_archive_oil", oilId],
     queryFn: async () => {
@@ -58,6 +36,34 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
     },
     enabled: !!oilId,
   });
+
+  useEffect(() => {
+    if (!activeId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId]);
+
+  useEffect(() => {
+    setIframeLoaded(false);
+    setIframeError(false);
+    if (!activeId) return;
+    const active = meetings.find((x) => x.id === activeId);
+    const embed = active ? toEmbedUrl(active.video_url) : "";
+    if (isRutubeEmbed(embed)) {
+      setIframeLoaded(true);
+      return;
+    }
+    const t = setTimeout(() => {
+      setIframeLoaded((loaded) => {
+        if (!loaded) setIframeError(true);
+        return loaded;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [activeId, meetings]);
 
   if (isLoading) {
     return (
@@ -100,23 +106,30 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
                     {(() => {
                       const embed = toEmbedUrl(m.video_url);
                       const canEmbed = !!embed && embed !== m.video_url;
+                      const isRutube = isRutubeEmbed(embed);
+                      const showError = !isRutube && (!canEmbed || iframeError);
+                      const showLoader = !isRutube && canEmbed && !iframeLoaded && !iframeError;
                       return (
                         <div className="relative w-full bg-black overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
-                          {canEmbed && !iframeError && (
+                          {(isRutube || (canEmbed && !iframeError)) && (
                             <iframe
                               src={embed}
                               onLoad={() => setIframeLoaded(true)}
-                              onError={() => setIframeError(true)}
+                              onError={() => { if (!isRutube) setIframeError(true); }}
                               className="absolute inset-0 h-full w-full"
                               frameBorder={0}
+                              width="100%"
+                              height="100%"
                               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                               allowFullScreen
-                              referrerPolicy="no-referrer"
-                              sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
+                              {...(!isRutube && {
+                                referrerPolicy: "no-referrer" as const,
+                                sandbox: "allow-scripts allow-same-origin allow-popups allow-forms allow-presentation",
+                              })}
                               title={m.title}
                             />
                           )}
-                          {canEmbed && !iframeLoaded && !iframeError && (
+                          {showLoader && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 via-indigo-900/30 to-fuchsia-900/40 animate-pulse" />
                               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(167,139,250,0.25),transparent_60%)] animate-pulse" />
@@ -126,7 +139,7 @@ export function OilMeetings({ oilId }: OilMeetingsProps) {
                               </div>
                             </div>
                           )}
-                          {(!canEmbed || iframeError) && (
+                          {showError && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-violet-950/80 to-indigo-950/80 px-4 text-center">
                               <p className="text-xs text-white/80">
                                 Не удалось встроить плеер в приложение.
