@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Users, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from "lucide-react";
+import { Loader2, Users, Droplet, BarChart3, Sparkles, ChevronLeft, ChevronRight, RefreshCw, MessageCircle, Star } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
   const [trendIndex, setTrendIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingFinal, setIsGeneratingFinal] = useState(false);
+  const [isGeneratingGlobal, setIsGeneratingGlobal] = useState(false);
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
@@ -68,6 +69,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
     enabled: !!user,
   });
 
+  const globalReport = reports.find((r) => r.report_type === "global") ?? null;
   const finalReport = reports.find((r) => r.report_type === "final") ?? null;
   const weeklyReports = reports.filter((r) => r.report_type === "weekly");
 
@@ -264,6 +266,45 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
+      {/* Global report — TOP-most, star icon, violet-cosmic accent */}
+      {globalReport && (
+        <div
+          className="relative overflow-hidden rounded-3xl p-8 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(265,80%,28%,0.65) 0%, hsla(280,75%,35%,0.55) 50%, hsla(295,70%,40%,0.5) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 60px hsla(280,90%,55%,0.35), 0 0 100px hsla(295,90%,60%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.25)",
+          }}
+        >
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-fuchsia-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-violet-400/20 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 shadow-[0_0_24px_hsla(295,90%,70%,0.5)]">
+              <Star className="h-5 w-5 text-amber-200 fill-amber-200" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+                Итоговый отчёт · все наблюдения
+              </p>
+              <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
+                Общий обзор Даваны
+              </h3>
+            </div>
+          </div>
+          <div className="relative text-sm leading-relaxed text-white/95 whitespace-pre-wrap">
+            {renderBoldText(globalReport.report_text)}
+          </div>
+          <p className="text-xs text-white/60">
+            Архив с{" "}
+            {new Date(globalReport.period_start).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+            {" "}по{" "}
+            {new Date(globalReport.period_end).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        </div>
+      )}
+
       {/* Final report — pinned at top with golden glow */}
       {finalReport && (
         <div
@@ -358,10 +399,52 @@ export function GroupField({ oilId }: GroupFieldProps) {
       {/* Admin: manual report generation */}
       {isAdmin && (
         <div className="space-y-2">
+          {/* Featured: global report across ALL entries */}
+          <Button
+            onClick={async () => {
+              setIsGeneratingGlobal(true);
+              try {
+                const { data, error } = await supabase.functions.invoke("generate-global-trends", { body: { oilId } });
+                if (error) throw error;
+                const status = (data as any)?.status;
+                if (status === "not_enough_entries") {
+                  toast.error(`Недостаточно публичных наблюдений (есть ${(data as any).total ?? 0}, нужно минимум 3)`);
+                } else if (status === "ai_failed") {
+                  toast.error("ИИ не смог сгенерировать отчёт. Попробуйте ещё раз");
+                } else if (status === "insert_error") {
+                  toast.error("Не удалось сохранить отчёт");
+                } else if (status === "success") {
+                  toast.success(`Общий отчёт готов! Проанализировано ${(data as any).total} записей`);
+                  await queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
+                } else {
+                  toast.error("Не удалось сгенерировать общий отчёт");
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Не удалось сгенерировать общий отчёт");
+              } finally {
+                setIsGeneratingGlobal(false);
+              }
+            }}
+            disabled={isGenerating || isGeneratingFinal || isGeneratingGlobal}
+            className="w-full rounded-full gap-2 text-sm font-semibold text-white border-0 shadow-[0_8px_30px_hsla(280,90%,55%,0.4),0_0_40px_hsla(295,90%,60%,0.2)] hover:shadow-[0_12px_40px_hsla(280,90%,55%,0.55),0_0_60px_hsla(295,90%,60%,0.3)] transition-all"
+            style={{
+              background:
+                "linear-gradient(135deg, hsl(265,80%,45%) 0%, hsl(280,75%,55%) 50%, hsl(295,80%,60%) 100%)",
+            }}
+          >
+            {isGeneratingGlobal ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Star className="h-4 w-4 fill-amber-200 text-amber-200" />
+            )}
+            Сгенерировать общий отчёт (по всем записям)
+          </Button>
+
           <Button
             variant="ghost"
             onClick={handleGenerateTrend}
-            disabled={isGenerating || isGeneratingFinal}
+            disabled={isGenerating || isGeneratingFinal || isGeneratingGlobal}
             className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
           >
             {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
@@ -389,7 +472,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 setIsGeneratingFinal(false);
               }
             }}
-            disabled={isGenerating || isGeneratingFinal}
+            disabled={isGenerating || isGeneratingFinal || isGeneratingGlobal}
             className="w-full rounded-full gap-2 text-xs text-amber-700 hover:text-amber-800 border border-dashed border-amber-400/30"
           >
             {isGeneratingFinal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
