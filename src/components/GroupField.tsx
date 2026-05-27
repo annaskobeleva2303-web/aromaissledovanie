@@ -69,6 +69,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
     enabled: !!user,
   });
 
+  const globalReport = reports.find((r) => r.report_type === "global") ?? null;
   const finalReport = reports.find((r) => r.report_type === "final") ?? null;
   const weeklyReports = reports.filter((r) => r.report_type === "weekly");
 
