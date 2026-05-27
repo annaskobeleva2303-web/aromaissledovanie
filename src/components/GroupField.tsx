@@ -60,8 +60,8 @@ export function GroupField({ oilId }: GroupFieldProps) {
         .from("group_reports")
         .select("id, report_type, period_start, period_end, report_text, created_at")
         .eq("oil_id", oilId)
-        .order("created_at", { ascending: false })
-        .limit(20);
+        .order("period_start", { ascending: false })
+        .limit(50);
       if (error) throw error;
       return data ?? [];
     },
