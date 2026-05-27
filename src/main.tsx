@@ -3,6 +3,6 @@ import App from "./App.tsx";
 import "./index.css";
 import { startVersionCheck } from "./lib/versionCheck";
 
-createRoot(document.getElementById("root")!).render(<App />); // force github sync v2
+createRoot(document.getElementById("root")!).render(<App />); // force github sync v3
 
 startVersionCheck();
