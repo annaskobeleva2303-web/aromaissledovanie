@@ -308,11 +308,11 @@ serve(async (req) => {
           generated_by: callerId,
         });
 
-      if (insertError && reportInsertError) {
+      if (reportInsertError) {
         console.error(`Insert error for ${oil.title}:`, insertError, reportInsertError);
         results.push({ oil: oil.title, status: "insert_error" });
       } else {
-        results.push({ oil: oil.title, status: "success" });
+        results.push({ oil: oil.title, status: "success", week_number: weekNumber });
         // Notify users with access
         const { data: accessUsers } = await supabase
           .from("user_access").select("user_id").eq("oil_id", oil.id);
