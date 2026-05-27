@@ -399,10 +399,52 @@ export function GroupField({ oilId }: GroupFieldProps) {
       {/* Admin: manual report generation */}
       {isAdmin && (
         <div className="space-y-2">
+          {/* Featured: global report across ALL entries */}
+          <Button
+            onClick={async () => {
+              setIsGeneratingGlobal(true);
+              try {
+                const { data, error } = await supabase.functions.invoke("generate-global-trends", { body: { oilId } });
+                if (error) throw error;
+                const status = (data as any)?.status;
+                if (status === "not_enough_entries") {
+                  toast.error(`Недостаточно публичных наблюдений (есть ${(data as any).total ?? 0}, нужно минимум 3)`);
+                } else if (status === "ai_failed") {
+                  toast.error("ИИ не смог сгенерировать отчёт. Попробуйте ещё раз");
+                } else if (status === "insert_error") {
+                  toast.error("Не удалось сохранить отчёт");
+                } else if (status === "success") {
+                  toast.success(`Общий отчёт готов! Проанализировано ${(data as any).total} записей`);
+                  await queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
+                } else {
+                  toast.error("Не удалось сгенерировать общий отчёт");
+                }
+              } catch (e) {
+                console.error(e);
+                toast.error("Не удалось сгенерировать общий отчёт");
+              } finally {
+                setIsGeneratingGlobal(false);
+              }
+            }}
+            disabled={isGenerating || isGeneratingFinal || isGeneratingGlobal}
+            className="w-full rounded-full gap-2 text-sm font-semibold text-white border-0 shadow-[0_8px_30px_hsla(280,90%,55%,0.4),0_0_40px_hsla(295,90%,60%,0.2)] hover:shadow-[0_12px_40px_hsla(280,90%,55%,0.55),0_0_60px_hsla(295,90%,60%,0.3)] transition-all"
+            style={{
+              background:
+                "linear-gradient(135deg, hsl(265,80%,45%) 0%, hsl(280,75%,55%) 50%, hsl(295,80%,60%) 100%)",
+            }}
+          >
+            {isGeneratingGlobal ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Star className="h-4 w-4 fill-amber-200 text-amber-200" />
+            )}
+            Сгенерировать общий отчёт (по всем записям)
+          </Button>
+
           <Button
             variant="ghost"
             onClick={handleGenerateTrend}
-            disabled={isGenerating || isGeneratingFinal}
+            disabled={isGenerating || isGeneratingFinal || isGeneratingGlobal}
             className="w-full rounded-full gap-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/20"
           >
             {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
@@ -430,7 +472,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 setIsGeneratingFinal(false);
               }
             }}
-            disabled={isGenerating || isGeneratingFinal}
+            disabled={isGenerating || isGeneratingFinal || isGeneratingGlobal}
             className="w-full rounded-full gap-2 text-xs text-amber-700 hover:text-amber-800 border border-dashed border-amber-400/30"
           >
             {isGeneratingFinal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
