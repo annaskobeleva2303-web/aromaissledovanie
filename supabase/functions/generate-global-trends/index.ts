@@ -92,7 +92,6 @@ serve(async (req) => {
       .from("entries")
       .select("date, mood, content")
       .eq("oil_id", oilId)
-      .eq("is_public", true)
       .order("date", { ascending: true });
 
     if (entriesError) {
