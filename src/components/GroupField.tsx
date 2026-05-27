@@ -24,6 +24,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
   const [trendIndex, setTrendIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingFinal, setIsGeneratingFinal] = useState(false);
+  const [isGeneratingGlobal, setIsGeneratingGlobal] = useState(false);
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
