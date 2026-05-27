@@ -60,8 +60,8 @@ export function GroupField({ oilId }: GroupFieldProps) {
         .from("group_reports")
         .select("id, report_type, period_start, period_end, report_text, created_at")
         .eq("oil_id", oilId)
-        .order("created_at", { ascending: false })
-        .limit(20);
+        .order("period_start", { ascending: false })
+        .limit(50);
       if (error) throw error;
       return data ?? [];
     },
@@ -150,10 +150,31 @@ export function GroupField({ oilId }: GroupFieldProps) {
         body: { oilId },
       });
       if (error) throw error;
-      toast.success("Групповой отчёт сгенерирован!");
-      setTrendIndex(0);
-      queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] });
-      queryClient.invalidateQueries({ queryKey: ["group-trends", oilId] });
+
+      const results = (data as { results?: Array<{ oil: string; status: string; week_number?: number }> })?.results ?? [];
+      const r = results[0];
+      const status = r?.status;
+
+      if (status === "success") {
+        toast.success(`Недельный отчёт №${r?.week_number ?? ""} готов!`);
+        setTrendIndex(0);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["group-reports", oilId] }),
+          queryClient.invalidateQueries({ queryKey: ["group-trends", oilId] }),
+        ]);
+      } else if (status === "not_enough_entries") {
+        toast.error("Недостаточно публичных наблюдений за неделю (нужно минимум 3)");
+      } else if (status === "already_exists") {
+        toast.info("Отчёт за эту неделю уже существует");
+      } else if (status === "ai_failed") {
+        toast.error("ИИ не смог сгенерировать отчёт. Попробуйте ещё раз");
+      } else if (status === "insert_error") {
+        toast.error("Не удалось сохранить отчёт в базу");
+      } else if (status === "entries_error") {
+        toast.error("Ошибка чтения записей");
+      } else {
+        toast.error("Не удалось сгенерировать отчёт");
+      }
     } catch (e) {
       console.error("Generate trend error:", e);
       toast.error("Не удалось сгенерировать отчёт");

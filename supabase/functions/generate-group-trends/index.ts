@@ -125,43 +125,72 @@ serve(async (req) => {
       });
     }
 
-    // Calculate week start (Monday of the current week)
+    // Current Monday as default week_start (used when no prior weekly exists)
     const now = new Date();
     const dayOfWeek = now.getDay();
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() + mondayOffset);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekStartStr = weekStart.toISOString().split("T")[0];
+    const currentMonday = new Date(now);
+    currentMonday.setDate(now.getDate() + mondayOffset);
+    currentMonday.setHours(0, 0, 0, 0);
 
-    // Date range: last 7 days
-    const weekAgo = new Date(now);
-    weekAgo.setDate(now.getDate() - 7);
-    const weekAgoStr = weekAgo.toISOString().split("T")[0];
-
-    const results: { oil: string; status: string }[] = [];
+    const results: { oil: string; status: string; week_number?: number }[] = [];
 
     for (const oil of oils) {
-      // Check if trend already exists for this week
-      const { data: existing } = await supabase
-        .from("group_trends")
-        .select("id")
+      // Determine next weekly slot for this oil:
+      // - if no prior weekly → use current Monday
+      // - else → previous period_start + 7 days
+      const { data: lastWeekly } = await supabase
+        .from("group_reports")
+        .select("period_start")
         .eq("oil_id", oil.id)
-        .eq("week_start", weekStartStr)
+        .eq("report_type", "weekly")
+        .order("period_start", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (existing) {
-        results.push({ oil: oil.title, status: "already_exists" });
+      const { count: weeklyExistingCount } = await supabase
+        .from("group_reports")
+        .select("id", { count: "exact", head: true })
+        .eq("oil_id", oil.id)
+        .eq("report_type", "weekly");
+
+      let weekStart: Date;
+      if (lastWeekly?.period_start) {
+        weekStart = new Date(lastWeekly.period_start + "T00:00:00Z");
+        weekStart.setUTCDate(weekStart.getUTCDate() + 7);
+      } else {
+        weekStart = new Date(currentMonday);
+      }
+      const weekStartStr = weekStart.toISOString().split("T")[0];
+      const weekNumber = (weeklyExistingCount ?? 0) + 1;
+
+      // Window for entries = the 7 days ending at weekStart + 6 (the slot itself)
+      const windowEnd = new Date(weekStart);
+      windowEnd.setUTCDate(windowEnd.getUTCDate() + 6);
+      const windowStartStr = weekStartStr;
+      const windowEndStr = windowEnd.toISOString().split("T")[0];
+
+      // Idempotency: skip only if this exact period already exists
+      const { data: existingSlot } = await supabase
+        .from("group_reports")
+        .select("id")
+        .eq("oil_id", oil.id)
+        .eq("report_type", "weekly")
+        .eq("period_start", weekStartStr)
+        .maybeSingle();
+      if (existingSlot) {
+        results.push({ oil: oil.title, status: "already_exists", week_number: weekNumber - 1 });
         continue;
       }
 
-      // Fetch PUBLIC entries for this oil in the last 7 days (anonymized — no user_id in output)
+      // Fetch PUBLIC entries for this oil within the window
       const { data: entries, error: entriesError } = await supabase
         .from("entries")
         .select("date, mood, content")
         .eq("oil_id", oil.id)
         .eq("is_public", true)
-        .gte("date", weekAgoStr)
+        .gte("date", windowStartStr)
+        .lte("date", windowEndStr)
         .order("date", { ascending: true });
 
       if (entriesError) {
@@ -171,7 +200,7 @@ serve(async (req) => {
       }
 
       if (!entries || entries.length < 3) {
-        results.push({ oil: oil.title, status: "not_enough_entries" });
+        results.push({ oil: oil.title, status: "not_enough_entries", week_number: weekNumber });
         continue;
       }
 
@@ -279,11 +308,11 @@ serve(async (req) => {
           generated_by: callerId,
         });
 
-      if (insertError && reportInsertError) {
+      if (reportInsertError) {
         console.error(`Insert error for ${oil.title}:`, insertError, reportInsertError);
         results.push({ oil: oil.title, status: "insert_error" });
       } else {
-        results.push({ oil: oil.title, status: "success" });
+        results.push({ oil: oil.title, status: "success", week_number: weekNumber });
         // Notify users with access
         const { data: accessUsers } = await supabase
           .from("user_access").select("user_id").eq("oil_id", oil.id);
