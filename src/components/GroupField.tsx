@@ -266,6 +266,45 @@ export function GroupField({ oilId }: GroupFieldProps) {
         </GlassSection>
       )}
 
+      {/* Global report — TOP-most, star icon, violet-cosmic accent */}
+      {globalReport && (
+        <div
+          className="relative overflow-hidden rounded-3xl p-8 space-y-5"
+          style={{
+            background:
+              "linear-gradient(135deg, hsla(265,80%,28%,0.65) 0%, hsla(280,75%,35%,0.55) 50%, hsla(295,70%,40%,0.5) 100%)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 60px hsla(280,90%,55%,0.35), 0 0 100px hsla(295,90%,60%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.25)",
+          }}
+        >
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-fuchsia-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-violet-400/20 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 shadow-[0_0_24px_hsla(295,90%,70%,0.5)]">
+              <Star className="h-5 w-5 text-amber-200 fill-amber-200" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+                Итоговый отчёт · все наблюдения
+              </p>
+              <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
+                Общий обзор Даваны
+              </h3>
+            </div>
+          </div>
+          <div className="relative text-sm leading-relaxed text-white/95 whitespace-pre-wrap">
+            {renderBoldText(globalReport.report_text)}
+          </div>
+          <p className="text-xs text-white/60">
+            Архив с{" "}
+            {new Date(globalReport.period_start).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+            {" "}по{" "}
+            {new Date(globalReport.period_end).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        </div>
+      )}
+
       {/* Final report — pinned at top with golden glow */}
       {finalReport && (
         <div
