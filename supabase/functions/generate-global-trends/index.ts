@@ -8,14 +8,7 @@ const corsHeaders = {
 
 function sanitizeTranscript(input: string): string {
   if (!input) return "";
-  let text = input.replace(/\s+/g, " ").trim();
-  if (!text) return "";
-  text = text.replace(/\b([\p{L}\p{N}'-]+)(\s+\1\b){1,}/giu, "$1");
-  for (let n = 5; n >= 2; n--) {
-    const pattern = new RegExp(`((?:\b[\p{L}\p{N}'-]+\b[\s,]*){${n}})(\1){1,}`, "giu");
-    text = text.replace(pattern, "$1");
-  }
-  return text.replace(/\s+/g, " ").trim();
+  return input.replace(/\s+/g, " ").trim();
 }
 
 serve(async (req) => {
