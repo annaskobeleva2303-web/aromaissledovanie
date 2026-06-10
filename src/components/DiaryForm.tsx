@@ -1114,7 +1114,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               />
               <SessionStagePanel
                 number={2}
-                title="Контакт с Даваной"
+                title={`Контакт с ${oilLabel}`}
                 subtitle="Дыхание, сенсорика и образы"
                 Icon={Flower2}
                 completed={contactDone}
@@ -1156,7 +1156,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               </button>
               {!canFinishSession && (
                 <p className="text-center text-[10px] text-muted-foreground/60 mt-2 tracking-wide">
-                  Пройди Контакт с Даваной и напиши в дневник
+                  Пройди Контакт с {oilLabel} и напиши в дневник
                 </p>
               )}
             </motion.div>
@@ -1232,7 +1232,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         {phase === "sensory" && (
           <PhaseWrapper
             key="sensory"
-            title="Контакт с Даваной"
+            title={`Контакт с ${oilLabel}`}
             subtitle="Сенсорика и образы"
             onBack={() => setPhase("hub")}
             onComplete={() => {
@@ -1386,8 +1386,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             className="space-y-5"
           >
             <div className="text-center">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">Послание Даваны</p>
-              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">Твой инсайт от Даваны ✨</h3>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">Послание масла «{oilTitle}»</p>
+              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">Твой инсайт от масла «{oilTitle}» ✨</h3>
             </div>
 
             <div className="relative overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/50 p-7 shadow-xl shadow-primary/5 backdrop-blur-2xl">
