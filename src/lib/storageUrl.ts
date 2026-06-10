@@ -19,3 +19,29 @@ export function proxiedStorageUrl(url: string | null | undefined): string {
   }
   return url;
 }
+
+// The `oil-media` bucket is private: meditation files require access verification
+// through RLS, so they must be served via short-lived signed URLs rather than
+// public URLs. Extract the object path from a stored file_url and sign it.
+export function extractOilMediaPath(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const marker = "/oil-media/";
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(url.slice(idx + marker.length).split("?")[0]);
+}
+
+export async function signedOilMediaUrl(
+  fileUrl: string | null | undefined,
+  expiresIn = 3600,
+): Promise<string> {
+  if (!fileUrl) return "";
+  const path = extractOilMediaPath(fileUrl);
+  if (!path) return proxiedStorageUrl(fileUrl);
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data, error } = await supabase.storage
+    .from("oil-media")
+    .createSignedUrl(path, expiresIn);
+  if (error || !data?.signedUrl) return proxiedStorageUrl(fileUrl);
+  return data.signedUrl;
+}
