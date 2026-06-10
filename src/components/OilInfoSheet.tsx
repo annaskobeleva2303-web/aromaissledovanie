@@ -4,7 +4,7 @@ import { BookOpen, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { proxiedStorageUrl } from "@/lib/storageUrl";
+import { proxiedStorageUrl, signedOilMediaUrl } from "@/lib/storageUrl";
 import { OilAudioPlayer } from "@/components/OilAudioPlayer";
 import {
   Accordion,
@@ -56,7 +56,11 @@ export function OilInfoSheet({ oil }: OilInfoSheetProps) {
         .order("order_index", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as Array<{ id: string; title: string; description: string | null; file_url: string; order_index: number }>;
+      const rows = data as Array<{ id: string; title: string; description: string | null; file_url: string; order_index: number }>;
+      // Resolve signed URLs since the oil-media bucket is private
+      return Promise.all(
+        rows.map(async (m) => ({ ...m, file_url: await signedOilMediaUrl(m.file_url) })),
+      );
     },
     enabled: !!oil.id,
   });

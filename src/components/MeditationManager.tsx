@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Upload, Trash2, Headphones } from "lucide-react";
 import { toast } from "sonner";
-import { proxiedStorageUrl } from "@/lib/storageUrl";
+import { proxiedStorageUrl, signedOilMediaUrl } from "@/lib/storageUrl";
 
 interface OilLite {
   id: string;
@@ -63,7 +63,11 @@ export function MeditationManager() {
         .order("order_index", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as OilMedia[];
+      const rows = data as OilMedia[];
+      // The oil-media bucket is private — resolve signed URLs for playback
+      return Promise.all(
+        rows.map(async (m) => ({ ...m, file_url: await signedOilMediaUrl(m.file_url) })),
+      );
     },
     enabled: !!selectedOilId,
   });
