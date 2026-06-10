@@ -21,7 +21,7 @@ interface InsightShareCardProps {
 export function InsightShareCard({
   insightText,
   shareQuote,
-  oilTitle = "Даваной",
+  oilTitle = "",
   moodBefore,
   moodAfter,
   energyBefore,
@@ -260,7 +260,7 @@ export function InsightShareCard({
                   lineHeight: 1.3,
                 }}
               >
-                с {oilTitle}
+                {oilTitle ? `с маслом «${oilTitle}»` : "с маслом"}
               </p>
             </div>
 
