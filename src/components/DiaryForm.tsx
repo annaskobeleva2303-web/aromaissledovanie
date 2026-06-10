@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -808,6 +808,22 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Resolve the current oil's name so all in-tab copy references the active oil
+  const { data: oilTitle = "маслом" } = useQuery({
+    queryKey: ["oil-title", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oils")
+        .select("title")
+        .eq("id", oilId)
+        .single();
+      if (error) throw error;
+      return data?.title ?? "маслом";
+    },
+    enabled: !!oilId,
+  });
+  const oilLabel = `маслом «${oilTitle}»`;
+
   // Session Hub state
   const [phase, setPhase] = useState<SessionPhase>("hub");
   const [beforeDone, setBeforeDone] = useState(false);
@@ -1098,7 +1114,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               />
               <SessionStagePanel
                 number={2}
-                title="Контакт с Даваной"
+                title={`Контакт с ${oilLabel}`}
                 subtitle="Дыхание, сенсорика и образы"
                 Icon={Flower2}
                 completed={contactDone}
@@ -1140,7 +1156,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
               </button>
               {!canFinishSession && (
                 <p className="text-center text-[10px] text-muted-foreground/60 mt-2 tracking-wide">
-                  Пройди Контакт с Даваной и напиши в дневник
+                  Пройди Контакт с {oilLabel} и напиши в дневник
                 </p>
               )}
             </motion.div>
@@ -1216,7 +1232,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
         {phase === "sensory" && (
           <PhaseWrapper
             key="sensory"
-            title="Контакт с Даваной"
+            title={`Контакт с ${oilLabel}`}
             subtitle="Сенсорика и образы"
             onBack={() => setPhase("hub")}
             onComplete={() => {
@@ -1370,8 +1386,8 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             className="space-y-5"
           >
             <div className="text-center">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">Послание Даваны</p>
-              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">Твой инсайт от Даваны ✨</h3>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/60 font-medium">Послание масла «{oilTitle}»</p>
+              <h3 className="mt-1 font-serif text-lg tracking-wide text-foreground/90">Твой инсайт от масла «{oilTitle}» ✨</h3>
             </div>
 
             <div className="relative overflow-hidden rounded-[1.75rem] border border-white/30 bg-white/50 p-7 shadow-xl shadow-primary/5 backdrop-blur-2xl">
@@ -1388,6 +1404,7 @@ export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
             <InsightShareCard
               insightText={insightText}
               shareQuote={shareQuote}
+              oilTitle={oilTitle}
               moodBefore={JSON.stringify({ before: moodsBefore, after: moodsAfter })}
               moodAfter={JSON.stringify({ before: moodsBefore, after: moodsAfter })}
               energyBefore={null}

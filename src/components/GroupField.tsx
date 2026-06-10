@@ -21,6 +21,21 @@ export function GroupField({ oilId }: GroupFieldProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Active oil name so report headings reference the current oil
+  const { data: oilTitle = "" } = useQuery({
+    queryKey: ["oil-title", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oils")
+        .select("title")
+        .eq("id", oilId)
+        .single();
+      if (error) throw error;
+      return data?.title ?? "";
+    },
+    enabled: !!oilId,
+  });
+
   const [trendIndex, setTrendIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingFinal, setIsGeneratingFinal] = useState(false);
@@ -289,7 +304,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 Итоговый отчёт · все наблюдения
               </p>
               <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
-                Общий обзор Даваны
+                Общий обзор {oilTitle ? `масла «${oilTitle}»` : "масла"}
               </h3>
             </div>
           </div>
@@ -327,7 +342,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 Итог цикла
               </p>
               <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-                Финальный отчёт Даваны
+                Финальный отчёт {oilTitle ? `масла «${oilTitle}»` : "масла"}
               </h3>
             </div>
           </div>
