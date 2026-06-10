@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -807,6 +807,22 @@ function SessionStagePanel({
 export function DiaryForm({ oilId, date, onSaved }: DiaryFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Resolve the current oil's name so all in-tab copy references the active oil
+  const { data: oilTitle = "маслом" } = useQuery({
+    queryKey: ["oil-title", oilId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("oils")
+        .select("title")
+        .eq("id", oilId)
+        .single();
+      if (error) throw error;
+      return data?.title ?? "маслом";
+    },
+    enabled: !!oilId,
+  });
+  const oilLabel = `маслом «${oilTitle}»`;
 
   // Session Hub state
   const [phase, setPhase] = useState<SessionPhase>("hub");
