@@ -304,7 +304,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 Итоговый отчёт · все наблюдения
               </p>
               <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
-                Общий обзор Даваны
+                Общий обзор {oilTitle ? `масла «${oilTitle}»` : "масла"}
               </h3>
             </div>
           </div>
@@ -342,7 +342,7 @@ export function GroupField({ oilId }: GroupFieldProps) {
                 Итог цикла
               </p>
               <h3 className="font-serif text-lg font-semibold tracking-wide text-foreground">
-                Финальный отчёт Даваны
+                Финальный отчёт {oilTitle ? `масла «${oilTitle}»` : "масла"}
               </h3>
             </div>
           </div>
